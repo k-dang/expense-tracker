@@ -1,33 +1,16 @@
 import { and, count, desc, gte, lte, sql, sum } from "drizzle-orm";
 import type { db as defaultDb } from "@/db/index";
-import { importsTable, transactionsTable } from "@/db/schema";
+import { transactionsTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
 import type {
   DashboardCategoryBreakdownItem,
   DashboardMonthlyTrendItem,
   DashboardResponse,
   DashboardTopVendorItem,
-  ImportHistoryItem,
   RecentTransaction,
 } from "@/lib/types/api";
 
 export type DbClient = typeof defaultDb;
-
-export async function listImports(db: DbClient): Promise<ImportHistoryItem[]> {
-  return db
-    .select({
-      id: importsTable.id,
-      filename: importsTable.filename,
-      uploadedAt: importsTable.uploadedAt,
-      rowCountTotal: importsTable.rowCountTotal,
-      rowCountInserted: importsTable.rowCountInserted,
-      rowCountDuplicates: importsTable.rowCountDuplicates,
-      status: importsTable.status,
-      errorMessage: importsTable.errorMessage,
-    })
-    .from(importsTable)
-    .orderBy(desc(importsTable.uploadedAt));
-}
 
 export async function getDashboardData(
   db: DbClient,
