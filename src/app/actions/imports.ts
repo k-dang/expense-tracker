@@ -1,0 +1,65 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { db } from "@/db/index";
+import { deleteImportById, processImportFile } from "@/db/queries/imports";
+import type {
+  ImportDeleteFailure,
+  ImportDeleteSuccess,
+  ImportPostFailure,
+  ImportPostSuccess,
+} from "@/lib/types/api";
+
+export async function uploadImportAction(
+  formData: FormData,
+): Promise<ImportPostSuccess | ImportPostFailure> {
+  const uploadedFile = formData.get("file");
+
+  if (!(uploadedFile instanceof File)) {
+    return {
+      status: "failed",
+      errors: [
+        { row: 0, field: "file", message: "Missing file in form-data." },
+      ],
+    };
+  }
+
+  try {
+    const bytes = new Uint8Array(await uploadedFile.arrayBuffer());
+    const result = await processImportFile({
+      db,
+      filename: uploadedFile.name,
+      contentType: uploadedFile.type,
+      bytes,
+    });
+
+    revalidatePath("/");
+    revalidatePath("/imports");
+    return result;
+  } catch {
+    return {
+      status: "failed",
+      errors: [{ row: 0, field: "file", message: "Upload failed. Try again." }],
+    };
+  }
+}
+
+export async function deleteImportAction(
+  importId: string,
+): Promise<ImportDeleteSuccess | ImportDeleteFailure> {
+  const normalizedImportId = importId.trim();
+  if (!normalizedImportId) {
+    return { status: "failed", error: "Import id is required." };
+  }
+
+  try {
+    const result = await deleteImportById({ db, importId: normalizedImportId });
+    if (result.status === "succeeded") {
+      revalidatePath("/");
+      revalidatePath("/imports");
+    }
+    return result;
+  } catch {
+    return { status: "failed", error: "Failed to delete import." };
+  }
+}

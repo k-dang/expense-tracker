@@ -4,7 +4,7 @@ import { getDashboardData } from "@/db/queries/dashboard";
 import { importsTable, transactionsTable } from "@/db/schema";
 import {
   getDefaultDashboardDateRange,
-  validateDateRange,
+  resolveDashboardPageDateRange,
 } from "@/lib/dashboard/date-range";
 import { createTestDb } from "@/test/db";
 
@@ -69,14 +69,32 @@ describe("dashboard queries", () => {
     expect(dashboard.recentTransactions[0]?.txnDate).toBe("2025-02-01");
   });
 
-  it("validates and derives ranges", () => {
-    const err = validateDateRange("2025-03-01", "2025-01-01");
-    expect(err).toBeTruthy();
-
+  it("derives default range from current date", () => {
     const range = getDefaultDashboardDateRange(
       new Date("2026-02-07T00:00:00.000Z"),
     );
     expect(range.from).toBe("2025-01-01");
     expect(range.to).toBe("2026-02-28");
+  });
+
+  it("resolves page date range with fallback for invalid inputs", () => {
+    expect(
+      resolveDashboardPageDateRange({ from: "2025-01-10", to: "2025-02-10" }),
+    ).toEqual({
+      from: "2025-01-10",
+      to: "2025-02-10",
+    });
+
+    const fallback = getDefaultDashboardDateRange();
+
+    expect(
+      resolveDashboardPageDateRange({ from: "2025-03-01", to: "2025-01-01" }),
+    ).toEqual(fallback);
+    expect(
+      resolveDashboardPageDateRange({ from: "2025-01-01", to: "not-a-date" }),
+    ).toEqual(fallback);
+    expect(resolveDashboardPageDateRange({ from: "2025-01-01" })).toEqual(
+      fallback,
+    );
   });
 });

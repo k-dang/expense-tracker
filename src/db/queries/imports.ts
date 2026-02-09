@@ -2,8 +2,7 @@ import { randomUUID } from "node:crypto";
 import { count, desc, eq } from "drizzle-orm";
 import type { db as defaultDb } from "@/db/index";
 import { importsTable, transactionsTable } from "@/db/schema";
-import { readCsvRows } from "@/lib/imports/parse";
-import { validateRow } from "@/lib/imports/validate";
+import { readCsvRows, validateRow } from "@/lib/imports/core";
 import type {
   ImportDeleteFailure,
   ImportDeleteSuccess,
@@ -83,10 +82,10 @@ export async function processImportFile(options: {
   const validated = parsed.rows.flatMap((row, index) => {
     const result = validateRow({
       rowNumber: index + 2,
-      date: row[parsed.headerMap.date] ?? "",
-      vendor: row[parsed.headerMap.vendor] ?? "",
-      amount: row[parsed.headerMap.amount] ?? "",
-      category: row[parsed.headerMap.category] ?? "",
+      date: row.date,
+      vendor: row.vendor,
+      amount: row.amount,
+      category: row.category,
     });
 
     if ("error" in result) {
