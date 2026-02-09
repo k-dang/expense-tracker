@@ -3,16 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
 import { deleteImportById, processImportFile } from "@/db/queries/imports";
-import type {
-  ImportDeleteFailure,
-  ImportDeleteSuccess,
-  ImportPostFailure,
-  ImportPostSuccess,
-} from "@/lib/types/api";
+import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
 export async function uploadImportAction(
   formData: FormData,
-): Promise<ImportPostSuccess | ImportPostFailure> {
+): Promise<ImportPostResult> {
   const uploadedFile = formData.get("file");
 
   if (!(uploadedFile instanceof File)) {
@@ -46,7 +41,7 @@ export async function uploadImportAction(
 
 export async function deleteImportAction(
   importId: string,
-): Promise<ImportDeleteSuccess | ImportDeleteFailure> {
+): Promise<ImportDeleteResult> {
   const normalizedImportId = importId.trim();
   if (!normalizedImportId) {
     return { status: "failed", error: "Import id is required." };

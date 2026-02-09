@@ -2,21 +2,12 @@ import { randomUUID } from "node:crypto";
 import { count, desc, eq } from "drizzle-orm";
 import type { db as defaultDb } from "@/db/index";
 import { importsTable, transactionsTable } from "@/db/schema";
-import { readCsvRows, validateRow } from "@/lib/imports/core";
-import type {
-  ImportDeleteFailure,
-  ImportDeleteSuccess,
-  ImportError,
-  ImportHistoryItem,
-  ImportPostFailure,
-  ImportPostSuccess,
-} from "@/lib/types/api";
-
-const MAX_FILE_BYTES = 2 * 1024 * 1024;
+import { processImportFileInput } from "@/lib/imports/process-import-file";
+import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
 export type DbClient = typeof defaultDb;
 
-export async function listImports(db: DbClient): Promise<ImportHistoryItem[]> {
+export async function listImports(db: DbClient) {
   return db
     .select({
       id: importsTable.id,
@@ -32,78 +23,27 @@ export async function listImports(db: DbClient): Promise<ImportHistoryItem[]> {
     .orderBy(desc(importsTable.uploadedAt));
 }
 
+export type ImportListItem = Awaited<ReturnType<typeof listImports>>[number];
+
 export async function processImportFile(options: {
   db: DbClient;
   filename: string;
   contentType: string;
   bytes: Uint8Array;
-}): Promise<ImportPostSuccess | ImportPostFailure> {
-  const fileValidationError = validateFileInput(options);
-  if (fileValidationError) {
-    await recordFailedImport({
-      db: options.db,
-      filename: options.filename,
-      message: fileValidationError.message,
-    });
-    return { status: "failed", errors: [fileValidationError] };
-  }
-
-  const decoder = new TextDecoder("utf-8", { fatal: true });
-  let csvText: string;
-
-  try {
-    csvText = decoder.decode(options.bytes);
-  } catch {
-    const decodeError: ImportError = {
-      row: 0,
-      field: "file",
-      message: "File must be valid UTF-8 text.",
-    };
-
-    await recordFailedImport({
-      db: options.db,
-      filename: options.filename,
-      message: decodeError.message,
-    });
-    return { status: "failed", errors: [decodeError] };
-  }
-
-  const parsed = readCsvRows(csvText);
-  if ("field" in parsed) {
-    await recordFailedImport({
-      db: options.db,
-      filename: options.filename,
-      message: parsed.message,
-    });
-    return { status: "failed", errors: [parsed] };
-  }
-
-  const validationErrors: ImportError[] = [];
-  const validated = parsed.rows.flatMap((row, index) => {
-    const result = validateRow({
-      rowNumber: index + 2,
-      date: row.date,
-      vendor: row.vendor,
-      amount: row.amount,
-      category: row.category,
-    });
-
-    if ("error" in result) {
-      validationErrors.push(result.error);
-      return [];
-    }
-
-    return [result.value];
+}): Promise<ImportPostResult> {
+  const processed = processImportFileInput({
+    filename: options.filename,
+    contentType: options.contentType,
+    bytes: options.bytes,
   });
-
-  if (validationErrors.length > 0) {
+  if (processed.status === "failed") {
     await recordFailedImport({
       db: options.db,
       filename: options.filename,
-      message: validationErrors[0]?.message ?? "Validation failed.",
-      rowCountTotal: parsed.rows.length,
+      message: processed.errors[0]?.message ?? "Import failed.",
+      rowCountTotal: processed.rowCountTotal,
     });
-    return { status: "failed", errors: validationErrors };
+    return { status: "failed", errors: processed.errors };
   }
 
   const importId = randomUUID();
@@ -113,7 +53,7 @@ export async function processImportFile(options: {
       .values({
         id: importId,
         filename: options.filename,
-        rowCountTotal: parsed.rows.length,
+        rowCountTotal: processed.totalRows,
         rowCountInserted: 0,
         rowCountDuplicates: 0,
         status: "succeeded",
@@ -123,7 +63,7 @@ export async function processImportFile(options: {
 
     tx.insert(transactionsTable)
       .values(
-        validated.map((txn) => ({
+        processed.rows.map((txn) => ({
           id: randomUUID(),
           txnDate: txn.txnDate,
           vendor: txn.vendor,
@@ -144,7 +84,7 @@ export async function processImportFile(options: {
       .get();
 
     const insertedRows = Number(insertedRow?.count ?? 0);
-    const duplicateRows = parsed.rows.length - insertedRows;
+    const duplicateRows = processed.totalRows - insertedRows;
 
     tx.update(importsTable)
       .set({
@@ -171,7 +111,7 @@ export async function processImportFile(options: {
 
   return {
     importId,
-    totalRows: parsed.rows.length,
+    totalRows: processed.totalRows,
     insertedRows,
     duplicateRows,
     status: "succeeded",
@@ -181,7 +121,7 @@ export async function processImportFile(options: {
 export async function deleteImportById(options: {
   db: DbClient;
   importId: string;
-}): Promise<ImportDeleteSuccess | ImportDeleteFailure> {
+}): Promise<ImportDeleteResult> {
   const existing = await options.db
     .select({ id: importsTable.id })
     .from(importsTable)
@@ -230,40 +170,4 @@ async function recordFailedImport(options: {
     status: "failed",
     errorMessage: options.message,
   });
-}
-
-function validateFileInput(options: {
-  filename: string;
-  contentType: string;
-  bytes: Uint8Array;
-}): ImportError | null {
-  if (!options.bytes.length) {
-    return { row: 0, field: "file", message: "File is empty." };
-  }
-
-  if (options.bytes.length > MAX_FILE_BYTES) {
-    return {
-      row: 0,
-      field: "file",
-      message: `File exceeds max size of ${MAX_FILE_BYTES} bytes.`,
-    };
-  }
-
-  const lower = options.filename.toLowerCase();
-  const hasCsvExt = lower.endsWith(".csv");
-  const csvMimeTypes = new Set([
-    "text/csv",
-    "application/csv",
-    "application/vnd.ms-excel",
-  ]);
-
-  if (!hasCsvExt && !csvMimeTypes.has(options.contentType)) {
-    return {
-      row: 0,
-      field: "file",
-      message: "File must be a CSV.",
-    };
-  }
-
-  return null;
 }

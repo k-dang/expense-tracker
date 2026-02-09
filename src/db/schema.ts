@@ -28,3 +28,11 @@ export const transactionsTable = sqliteTable("transactions", {
     .notNull()
     .$defaultFn(() => Date.now()),
 });
+
+export type ImportRow = typeof importsTable.$inferSelect;
+export type NewImportRow = typeof importsTable.$inferInsert;
+
+export type TransactionRow = typeof transactionsTable.$inferSelect;
+export type NewTransactionRow = typeof transactionsTable.$inferInsert;
+
+export type ImportStatus = ImportRow["status"];

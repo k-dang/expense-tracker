@@ -2,20 +2,10 @@ import { and, count, desc, gte, lte, sql, sum } from "drizzle-orm";
 import type { db as defaultDb } from "@/db/index";
 import { transactionsTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
-import type {
-  DashboardCategoryBreakdownItem,
-  DashboardMonthlyTrendItem,
-  DashboardResponse,
-  DashboardTopVendorItem,
-  RecentTransaction,
-} from "@/lib/types/api";
 
 export type DbClient = typeof defaultDb;
 
-export async function getDashboardData(
-  db: DbClient,
-  range: DateRange,
-): Promise<DashboardResponse> {
+export async function getDashboardData(db: DbClient, range: DateRange) {
   const rangeFilter = and(
     gte(transactionsTable.txnDate, range.from),
     lte(transactionsTable.txnDate, range.to),
@@ -79,30 +69,28 @@ export async function getDashboardData(
   const totalSpendCents = Number(totalsRow[0]?.totalSpendCents ?? 0);
   const transactionCount = Number(totalsRow[0]?.transactionCount ?? 0);
 
-  const monthlyTrend: DashboardMonthlyTrendItem[] = monthlyRows.map((row) => ({
+  const monthlyTrend = monthlyRows.map((row) => ({
     month: row.month,
     totalCents: Number(row.totalCents ?? 0),
   }));
 
-  const categoryBreakdown: DashboardCategoryBreakdownItem[] = categoryRows.map(
-    (row) => {
-      const totalCents = Number(row.totalCents ?? 0);
-      const percent = totalSpendCents === 0 ? 0 : totalCents / totalSpendCents;
-      return {
-        category: row.category,
-        totalCents,
-        percent,
-      };
-    },
-  );
+  const categoryBreakdown = categoryRows.map((row) => {
+    const totalCents = Number(row.totalCents ?? 0);
+    const percent = totalSpendCents === 0 ? 0 : totalCents / totalSpendCents;
+    return {
+      category: row.category,
+      totalCents,
+      percent,
+    };
+  });
 
-  const topVendors: DashboardTopVendorItem[] = vendorRows.map((row) => ({
+  const topVendors = vendorRows.map((row) => ({
     vendor: row.vendor,
     totalCents: Number(row.totalCents ?? 0),
     count: Number(row.count ?? 0),
   }));
 
-  const recentTransactions: RecentTransaction[] = recentRows.map((row) => ({
+  const recentTransactions = recentRows.map((row) => ({
     id: row.id,
     txnDate: row.txnDate,
     vendor: row.vendor,
@@ -125,3 +113,5 @@ export async function getDashboardData(
     recentTransactions,
   };
 }
+
+export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
