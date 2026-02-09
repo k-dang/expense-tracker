@@ -6,6 +6,7 @@ import { deleteImportById, processImportFile } from "@/db/queries/imports";
 import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
 export async function uploadImportAction(
+  _previousState: ImportPostResult | null,
   formData: FormData,
 ): Promise<ImportPostResult> {
   const uploadedFile = formData.get("file");
@@ -29,7 +30,6 @@ export async function uploadImportAction(
     });
 
     revalidatePath("/");
-    revalidatePath("/imports");
     return result;
   } catch {
     return {
@@ -40,8 +40,11 @@ export async function uploadImportAction(
 }
 
 export async function deleteImportAction(
-  importId: string,
+  _previousState: ImportDeleteResult | null,
+  formData: FormData,
 ): Promise<ImportDeleteResult> {
+  const rawImportId = formData.get("importId");
+  const importId = typeof rawImportId === "string" ? rawImportId : "";
   const normalizedImportId = importId.trim();
   if (!normalizedImportId) {
     return { status: "failed", error: "Import id is required." };
@@ -51,7 +54,6 @@ export async function deleteImportAction(
     const result = await deleteImportById({ db, importId: normalizedImportId });
     if (result.status === "succeeded") {
       revalidatePath("/");
-      revalidatePath("/imports");
     }
     return result;
   } catch {
