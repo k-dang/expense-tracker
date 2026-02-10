@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expense Tracker
 
-## Getting Started
+Single-user CAD expense tracker built with Next.js 16, TypeScript, SQLite, and Drizzle ORM.
 
-First, run the development server:
+The app imports CSV files, deduplicates transactions across uploads, and renders dashboard analytics.
+
+## Requirements
+
+- Bun (required, because the app uses `drizzle-orm/bun-sqlite`)
+
+## Quick Start
+
+1. Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create `.env` at the project root:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+DB_FILE_NAME=mydb.sqlite
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Run DB migrations:
 
-## Learn More
+```bash
+bunx drizzle-kit migrate
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Start the app:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+bun run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open `http://localhost:3000`.
 
-## Deploy on Vercel
+## Routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/` - expense dashboard (KPIs, monthly trend, category breakdown, top vendors, recent transactions)
+- `/imports` - CSV upload and import history
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## CSV Import Contract
+
+Required headers (case-insensitive): `date,vendor,amount,category`
+
+Validation rules:
+- `date`: strict `YYYY-MM-DD` and must be a real calendar date
+- `vendor`: required, non-empty after trim + whitespace normalization
+- `amount`: required, numeric, positive, up to 2 decimals
+- `category`: required, non-empty after trim + whitespace normalization
+- all-or-nothing import: one invalid row fails the whole file
+
+Dedup key input:
+- `date|vendor_lower|amount_cents|category_lower|CAD` (SHA-256 fingerprint)
+
+Sample CSV:
+- `public/samples/expenses-sample.csv`
+
+## Available Scripts
+
+```bash
+bun run dev      # start local dev server
+bun run build    # production build
+bun run start    # run production server
+bun run lint     # Biome checks
+bun run format   # apply Biome formatting
+bun run test     # run test suite
+```
+
+## Tech Stack
+
+- Next.js App Router + React 19
+- TypeScript
+- SQLite (`bun:sqlite`)
+- Drizzle ORM + Drizzle Kit
+- Biome

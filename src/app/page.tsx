@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { CategoryBreakdownCard } from "@/components/dashboard/category-breakdown-card";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
@@ -6,6 +7,13 @@ import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
 import { RecentTransactionsCard } from "@/components/dashboard/recent-transactions-card";
 import { TopVendorsCard } from "@/components/dashboard/top-vendors-card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
 
 type PageProps = {
@@ -42,14 +50,62 @@ export default async function Page({ searchParams }: PageProps) {
       </header>
 
       <DateRangeFilter range={range} />
-      <KpiCards range={range} />
+      <Suspense fallback={<KpiCardsFallback />}>
+        <KpiCards range={range} />
+      </Suspense>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <MonthlyTrendCard range={range} />
-        <CategoryBreakdownCard range={range} />
-        <TopVendorsCard range={range} />
-        <RecentTransactionsCard range={range} />
+        <Suspense fallback={<CardFallback title="Monthly trend" />}>
+          <MonthlyTrendCard range={range} />
+        </Suspense>
+        <Suspense fallback={<CardFallback title="Category breakdown" />}>
+          <CategoryBreakdownCard range={range} />
+        </Suspense>
+        <Suspense fallback={<CardFallback title="Top vendors" />}>
+          <TopVendorsCard range={range} />
+        </Suspense>
+        <Suspense fallback={<CardFallback title="Recent transactions" />}>
+          <RecentTransactionsCard range={range} />
+        </Suspense>
       </section>
     </main>
+  );
+}
+
+function KpiCardsFallback() {
+  return (
+    <section className="grid gap-4 sm:grid-cols-3">
+      <Card>
+        <CardHeader>
+          <CardTitle>Total spend</CardTitle>
+          <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Transactions</CardTitle>
+          <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Avg per transaction</CardTitle>
+          <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+      </Card>
+    </section>
+  );
+}
+
+function CardFallback({ title }: { title: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        Loading...
+      </CardContent>
+    </Card>
   );
 }
