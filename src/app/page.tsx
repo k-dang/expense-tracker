@@ -7,13 +7,7 @@ import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
 import { RecentTransactionsCard } from "@/components/dashboard/recent-transactions-card";
 import { TopVendorsCard } from "@/components/dashboard/top-vendors-card";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
 
 type PageProps = {
@@ -50,61 +44,66 @@ export default async function Page({ searchParams }: PageProps) {
       </header>
 
       <DateRangeFilter range={range} />
+
       <Suspense fallback={<KpiCardsFallback />}>
         <KpiCards range={range} />
       </Suspense>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Suspense fallback={<CardFallback title="Monthly trend" />}>
-          <MonthlyTrendCard range={range} />
-        </Suspense>
-        <Suspense fallback={<CardFallback title="Category breakdown" />}>
-          <CategoryBreakdownCard range={range} />
-        </Suspense>
-        <Suspense fallback={<CardFallback title="Top vendors" />}>
-          <TopVendorsCard range={range} />
-        </Suspense>
-        <Suspense fallback={<CardFallback title="Recent transactions" />}>
-          <RecentTransactionsCard range={range} />
-        </Suspense>
-      </section>
+      <Suspense
+        fallback={<CardFallback title="Monthly trend" className="h-80" />}
+      >
+        <MonthlyTrendCard range={range} />
+      </Suspense>
+
+      <Suspense fallback={<CardFallback title="Category breakdown" />}>
+        <CategoryBreakdownCard range={range} />
+      </Suspense>
+
+      <Suspense fallback={<CardFallback title="Top vendors" />}>
+        <TopVendorsCard range={range} />
+      </Suspense>
+
+      <Suspense fallback={<CardFallback title="Recent transactions" />}>
+        <RecentTransactionsCard range={range} />
+      </Suspense>
     </main>
   );
 }
 
 function KpiCardsFallback() {
   return (
-    <section className="grid gap-4 sm:grid-cols-3">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total spend</CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Avg per transaction</CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
+    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }, (_, i) => (
+        <Card key={i}>
+          <CardHeader className="flex-row items-center gap-3">
+            <div className="bg-muted size-8 animate-pulse rounded-md" />
+            <div className="min-w-0 space-y-2">
+              <div className="bg-muted h-4 w-24 animate-pulse rounded" />
+              <div className="bg-muted h-8 w-32 animate-pulse rounded" />
+            </div>
+          </CardHeader>
+        </Card>
+      ))}
     </section>
   );
 }
 
-function CardFallback({ title }: { title: string }) {
+function CardFallback({
+  title,
+  className,
+}: {
+  title: string;
+  className?: string;
+}) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">
-        Loading...
+      <CardContent>
+        <div
+          className={`bg-muted h-72 animate-pulse rounded ${className ?? ""}`}
+        />
       </CardContent>
     </Card>
   );
