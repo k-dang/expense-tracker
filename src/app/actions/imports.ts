@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/index";
-import { deleteImportById, processImportFile } from "@/db/queries/imports";
+import {
+  deleteImportById,
+  listDuplicatesByImportId,
+  processImportFile,
+} from "@/db/queries/imports";
+import type { ImportDuplicateItem } from "@/db/queries/imports";
 import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
 export async function uploadImportAction(
@@ -37,6 +42,12 @@ export async function uploadImportAction(
       errors: [{ row: 0, field: "file", message: "Upload failed. Try again." }],
     };
   }
+}
+
+export async function fetchDuplicatesAction(
+  importId: string,
+): Promise<ImportDuplicateItem[]> {
+  return listDuplicatesByImportId({ db, importId });
 }
 
 export async function deleteImportAction(

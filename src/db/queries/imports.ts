@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, inArray } from "drizzle-orm";
 import type { db as defaultDb } from "@/db/index";
-import { importsTable, transactionsTable } from "@/db/schema";
+import {
+  importDuplicatesTable,
+  importsTable,
+  transactionsTable,
+} from "@/db/schema";
 import { processImportFileInput } from "@/lib/imports/process-import-file";
 import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
@@ -48,72 +52,97 @@ export async function processImportFile(options: {
 
   const importId = randomUUID();
 
+  // Collect all fingerprints and query existing ones in batches
+  const allFingerprints = processed.rows.map((r) => r.fingerprint);
+  const existingFingerprints = new Set<string>();
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < allFingerprints.length; i += BATCH_SIZE) {
+    const batch = allFingerprints.slice(i, i + BATCH_SIZE);
+    const rows = options.db
+      .select({ fingerprint: transactionsTable.fingerprint })
+      .from(transactionsTable)
+      .where(inArray(transactionsTable.fingerprint, batch))
+      .all();
+    for (const r of rows) existingFingerprints.add(r.fingerprint);
+  }
+
+  // Partition rows into inserts vs duplicates
+  const seenInFile = new Set<string>();
+  const rowsToInsert: typeof processed.rows = [];
+  const duplicateRows: {
+    txnDate: string;
+    vendor: string;
+    amountCents: number;
+    category: string;
+    fingerprint: string;
+    reason: "cross_import" | "within_file";
+  }[] = [];
+
+  for (const row of processed.rows) {
+    if (existingFingerprints.has(row.fingerprint)) {
+      duplicateRows.push({ ...row, reason: "cross_import" });
+    } else if (seenInFile.has(row.fingerprint)) {
+      duplicateRows.push({ ...row, reason: "within_file" });
+    } else {
+      seenInFile.add(row.fingerprint);
+      rowsToInsert.push(row);
+    }
+  }
+
   options.db.transaction((tx) => {
     tx.insert(importsTable)
       .values({
         id: importId,
         filename: options.filename,
         rowCountTotal: processed.totalRows,
-        rowCountInserted: 0,
-        rowCountDuplicates: 0,
+        rowCountInserted: rowsToInsert.length,
+        rowCountDuplicates: duplicateRows.length,
         status: "succeeded",
         errorMessage: null,
       })
       .run();
 
-    tx.insert(transactionsTable)
-      .values(
-        processed.rows.map((txn) => ({
-          id: randomUUID(),
-          txnDate: txn.txnDate,
-          vendor: txn.vendor,
-          amountCents: txn.amountCents,
-          category: txn.category,
-          currency: "CAD",
-          fingerprint: txn.fingerprint,
-          importId,
-        })),
-      )
-      .onConflictDoNothing({ target: transactionsTable.fingerprint })
-      .run();
+    if (rowsToInsert.length > 0) {
+      tx.insert(transactionsTable)
+        .values(
+          rowsToInsert.map((txn) => ({
+            id: randomUUID(),
+            txnDate: txn.txnDate,
+            vendor: txn.vendor,
+            amountCents: txn.amountCents,
+            category: txn.category,
+            currency: "CAD",
+            fingerprint: txn.fingerprint,
+            importId,
+          })),
+        )
+        .run();
+    }
 
-    const insertedRow = tx
-      .select({ count: count(transactionsTable.id) })
-      .from(transactionsTable)
-      .where(eq(transactionsTable.importId, importId))
-      .get();
-
-    const insertedRows = Number(insertedRow?.count ?? 0);
-    const duplicateRows = processed.totalRows - insertedRows;
-
-    tx.update(importsTable)
-      .set({
-        rowCountInserted: insertedRows,
-        rowCountDuplicates: duplicateRows,
-      })
-      .where(eq(importsTable.id, importId))
-      .run();
+    if (duplicateRows.length > 0) {
+      tx.insert(importDuplicatesTable)
+        .values(
+          duplicateRows.map((dup) => ({
+            id: randomUUID(),
+            importId,
+            txnDate: dup.txnDate,
+            vendor: dup.vendor,
+            amountCents: dup.amountCents,
+            category: dup.category,
+            currency: "CAD",
+            fingerprint: dup.fingerprint,
+            reason: dup.reason,
+          })),
+        )
+        .run();
+    }
   });
-
-  const insertedImportRows = await options.db
-    .select({
-      rowCountInserted: importsTable.rowCountInserted,
-      rowCountDuplicates: importsTable.rowCountDuplicates,
-    })
-    .from(importsTable)
-    .where(eq(importsTable.id, importId))
-    .limit(1);
-
-  const insertedImport = insertedImportRows[0];
-
-  const insertedRows = insertedImport?.rowCountInserted ?? 0;
-  const duplicateRows = insertedImport?.rowCountDuplicates ?? 0;
 
   return {
     importId,
     totalRows: processed.totalRows,
-    insertedRows,
-    duplicateRows,
+    insertedRows: rowsToInsert.length,
+    duplicateRows: duplicateRows.length,
     status: "succeeded",
   };
 }
@@ -139,6 +168,10 @@ export async function deleteImportById(options: {
       .where(eq(transactionsTable.importId, options.importId))
       .get();
 
+    tx.delete(importDuplicatesTable)
+      .where(eq(importDuplicatesTable.importId, options.importId))
+      .run();
+
     tx.delete(transactionsTable)
       .where(eq(transactionsTable.importId, options.importId))
       .run();
@@ -154,6 +187,28 @@ export async function deleteImportById(options: {
     deletedTransactionCount,
   };
 }
+
+export async function listDuplicatesByImportId(options: {
+  db: DbClient;
+  importId: string;
+}) {
+  return options.db
+    .select({
+      id: importDuplicatesTable.id,
+      txnDate: importDuplicatesTable.txnDate,
+      vendor: importDuplicatesTable.vendor,
+      amountCents: importDuplicatesTable.amountCents,
+      category: importDuplicatesTable.category,
+      currency: importDuplicatesTable.currency,
+      reason: importDuplicatesTable.reason,
+    })
+    .from(importDuplicatesTable)
+    .where(eq(importDuplicatesTable.importId, options.importId));
+}
+
+export type ImportDuplicateItem = Awaited<
+  ReturnType<typeof listDuplicatesByImportId>
+>[number];
 
 async function recordFailedImport(options: {
   db: DbClient;

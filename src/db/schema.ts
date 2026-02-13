@@ -32,7 +32,24 @@ export const transactionsTable = sqliteTable("transactions", {
 export type ImportRow = typeof importsTable.$inferSelect;
 export type NewImportRow = typeof importsTable.$inferInsert;
 
+export const importDuplicatesTable = sqliteTable("import_duplicates", {
+  id: text("id").primaryKey(),
+  importId: text("import_id")
+    .notNull()
+    .references(() => importsTable.id),
+  txnDate: text("txn_date").notNull(),
+  vendor: text("vendor").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  category: text("category").notNull(),
+  currency: text("currency").notNull().default("CAD"),
+  fingerprint: text("fingerprint").notNull(),
+  reason: text("reason", { enum: ["cross_import", "within_file"] }).notNull(),
+});
+
 export type TransactionRow = typeof transactionsTable.$inferSelect;
 export type NewTransactionRow = typeof transactionsTable.$inferInsert;
+
+export type ImportDuplicateRow = typeof importDuplicatesTable.$inferSelect;
+export type NewImportDuplicateRow = typeof importDuplicatesTable.$inferInsert;
 
 export type ImportStatus = ImportRow["status"];

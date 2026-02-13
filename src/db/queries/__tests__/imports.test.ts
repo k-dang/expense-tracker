@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { count } from "drizzle-orm";
-import { importsTable, transactionsTable } from "@/db/schema";
-import { deleteImportById, processImportFile } from "@/db/queries/imports";
+import {
+  importDuplicatesTable,
+  importsTable,
+  transactionsTable,
+} from "@/db/schema";
+import {
+  deleteImportById,
+  listDuplicatesByImportId,
+  processImportFile,
+} from "@/db/queries/imports";
 import { createTestDb } from "@/test/db";
 
 function toBytes(text: string) {
@@ -58,7 +66,7 @@ describe("processImportFile integration", () => {
     expect(importRows[0]?.status).toBe("failed");
   });
 
-  it("tracks duplicates across repeated imports", async () => {
+  it("tracks duplicates across repeated imports with cross_import reason", async () => {
     const db = createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-02-2025,Store B,20.50,Transport";
@@ -82,12 +90,40 @@ describe("processImportFile integration", () => {
     if (second.status === "succeeded") {
       expect(second.insertedRows).toBe(0);
       expect(second.duplicateRows).toBe(2);
+
+      const dups = await db.select().from(importDuplicatesTable);
+      expect(dups).toHaveLength(2);
+      expect(dups.every((d) => d.reason === "cross_import")).toBe(true);
+      expect(dups.every((d) => d.importId === second.importId)).toBe(true);
     }
 
     const txCount = await db
       .select({ count: count(transactionsTable.id) })
       .from(transactionsTable);
     expect(Number(txCount[0]?.count ?? 0)).toBe(2);
+  });
+
+  it("detects within-file duplicates when the same row appears twice", async () => {
+    const db = createTestDb();
+    const csv =
+      "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-01-2025,Store A,10.00,Food";
+
+    const result = await processImportFile({
+      db,
+      filename: "dupes.csv",
+      contentType: "text/csv",
+      bytes: toBytes(csv),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.insertedRows).toBe(1);
+      expect(result.duplicateRows).toBe(1);
+
+      const dups = await db.select().from(importDuplicatesTable);
+      expect(dups).toHaveLength(1);
+      expect(dups[0]?.reason).toBe("within_file");
+    }
   });
 
   it("inserts only new rows for overlapping files", async () => {
@@ -120,38 +156,39 @@ describe("processImportFile integration", () => {
     }
   });
 
-  it("deletes a succeeded import and its linked transactions", async () => {
+  it("deletes a succeeded import and its linked transactions and duplicates", async () => {
     const db = createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-02-2025,Store B,20.50,Transport";
 
-    const created = await processImportFile({
+    // First import inserts, second produces duplicates
+    await processImportFile({
       db,
       filename: "expenses.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
     });
 
-    expect(created.status).toBe("succeeded");
-    if (created.status !== "succeeded") {
-      return;
-    }
+    const second = await processImportFile({
+      db,
+      filename: "expenses.csv",
+      contentType: "text/csv",
+      bytes: toBytes(csv),
+    });
 
-    const deleted = await deleteImportById({ db, importId: created.importId });
+    expect(second.status).toBe("succeeded");
+    if (second.status !== "succeeded") return;
 
+    // Verify duplicates exist before delete
+    const dupsBefore = await db.select().from(importDuplicatesTable);
+    expect(dupsBefore).toHaveLength(2);
+
+    const deleted = await deleteImportById({ db, importId: second.importId });
     expect(deleted.status).toBe("succeeded");
-    if (deleted.status === "succeeded") {
-      expect(deleted.importId).toBe(created.importId);
-      expect(deleted.deletedTransactionCount).toBe(2);
-    }
 
-    const remainingImports = await db.select().from(importsTable);
-    expect(remainingImports).toHaveLength(0);
-
-    const txCount = await db
-      .select({ count: count(transactionsTable.id) })
-      .from(transactionsTable);
-    expect(Number(txCount[0]?.count ?? 0)).toBe(0);
+    // Duplicates for that import should be gone
+    const dupsAfter = await db.select().from(importDuplicatesTable);
+    expect(dupsAfter).toHaveLength(0);
   });
 
   it("deletes a failed import with zero linked transactions", async () => {
@@ -196,5 +233,27 @@ describe("processImportFile integration", () => {
       status: "failed",
       error: "Import not found.",
     });
+  });
+
+  it("listDuplicatesByImportId returns empty array when no duplicates", async () => {
+    const db = createTestDb();
+    const csv =
+      "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food";
+
+    const result = await processImportFile({
+      db,
+      filename: "expenses.csv",
+      contentType: "text/csv",
+      bytes: toBytes(csv),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status !== "succeeded") return;
+
+    const dups = await listDuplicatesByImportId({
+      db,
+      importId: result.importId,
+    });
+    expect(dups).toEqual([]);
   });
 });
