@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, parse } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import type { DateRange } from "@/lib/dashboard/date-range";
+import { formatDateLabel, formatIsoDate, parseIsoDate } from "@/lib/date/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -12,14 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-function toDate(dateStr: string) {
-  return parse(dateStr, "yyyy-MM-dd", new Date());
-}
-
-function toDateStr(date: Date) {
-  return format(date, "yyyy-MM-dd");
-}
 
 type Props = {
   range: DateRange;
@@ -29,18 +21,22 @@ export function DateRangeFilter({ range }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
-  const [fromDate, setFromDate] = useState<Date>(toDate(range.from));
-  const [toDateVal, setToDateVal] = useState<Date>(toDate(range.to));
+  const [fromDate, setFromDate] = useState<Date>(
+    () => parseIsoDate(range.from) ?? new Date(),
+  );
+  const [toDateVal, setToDateVal] = useState<Date>(
+    () => parseIsoDate(range.to) ?? new Date(),
+  );
 
   function applyRange(from: Date, to: Date) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("from", toDateStr(from));
-    params.set("to", toDateStr(to));
+    params.set("from", formatIsoDate(from));
+    params.set("to", formatIsoDate(to));
     router.replace(`?${params.toString()}`, { scroll: false });
     setOpen(false);
   }
 
-  const label = `${format(fromDate, "MMM d, yyyy")} – ${format(toDateVal, "MMM d, yyyy")}`;
+  const label = `${formatDateLabel(fromDate)} – ${formatDateLabel(toDateVal)}`;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

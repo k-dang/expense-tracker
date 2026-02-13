@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  formatMonthLabel,
   toMonthlyTotalsRows,
   toMonthlyTrendChartData,
 } from "@/components/dashboard/monthly-trend-chart";
+import { formatMonthLabel } from "@/lib/date/utils";
 
 describe("monthly trend chart transforms", () => {
   it("maps monthly trend data for chart and table", () => {

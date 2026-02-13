@@ -1,4 +1,5 @@
-import { parseStrictDate } from "@/lib/date/parse-strict-date";
+import { endOfMonth } from "date-fns";
+import { formatIsoDate, parseStrictDate } from "@/lib/date/utils";
 
 export type DateRange = {
   from: string;
@@ -6,45 +7,31 @@ export type DateRange = {
 };
 
 export function getDefaultDashboardDateRange(now = new Date()): DateRange {
-  const month = now.getUTCMonth();
-  const year = now.getUTCFullYear();
-  const toDate = new Date(Date.UTC(year, month + 1, 0));
-
-  const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
+  const toDate = endOfMonth(
+    new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  );
 
   return {
     from: "2025-01-01",
-    to: toIsoDate(toDate),
+    to: formatIsoDate(toDate),
   };
-}
-
-function isValidDateRange(from: string, to: string): boolean {
-  return from <= to;
 }
 
 export function resolveDashboardPageDateRange(input: {
   from?: string;
   to?: string;
 }): DateRange {
-  const fallbackRange = getDefaultDashboardDateRange();
-  const hasFrom = Boolean(input.from);
-  const hasTo = Boolean(input.to);
+  const fallback = getDefaultDashboardDateRange();
 
-  if (hasFrom !== hasTo) {
-    return fallbackRange;
+  if (!input.from || !input.to) {
+    return fallback;
   }
 
-  const candidateRange =
-    hasFrom && hasTo ? { from: input.from, to: input.to } : fallbackRange;
-  const from = parseStrictDate(candidateRange.from ?? "");
-  const to = parseStrictDate(candidateRange.to ?? "");
+  const from = parseStrictDate(input.from);
+  const to = parseStrictDate(input.to);
 
-  if (!from || !to) {
-    return fallbackRange;
-  }
-
-  if (!isValidDateRange(from, to)) {
-    return fallbackRange;
+  if (!from || !to || from > to) {
+    return fallback;
   }
 
   return { from, to };

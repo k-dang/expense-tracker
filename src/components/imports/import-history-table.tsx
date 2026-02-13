@@ -3,10 +3,7 @@ import { listImports } from "@/db/queries/imports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeleteImportDialog } from "@/components/imports/delete-import-dialog";
 import { ViewDuplicatesDialog } from "@/components/imports/view-duplicates-dialog";
-
-function formatUploadedAt(timestamp: number) {
-  return new Date(timestamp).toLocaleString("en-CA");
-}
+import { formatUtcTimestamp } from "@/lib/date/utils";
 
 export async function ImportHistoryTable() {
   const imports = await listImports(db);
@@ -38,7 +35,7 @@ export async function ImportHistoryTable() {
                 {imports.map((item) => (
                   <tr key={item.id} className="border-b">
                     <td className="py-2 pr-3">
-                      {formatUploadedAt(item.uploadedAt)}
+                      {formatUtcTimestamp(item.uploadedAt)}
                     </td>
                     <td className="py-2 pr-3">{item.filename}</td>
                     <td className="py-2 pr-3">{item.status}</td>

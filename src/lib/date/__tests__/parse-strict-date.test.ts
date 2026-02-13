@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseStrictDate } from "@/lib/date/parse-strict-date";
+import { parseStrictDate } from "@/lib/date/utils";
 
 describe("parseStrictDate", () => {
   it("accepts valid ISO calendar dates", () => {

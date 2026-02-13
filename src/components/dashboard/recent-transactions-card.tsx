@@ -11,33 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { db } from "@/db/index";
 import { getDashboardRecentTransactions } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
+import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
 
 type Props = {
   range: DateRange;
 };
-
-function formatTxnDate(dateStr: string): string {
-  const [yearRaw, monthRaw, dayRaw] = dateStr.split("-");
-  const year = Number(yearRaw);
-  const month = Number(monthRaw) - 1;
-  const day = Number(dayRaw);
-
-  if (
-    !Number.isFinite(year) ||
-    !Number.isFinite(month) ||
-    !Number.isFinite(day)
-  ) {
-    return dateStr;
-  }
-
-  return new Intl.DateTimeFormat("en-CA", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month, day)));
-}
 
 export async function RecentTransactionsCard({ range }: Props) {
   const data = await getDashboardRecentTransactions(db, range);
@@ -67,7 +46,7 @@ export async function RecentTransactionsCard({ range }: Props) {
                 {data.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell className="text-muted-foreground">
-                      {formatTxnDate(transaction.txnDate)}
+                      {formatIsoDateLabel(transaction.txnDate)}
                     </TableCell>
                     <TableCell>{transaction.vendor}</TableCell>
                     <TableCell>

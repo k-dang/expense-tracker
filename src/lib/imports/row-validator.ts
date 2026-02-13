@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { parseStrictDate } from "@/lib/date/parse-strict-date";
+import { parseStrictDate } from "@/lib/date/utils";
 import type { ImportError } from "@/lib/types/api";
 
 export type ValidatedTransactionInput = {

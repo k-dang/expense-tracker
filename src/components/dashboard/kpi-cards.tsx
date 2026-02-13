@@ -1,4 +1,5 @@
 import { Calendar, DollarSign, Receipt, TrendingUp } from "lucide-react";
+import { differenceInCalendarDays, isValid, parseISO } from "date-fns";
 import { formatCurrencyFromCents } from "@/lib/format";
 import {
   Card,
@@ -15,9 +16,13 @@ type Props = {
 };
 
 function daysInRange(range: DateRange): number {
-  const from = new Date(range.from);
-  const to = new Date(range.to);
-  const diff = Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1;
+  const from = parseISO(range.from);
+  const to = parseISO(range.to);
+  if (!isValid(from) || !isValid(to)) {
+    return 1;
+  }
+
+  const diff = differenceInCalendarDays(to, from) + 1;
   return Math.max(diff, 1);
 }
 
