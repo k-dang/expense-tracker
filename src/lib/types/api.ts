@@ -37,3 +37,13 @@ export type ImportDeleteResult =
       status: Extract<ImportStatus, "failed">;
       error: string;
     };
+
+export type ImportDuplicatesResult =
+  | {
+      status: Extract<ImportStatus, "succeeded">;
+      importedCount: number;
+    }
+  | {
+      status: Extract<ImportStatus, "failed">;
+      error: string;
+    };

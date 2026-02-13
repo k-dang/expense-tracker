@@ -210,6 +210,69 @@ export type ImportDuplicateItem = Awaited<
   ReturnType<typeof listDuplicatesByImportId>
 >[number];
 
+export function importSelectedDuplicates(options: {
+  db: DbClient;
+  importId: string;
+  duplicateIds: string[];
+}): number {
+  const { db: dbClient, importId, duplicateIds } = options;
+  if (duplicateIds.length === 0) return 0;
+
+  return dbClient.transaction((tx) => {
+    // Fetch selected duplicate rows
+    const rows = tx
+      .select()
+      .from(importDuplicatesTable)
+      .where(inArray(importDuplicatesTable.id, duplicateIds))
+      .all();
+
+    if (rows.length === 0) return 0;
+
+    // Insert into transactions with unique fingerprints
+    tx.insert(transactionsTable)
+      .values(
+        rows.map((row) => ({
+          id: randomUUID(),
+          txnDate: row.txnDate,
+          vendor: row.vendor,
+          amountCents: row.amountCents,
+          category: row.category,
+          currency: row.currency,
+          fingerprint: `${row.fingerprint}-${randomUUID()}`,
+          importId,
+        })),
+      )
+      .run();
+
+    // Delete from duplicates table
+    tx.delete(importDuplicatesTable)
+      .where(inArray(importDuplicatesTable.id, duplicateIds))
+      .run();
+
+    // Update import counters
+    const current = tx
+      .select({
+        rowCountInserted: importsTable.rowCountInserted,
+        rowCountDuplicates: importsTable.rowCountDuplicates,
+      })
+      .from(importsTable)
+      .where(eq(importsTable.id, importId))
+      .get();
+
+    if (current) {
+      tx.update(importsTable)
+        .set({
+          rowCountInserted: current.rowCountInserted + rows.length,
+          rowCountDuplicates: current.rowCountDuplicates - rows.length,
+        })
+        .where(eq(importsTable.id, importId))
+        .run();
+    }
+
+    return rows.length;
+  });
+}
+
 async function recordFailedImport(options: {
   db: DbClient;
   filename: string;
