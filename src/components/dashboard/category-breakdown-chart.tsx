@@ -131,7 +131,9 @@ export function CategoryBreakdownChart({ data }: Props) {
                           ],
                       }}
                     />
-                    <span className="flex-1 truncate text-sm">{item.category}</span>
+                    <span className="flex-1 truncate text-sm">
+                      {item.category}
+                    </span>
                     <span className="text-muted-foreground w-10 shrink-0 text-right text-xs tabular-nums">
                       {formatPercent(item.percent)}
                     </span>
