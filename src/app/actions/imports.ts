@@ -64,7 +64,7 @@ export async function importDuplicatesAction(
   }
 
   try {
-    const importedCount = importSelectedDuplicates({
+    const importedCount = await importSelectedDuplicates({
       db,
       importId,
       duplicateIds,

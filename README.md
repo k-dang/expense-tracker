@@ -6,7 +6,7 @@ The app imports CSV files, deduplicates transactions across uploads, and renders
 
 ## Requirements
 
-- Bun (required, because the app uses `drizzle-orm/bun-sqlite`)
+- Bun (recommended; project scripts use Bun by default)
 
 ## Quick Start
 
@@ -19,7 +19,8 @@ bun install
 2. Create `.env` at the project root:
 
 ```bash
-DB_FILE_NAME=mydb.sqlite
+DB_URL=file:mydb.sqlite
+DB_AUTH_TOKEN= # only required for remote Turso/libSQL URLs
 ```
 
 3. Run DB migrations:
@@ -35,6 +36,16 @@ bun run dev
 ```
 
 Open `http://localhost:3000`.
+
+## Environment Profiles
+
+- Local development: `DB_URL=file:mydb.sqlite`
+- Production (Turso/libSQL):
+
+```bash
+DB_URL=libsql://<your-db-host>
+DB_AUTH_TOKEN=<your-auth-token>
+```
 
 ## Routes
 
@@ -73,6 +84,6 @@ bun run test     # run test suite
 
 - Next.js App Router + React 19
 - TypeScript
-- SQLite (`bun:sqlite`)
+- SQLite via libSQL (`file:` locally, Turso/libSQL remotely)
 - Drizzle ORM + Drizzle Kit
 - Biome

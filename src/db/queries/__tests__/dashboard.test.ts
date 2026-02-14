@@ -16,7 +16,7 @@ import { createTestDb } from "@/test/db";
 
 describe("dashboard queries", () => {
   it("returns expected totals", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const importId = randomUUID();
 
     await db.insert(importsTable).values({
@@ -73,7 +73,7 @@ describe("dashboard queries", () => {
   });
 
   it("returns expected monthly trend", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const importId = randomUUID();
 
     await db.insert(importsTable).values({
@@ -131,7 +131,7 @@ describe("dashboard queries", () => {
   });
 
   it("returns expected category breakdown with percentages", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const importId = randomUUID();
 
     await db.insert(importsTable).values({
@@ -196,7 +196,7 @@ describe("dashboard queries", () => {
   });
 
   it("returns expected top vendors", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const importId = randomUUID();
 
     await db.insert(importsTable).values({
@@ -254,7 +254,7 @@ describe("dashboard queries", () => {
   });
 
   it("returns expected recent transactions", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const importId = randomUUID();
 
     await db.insert(importsTable).values({

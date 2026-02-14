@@ -58,11 +58,10 @@ export async function processImportFile(options: {
   const BATCH_SIZE = 500;
   for (let i = 0; i < allFingerprints.length; i += BATCH_SIZE) {
     const batch = allFingerprints.slice(i, i + BATCH_SIZE);
-    const rows = options.db
+    const rows = await options.db
       .select({ fingerprint: transactionsTable.fingerprint })
       .from(transactionsTable)
-      .where(inArray(transactionsTable.fingerprint, batch))
-      .all();
+      .where(inArray(transactionsTable.fingerprint, batch));
     for (const r of rows) existingFingerprints.add(r.fingerprint);
   }
 
@@ -89,52 +88,46 @@ export async function processImportFile(options: {
     }
   }
 
-  options.db.transaction((tx) => {
-    tx.insert(importsTable)
-      .values({
-        id: importId,
-        filename: options.filename,
-        rowCountTotal: processed.totalRows,
-        rowCountInserted: rowsToInsert.length,
-        rowCountDuplicates: duplicateRows.length,
-        status: "succeeded",
-        errorMessage: null,
-      })
-      .run();
+  await options.db.transaction(async (tx) => {
+    await tx.insert(importsTable).values({
+      id: importId,
+      filename: options.filename,
+      rowCountTotal: processed.totalRows,
+      rowCountInserted: rowsToInsert.length,
+      rowCountDuplicates: duplicateRows.length,
+      status: "succeeded",
+      errorMessage: null,
+    });
 
     if (rowsToInsert.length > 0) {
-      tx.insert(transactionsTable)
-        .values(
-          rowsToInsert.map((txn) => ({
-            id: randomUUID(),
-            txnDate: txn.txnDate,
-            vendor: txn.vendor,
-            amountCents: txn.amountCents,
-            category: txn.category,
-            currency: "CAD",
-            fingerprint: txn.fingerprint,
-            importId,
-          })),
-        )
-        .run();
+      await tx.insert(transactionsTable).values(
+        rowsToInsert.map((txn) => ({
+          id: randomUUID(),
+          txnDate: txn.txnDate,
+          vendor: txn.vendor,
+          amountCents: txn.amountCents,
+          category: txn.category,
+          currency: "CAD",
+          fingerprint: txn.fingerprint,
+          importId,
+        })),
+      );
     }
 
     if (duplicateRows.length > 0) {
-      tx.insert(importDuplicatesTable)
-        .values(
-          duplicateRows.map((dup) => ({
-            id: randomUUID(),
-            importId,
-            txnDate: dup.txnDate,
-            vendor: dup.vendor,
-            amountCents: dup.amountCents,
-            category: dup.category,
-            currency: "CAD",
-            fingerprint: dup.fingerprint,
-            reason: dup.reason,
-          })),
-        )
-        .run();
+      await tx.insert(importDuplicatesTable).values(
+        duplicateRows.map((dup) => ({
+          id: randomUUID(),
+          importId,
+          txnDate: dup.txnDate,
+          vendor: dup.vendor,
+          amountCents: dup.amountCents,
+          category: dup.category,
+          currency: "CAD",
+          fingerprint: dup.fingerprint,
+          reason: dup.reason,
+        })),
+      );
     }
   });
 
@@ -161,24 +154,24 @@ export async function deleteImportById(options: {
     return { status: "failed", error: "Import not found." };
   }
 
-  const deletedTransactionCount = options.db.transaction((tx) => {
-    const existingTransactionCount = tx
+  const deletedTransactionCount = await options.db.transaction(async (tx) => {
+    const existingTransactionCount = await tx
       .select({ count: count(transactionsTable.id) })
       .from(transactionsTable)
       .where(eq(transactionsTable.importId, options.importId))
-      .get();
+      .limit(1);
 
-    tx.delete(importDuplicatesTable)
-      .where(eq(importDuplicatesTable.importId, options.importId))
-      .run();
+    await tx
+      .delete(importDuplicatesTable)
+      .where(eq(importDuplicatesTable.importId, options.importId));
 
-    tx.delete(transactionsTable)
-      .where(eq(transactionsTable.importId, options.importId))
-      .run();
+    await tx
+      .delete(transactionsTable)
+      .where(eq(transactionsTable.importId, options.importId));
 
-    tx.delete(importsTable).where(eq(importsTable.id, options.importId)).run();
+    await tx.delete(importsTable).where(eq(importsTable.id, options.importId));
 
-    return Number(existingTransactionCount?.count ?? 0);
+    return Number(existingTransactionCount[0]?.count ?? 0);
   });
 
   return {
@@ -210,63 +203,62 @@ export type ImportDuplicateItem = Awaited<
   ReturnType<typeof listDuplicatesByImportId>
 >[number];
 
-export function importSelectedDuplicates(options: {
+export async function importSelectedDuplicates(options: {
   db: DbClient;
   importId: string;
   duplicateIds: string[];
-}): number {
+}): Promise<number> {
   const { db: dbClient, importId, duplicateIds } = options;
   if (duplicateIds.length === 0) return 0;
 
-  return dbClient.transaction((tx) => {
+  return dbClient.transaction(async (tx) => {
     // Fetch selected duplicate rows
-    const rows = tx
+    const rows = await tx
       .select()
       .from(importDuplicatesTable)
-      .where(inArray(importDuplicatesTable.id, duplicateIds))
-      .all();
+      .where(inArray(importDuplicatesTable.id, duplicateIds));
 
     if (rows.length === 0) return 0;
 
     // Insert into transactions with unique fingerprints
-    tx.insert(transactionsTable)
-      .values(
-        rows.map((row) => ({
-          id: randomUUID(),
-          txnDate: row.txnDate,
-          vendor: row.vendor,
-          amountCents: row.amountCents,
-          category: row.category,
-          currency: row.currency,
-          fingerprint: `${row.fingerprint}-${randomUUID()}`,
-          importId,
-        })),
-      )
-      .run();
+    await tx.insert(transactionsTable).values(
+      rows.map((row) => ({
+        id: randomUUID(),
+        txnDate: row.txnDate,
+        vendor: row.vendor,
+        amountCents: row.amountCents,
+        category: row.category,
+        currency: row.currency,
+        fingerprint: `${row.fingerprint}-${randomUUID()}`,
+        importId,
+      })),
+    );
 
     // Delete from duplicates table
-    tx.delete(importDuplicatesTable)
-      .where(inArray(importDuplicatesTable.id, duplicateIds))
-      .run();
+    await tx
+      .delete(importDuplicatesTable)
+      .where(inArray(importDuplicatesTable.id, duplicateIds));
 
     // Update import counters
-    const current = tx
+    const current = await tx
       .select({
         rowCountInserted: importsTable.rowCountInserted,
         rowCountDuplicates: importsTable.rowCountDuplicates,
       })
       .from(importsTable)
       .where(eq(importsTable.id, importId))
-      .get();
+      .limit(1);
 
-    if (current) {
-      tx.update(importsTable)
+    const currentRow = current[0];
+
+    if (currentRow) {
+      await tx
+        .update(importsTable)
         .set({
-          rowCountInserted: current.rowCountInserted + rows.length,
-          rowCountDuplicates: current.rowCountDuplicates - rows.length,
+          rowCountInserted: currentRow.rowCountInserted + rows.length,
+          rowCountDuplicates: currentRow.rowCountDuplicates - rows.length,
         })
-        .where(eq(importsTable.id, importId))
-        .run();
+        .where(eq(importsTable.id, importId));
     }
 
     return rows.length;

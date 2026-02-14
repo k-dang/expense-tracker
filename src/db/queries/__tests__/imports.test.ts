@@ -18,7 +18,7 @@ function toBytes(text: string) {
 
 describe("processImportFile integration", () => {
   it("imports valid CSV with canonical headers and $ amounts", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,$10.00,Food\n01-02-2025,Store B,$20.50,Transport";
 
@@ -43,7 +43,7 @@ describe("processImportFile integration", () => {
   });
 
   it("fails all-or-nothing when one row is invalid", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n99-99-2025,Store B,20.50,Transport";
 
@@ -67,7 +67,7 @@ describe("processImportFile integration", () => {
   });
 
   it("tracks duplicates across repeated imports with cross_import reason", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-02-2025,Store B,20.50,Transport";
 
@@ -104,7 +104,7 @@ describe("processImportFile integration", () => {
   });
 
   it("detects within-file duplicates when the same row appears twice", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-01-2025,Store A,10.00,Food";
 
@@ -127,7 +127,7 @@ describe("processImportFile integration", () => {
   });
 
   it("inserts only new rows for overlapping files", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const firstCsv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-02-2025,Store B,20.50,Transport";
     const secondCsv =
@@ -157,7 +157,7 @@ describe("processImportFile integration", () => {
   });
 
   it("deletes a succeeded import and its linked transactions and duplicates", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const csv =
       "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food\n01-02-2025,Store B,20.50,Transport";
 
@@ -192,7 +192,7 @@ describe("processImportFile integration", () => {
   });
 
   it("deletes a failed import with zero linked transactions", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
     const invalidCsv =
       "date,vendor,amount,category\n99-99-2025,Store A,10.00,Food";
 
@@ -222,7 +222,7 @@ describe("processImportFile integration", () => {
   });
 
   it("returns not-found when deleting a missing import", async () => {
-    const db = createTestDb();
+    const db = await createTestDb();
 
     const deleted = await deleteImportById({
       db,
@@ -236,9 +236,8 @@ describe("processImportFile integration", () => {
   });
 
   it("listDuplicatesByImportId returns empty array when no duplicates", async () => {
-    const db = createTestDb();
-    const csv =
-      "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food";
+    const db = await createTestDb();
+    const csv = "date,vendor,amount,category\n01-01-2025,Store A,10.00,Food";
 
     const result = await processImportFile({
       db,
