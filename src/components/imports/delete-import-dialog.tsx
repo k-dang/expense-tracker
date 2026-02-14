@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { deleteImportAction } from "@/app/actions/imports";
+import { deleteImportAction } from "@/lib/actions/imports";
 import type { ImportDeleteResult } from "@/lib/types/api";
 import {
   AlertDialog,

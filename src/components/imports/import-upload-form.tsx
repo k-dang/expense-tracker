@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { uploadImportAction } from "@/app/actions/imports";
+import { uploadImportAction } from "@/lib/actions/imports";
 import type { ImportPostResult } from "@/lib/types/api";
 import {
   Card,

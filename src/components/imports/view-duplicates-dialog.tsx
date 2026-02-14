@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   fetchDuplicatesAction,
   importDuplicatesAction,
-} from "@/app/actions/imports";
+} from "@/lib/actions/imports";
 import type { ImportDuplicateItem } from "@/db/queries/imports";
 import { formatCurrencyFromCents } from "@/lib/format";
 import {
