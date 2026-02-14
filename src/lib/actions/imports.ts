@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/db/index";
 import {
   deleteImportById,
   importSelectedDuplicates,
@@ -33,7 +32,6 @@ export async function uploadImportAction(
   try {
     const bytes = new Uint8Array(await uploadedFile.arrayBuffer());
     const result = await processImportFile({
-      db,
       filename: uploadedFile.name,
       contentType: uploadedFile.type,
       bytes,
@@ -52,7 +50,7 @@ export async function uploadImportAction(
 export async function fetchDuplicatesAction(
   importId: string,
 ): Promise<ImportDuplicateItem[]> {
-  return listDuplicatesByImportId({ db, importId });
+  return listDuplicatesByImportId({ importId });
 }
 
 export async function importDuplicatesAction(
@@ -65,7 +63,6 @@ export async function importDuplicatesAction(
 
   try {
     const importedCount = await importSelectedDuplicates({
-      db,
       importId,
       duplicateIds,
     });
@@ -88,7 +85,7 @@ export async function deleteImportAction(
   }
 
   try {
-    const result = await deleteImportById({ db, importId: normalizedImportId });
+    const result = await deleteImportById({ importId: normalizedImportId });
     if (result.status === "succeeded") {
       revalidatePath("/");
     }

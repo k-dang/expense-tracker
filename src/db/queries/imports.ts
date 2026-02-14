@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { count, desc, eq, inArray } from "drizzle-orm";
-import type { db as defaultDb } from "@/db/index";
+import { db } from "@/db/index";
 import {
   importDuplicatesTable,
   importsTable,
@@ -9,9 +9,7 @@ import {
 import { processImportFileInput } from "@/lib/imports/process-import-file";
 import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
-export type DbClient = typeof defaultDb;
-
-export async function listImports(db: DbClient) {
+export async function listImports() {
   return db
     .select({
       id: importsTable.id,
@@ -30,7 +28,6 @@ export async function listImports(db: DbClient) {
 export type ImportListItem = Awaited<ReturnType<typeof listImports>>[number];
 
 export async function processImportFile(options: {
-  db: DbClient;
   filename: string;
   contentType: string;
   bytes: Uint8Array;
@@ -42,7 +39,6 @@ export async function processImportFile(options: {
   });
   if (processed.status === "failed") {
     await recordFailedImport({
-      db: options.db,
       filename: options.filename,
       message: processed.errors[0]?.message ?? "Import failed.",
       rowCountTotal: processed.rowCountTotal,
@@ -58,7 +54,7 @@ export async function processImportFile(options: {
   const BATCH_SIZE = 500;
   for (let i = 0; i < allFingerprints.length; i += BATCH_SIZE) {
     const batch = allFingerprints.slice(i, i + BATCH_SIZE);
-    const rows = await options.db
+    const rows = await db
       .select({ fingerprint: transactionsTable.fingerprint })
       .from(transactionsTable)
       .where(inArray(transactionsTable.fingerprint, batch));
@@ -88,7 +84,7 @@ export async function processImportFile(options: {
     }
   }
 
-  await options.db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await tx.insert(importsTable).values({
       id: importId,
       filename: options.filename,
@@ -141,10 +137,9 @@ export async function processImportFile(options: {
 }
 
 export async function deleteImportById(options: {
-  db: DbClient;
   importId: string;
 }): Promise<ImportDeleteResult> {
-  const existing = await options.db
+  const existing = await db
     .select({ id: importsTable.id })
     .from(importsTable)
     .where(eq(importsTable.id, options.importId))
@@ -154,7 +149,7 @@ export async function deleteImportById(options: {
     return { status: "failed", error: "Import not found." };
   }
 
-  const deletedTransactionCount = await options.db.transaction(async (tx) => {
+  const deletedTransactionCount = await db.transaction(async (tx) => {
     const existingTransactionCount = await tx
       .select({ count: count(transactionsTable.id) })
       .from(transactionsTable)
@@ -181,11 +176,8 @@ export async function deleteImportById(options: {
   };
 }
 
-export async function listDuplicatesByImportId(options: {
-  db: DbClient;
-  importId: string;
-}) {
-  return options.db
+export async function listDuplicatesByImportId(options: { importId: string }) {
+  return db
     .select({
       id: importDuplicatesTable.id,
       txnDate: importDuplicatesTable.txnDate,
@@ -204,14 +196,13 @@ export type ImportDuplicateItem = Awaited<
 >[number];
 
 export async function importSelectedDuplicates(options: {
-  db: DbClient;
   importId: string;
   duplicateIds: string[];
 }): Promise<number> {
-  const { db: dbClient, importId, duplicateIds } = options;
+  const { importId, duplicateIds } = options;
   if (duplicateIds.length === 0) return 0;
 
-  return dbClient.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     // Fetch selected duplicate rows
     const rows = await tx
       .select()
@@ -266,12 +257,11 @@ export async function importSelectedDuplicates(options: {
 }
 
 async function recordFailedImport(options: {
-  db: DbClient;
   filename: string;
   message: string;
   rowCountTotal?: number;
 }) {
-  await options.db.insert(importsTable).values({
+  await db.insert(importsTable).values({
     id: randomUUID(),
     filename: options.filename,
     rowCountTotal: options.rowCountTotal ?? 0,

@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { db } from "@/db/index";
 import { getDashboardTotals } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
 
@@ -27,7 +26,7 @@ function daysInRange(range: DateRange): number {
 }
 
 export async function KpiCards({ range }: Props) {
-  const totals = await getDashboardTotals(db, range);
+  const totals = await getDashboardTotals(range);
   const days = daysInRange(range);
   const dailyAvgCents = Math.round(totals.totalSpendCents / days);
 

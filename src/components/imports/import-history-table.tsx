@@ -1,4 +1,3 @@
-import { db } from "@/db/index";
 import { listImports } from "@/db/queries/imports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeleteImportDialog } from "@/components/imports/delete-import-dialog";
@@ -6,7 +5,7 @@ import { ViewDuplicatesDialog } from "@/components/imports/view-duplicates-dialo
 import { formatUtcTimestamp } from "@/lib/date/utils";
 
 export async function ImportHistoryTable() {
-  const imports = await listImports(db);
+  const imports = await listImports();
 
   return (
     <Card>

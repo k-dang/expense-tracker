@@ -8,7 +8,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { db } from "@/db/index";
 import { getDashboardRecentTransactions } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
 import { formatIsoDateLabel } from "@/lib/date/utils";
@@ -19,7 +18,7 @@ type Props = {
 };
 
 export async function RecentTransactionsCard({ range }: Props) {
-  const data = await getDashboardRecentTransactions(db, range);
+  const data = await getDashboardRecentTransactions(range);
 
   return (
     <Card>

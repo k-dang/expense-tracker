@@ -1,9 +1,7 @@
 import { and, count, desc, gte, lte, sql, sum } from "drizzle-orm";
-import type { db as defaultDb } from "@/db/index";
+import { db } from "@/db/index";
 import { transactionsTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
-
-export type DbClient = typeof defaultDb;
 
 function getRangeFilter(range: DateRange) {
   return and(
@@ -12,7 +10,7 @@ function getRangeFilter(range: DateRange) {
   );
 }
 
-export async function getDashboardTotals(db: DbClient, range: DateRange) {
+export async function getDashboardTotals(range: DateRange) {
   const rangeFilter = getRangeFilter(range);
 
   const totalsRow = await db
@@ -38,7 +36,7 @@ export async function getDashboardTotals(db: DbClient, range: DateRange) {
 
 export type DashboardTotals = Awaited<ReturnType<typeof getDashboardTotals>>;
 
-export async function getDashboardMonthlyTrend(db: DbClient, range: DateRange) {
+export async function getDashboardMonthlyTrend(range: DateRange) {
   const rangeFilter = getRangeFilter(range);
 
   const monthlyRows = await db
@@ -61,10 +59,7 @@ export type DashboardMonthlyTrendItem = Awaited<
   ReturnType<typeof getDashboardMonthlyTrend>
 >[number];
 
-export async function getDashboardCategoryBreakdown(
-  db: DbClient,
-  range: DateRange,
-) {
+export async function getDashboardCategoryBreakdown(range: DateRange) {
   const rangeFilter = getRangeFilter(range);
 
   const categoryRows = await db
@@ -97,7 +92,7 @@ export type DashboardCategoryBreakdownItem = Awaited<
   ReturnType<typeof getDashboardCategoryBreakdown>
 >[number];
 
-export async function getDashboardTopVendors(db: DbClient, range: DateRange) {
+export async function getDashboardTopVendors(range: DateRange) {
   const rangeFilter = getRangeFilter(range);
 
   const vendorRows = await db
@@ -123,10 +118,7 @@ export type DashboardTopVendorItem = Awaited<
   ReturnType<typeof getDashboardTopVendors>
 >[number];
 
-export async function getDashboardRecentTransactions(
-  db: DbClient,
-  range: DateRange,
-) {
+export async function getDashboardRecentTransactions(range: DateRange) {
   const rangeFilter = getRangeFilter(range);
 
   const recentRows = await db
