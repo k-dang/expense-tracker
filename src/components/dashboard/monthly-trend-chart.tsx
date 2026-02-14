@@ -62,50 +62,6 @@ function toNumber(value: unknown): number {
   return Number(value ?? 0);
 }
 
-function SharedAxes({
-  dollarsFormatter,
-}: {
-  dollarsFormatter: Intl.NumberFormat;
-}) {
-  return (
-    <>
-      <CartesianGrid vertical={false} />
-      <XAxis
-        dataKey="month"
-        tickFormatter={formatShortMonthLabel}
-        tickLine={false}
-        axisLine={false}
-        tickMargin={8}
-      />
-      <YAxis
-        width={80}
-        tickFormatter={(value) => dollarsFormatter.format(toNumber(value))}
-        tickLine={false}
-        axisLine={false}
-        tickMargin={8}
-      />
-      <ChartTooltip
-        cursor={false}
-        content={
-          <ChartTooltipContent
-            formatter={(value, name) => (
-              <div className="flex min-w-0 items-center justify-between gap-2">
-                <span className="text-muted-foreground truncate">
-                  {name == null ? "Value" : String(name)}
-                </span>
-                <span className="text-foreground font-mono font-medium tabular-nums">
-                  {dollarsFormatter.format(toNumber(value))}
-                </span>
-              </div>
-            )}
-            indicator="line"
-          />
-        }
-      />
-    </>
-  );
-}
-
 export function MonthlyTrendChart({ data }: Props) {
   const [view, setView] = useState<ChartView>("area");
   const chartData = toMonthlyTrendChartData(data);
@@ -144,7 +100,39 @@ export function MonthlyTrendChart({ data }: Props) {
                 />
               </linearGradient>
             </defs>
-            <SharedAxes dollarsFormatter={dollarsFormatter} />
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickFormatter={formatShortMonthLabel}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
+            <YAxis
+              width={80}
+              tickFormatter={(value) => dollarsFormatter.format(toNumber(value))}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  formatter={(value, name) => (
+                    <div className="flex min-w-0 items-center justify-between gap-2">
+                      <span className="text-muted-foreground truncate">
+                        {name == null ? "Value" : String(name)}
+                      </span>
+                      <span className="text-foreground font-mono font-medium tabular-nums">
+                        {dollarsFormatter.format(toNumber(value))}
+                      </span>
+                    </div>
+                  )}
+                  indicator="line"
+                />
+              }
+            />
             <Area
               dataKey="totalDollars"
               type="monotone"
@@ -163,7 +151,39 @@ export function MonthlyTrendChart({ data }: Props) {
         config={MONTHLY_TREND_CHART_CONFIG}
       >
         <BarChart data={chartData} margin={{ top: 12, right: 8 }}>
-          <SharedAxes dollarsFormatter={dollarsFormatter} />
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="month"
+            tickFormatter={formatShortMonthLabel}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
+          <YAxis
+            width={80}
+            tickFormatter={(value) => dollarsFormatter.format(toNumber(value))}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                formatter={(value, name) => (
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <span className="text-muted-foreground truncate">
+                      {name == null ? "Value" : String(name)}
+                    </span>
+                    <span className="text-foreground font-mono font-medium tabular-nums">
+                      {dollarsFormatter.format(toNumber(value))}
+                    </span>
+                  </div>
+                )}
+                indicator="line"
+              />
+            }
+          />
           <Bar
             dataKey="totalDollars"
             fill="var(--color-totalDollars)"
