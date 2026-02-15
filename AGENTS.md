@@ -8,11 +8,11 @@
 - Root config: `next.config.ts`, `tsconfig.json`, `biome.json`, `components.json`.
 
 ## Build, Test, and Development Commands
-- `bun run dev` (or `npm run dev`): Start local dev server at `http://localhost:3000`.
-- `bun run build`: Create a production build with Next.js.
-- `bun run start`: Serve the production build locally.
-- `bun run lint`: Run Biome checks (lint + static checks).
-- `bun run format`: Apply Biome formatting changes.
+- `pnpm run dev` (or `npm run dev`): Start local dev server at `http://localhost:3000`.
+- `pnpm run build`: Create a production build with Next.js.
+- `pnpm run start`: Serve the production build locally.
+- `pnpm run lint`: Run Biome checks (lint + static checks).
+- `pnpm run format`: Apply Biome formatting changes.
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript + React function components.

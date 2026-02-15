@@ -2,6 +2,14 @@ import { listImports } from "@/db/queries/imports";
 import { DeleteImportDialog } from "@/components/imports/delete-import-dialog";
 import { ViewDuplicatesDialog } from "@/components/imports/view-duplicates-dialog";
 import { formatUtcTimestamp } from "@/lib/date/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export async function ImportHistoryTable() {
   const imports = await listImports();
@@ -11,44 +19,40 @@ export async function ImportHistoryTable() {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[700px] text-sm">
-        <thead>
-          <tr className="text-muted-foreground border-b text-left">
-            <th className="py-2 pr-3">Uploaded</th>
-            <th className="py-2 pr-3">File</th>
-            <th className="py-2 pr-3">Status</th>
-            <th className="py-2 pr-3">Total</th>
-            <th className="py-2 pr-3">Inserted</th>
-            <th className="py-2 pr-3">Duplicates</th>
-            <th className="py-2 pr-3">Error</th>
-            <th className="py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {imports.map((item) => (
-            <tr key={item.id} className="border-b">
-              <td className="py-2 pr-3">
-                {formatUtcTimestamp(item.uploadedAt)}
-              </td>
-              <td className="py-2 pr-3">{item.filename}</td>
-              <td className="py-2 pr-3">{item.status}</td>
-              <td className="py-2 pr-3">{item.rowCountTotal}</td>
-              <td className="py-2 pr-3">{item.rowCountInserted}</td>
-              <td className="py-2 pr-3">
-                <ViewDuplicatesDialog
-                  importId={item.id}
-                  duplicateCount={item.rowCountDuplicates}
-                />
-              </td>
-              <td className="py-2 pr-3">{item.errorMessage ?? "-"}</td>
-              <td className="py-2 text-right">
-                <DeleteImportDialog importId={item.id} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table className="min-w-[700px]">
+      <TableHeader>
+        <TableRow className="text-muted-foreground hover:bg-transparent">
+          <TableHead>Uploaded</TableHead>
+          <TableHead>File</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Total</TableHead>
+          <TableHead>Inserted</TableHead>
+          <TableHead>Duplicates</TableHead>
+          <TableHead>Error</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {imports.map((item) => (
+          <TableRow key={item.id}>
+            <TableCell>{formatUtcTimestamp(item.uploadedAt)}</TableCell>
+            <TableCell>{item.filename}</TableCell>
+            <TableCell>{item.status}</TableCell>
+            <TableCell>{item.rowCountTotal}</TableCell>
+            <TableCell>{item.rowCountInserted}</TableCell>
+            <TableCell>
+              <ViewDuplicatesDialog
+                importId={item.id}
+                duplicateCount={item.rowCountDuplicates}
+              />
+            </TableCell>
+            <TableCell>{item.errorMessage ?? "-"}</TableCell>
+            <TableCell className="text-right">
+              <DeleteImportDialog importId={item.id} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

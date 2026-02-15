@@ -195,7 +195,7 @@ Tech baseline is existing Next.js 16 + TypeScript app, with SQLite + Drizzle ORM
 - Duplicate rows are blocked by dedup logic.
 - Invalid CSV rows fail entire import with actionable errors.
 - Dashboard shows correct totals/aggregations from DB data.
-- Project runs with `bun run dev`, builds with `bun run build`, passes lint.
+- Project runs with `pnpm run dev`, builds with `pnpm run build`, passes lint.
 
 ## Assumptions and Defaults
 - Currency is always CAD in v1.

@@ -110,7 +110,9 @@ export function MonthlyTrendChart({ data }: Props) {
             />
             <YAxis
               width={80}
-              tickFormatter={(value) => dollarsFormatter.format(toNumber(value))}
+              tickFormatter={(value) =>
+                dollarsFormatter.format(toNumber(value))
+              }
               tickLine={false}
               axisLine={false}
               tickMargin={8}

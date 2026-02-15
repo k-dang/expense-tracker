@@ -18,7 +18,13 @@ export default function ImportsPage() {
           <CardTitle>Import history</CardTitle>
         </CardHeader>
         <CardContent>
-          <Suspense fallback={<div className="flex justify-center items-center"><Spinner className="size-8" /></div>}>
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center">
+                <Spinner className="size-8" />
+              </div>
+            }
+          >
             <ImportHistoryTable />
           </Suspense>
         </CardContent>

@@ -6,14 +6,14 @@ The app imports CSV files, deduplicates transactions across uploads, and renders
 
 ## Requirements
 
-- Bun (recommended; project scripts use Bun by default)
+- pnpm
 
 ## Quick Start
 
 1. Install dependencies:
 
 ```bash
-bun install
+pnpm install
 ```
 
 2. Copy `.env.example` to `.env` and set `DB_URL` (and `DB_AUTH_TOKEN` only for remote Turso/libSQL).
@@ -21,13 +21,13 @@ bun install
 3. Run DB migrations:
 
 ```bash
-bunx drizzle-kit migrate
+pnpm exec drizzle-kit migrate
 ```
 
 4. Start the app:
 
 ```bash
-bun run dev
+pnpm run dev
 ```
 
 Open `http://localhost:3000`.
@@ -67,12 +67,12 @@ Sample CSV:
 ## Available Scripts
 
 ```bash
-bun run dev      # start local dev server
-bun run build    # production build
-bun run start    # run production server
-bun run lint     # Biome checks
-bun run format   # apply Biome formatting
-bun run test     # run test suite
+pnpm run dev      # start local dev server
+pnpm run build    # production build
+pnpm run start    # run production server
+pnpm run lint     # Biome checks
+pnpm run format   # apply Biome formatting
+pnpm run test     # run test suite
 ```
 
 ## Tech Stack
