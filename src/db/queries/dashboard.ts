@@ -1,12 +1,12 @@
 import { and, count, desc, gte, lte, sql, sum } from "drizzle-orm";
-import { db } from "@/db/index";
+import { db } from "@/db";
 import { transactionsTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
 
 function getRangeFilter(range: DateRange) {
   return and(
     gte(transactionsTable.txnDate, range.from),
-    lte(transactionsTable.txnDate, range.to),
+    lte(transactionsTable.txnDate, range.to)
   );
 }
 
@@ -74,7 +74,7 @@ export async function getDashboardCategoryBreakdown(range: DateRange) {
 
   const totalSpendCents = categoryRows.reduce(
     (total, row) => total + Number(row.totalCents ?? 0),
-    0,
+    0
   );
 
   return categoryRows.map((row) => {

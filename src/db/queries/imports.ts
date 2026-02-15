@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { count, desc, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/index";
+import { db } from "@/db";
 import {
   importDuplicatesTable,
   importsTable,

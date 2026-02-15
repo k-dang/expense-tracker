@@ -50,3 +50,5 @@ test-*.sqlite
 
 # samples
 samples/
+
+.env*.local
