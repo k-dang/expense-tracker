@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { Suspense } from "react";
-import { Button } from "@/components/ui/button";
 import { CategoryBreakdownCard } from "@/components/dashboard/category-breakdown-card";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
@@ -23,24 +21,13 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Expense Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Single-user CAD expense analytics
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/imports" />}
-          >
-            Go to imports
-          </Button>
-        </div>
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Expense Dashboard
+        </h1>
+        <p className="text-muted-foreground">
+          Single-user CAD expense analytics
+        </p>
       </header>
 
       <DateRangeFilter range={range} />
