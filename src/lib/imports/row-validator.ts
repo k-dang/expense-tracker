@@ -1,13 +1,14 @@
 import { createHash } from "node:crypto";
 import { parseStrictDate } from "@/lib/date/utils";
+import { categorize } from "@/lib/imports/auto-categorize";
 import type { ImportError } from "@/lib/types/api";
 
 export type ValidatedTransactionInput = {
   txnDate: string;
-  vendor: string;
+  description: string;
   amountCents: number;
   category: string;
-  vendorDedup: string;
+  descriptionDedup: string;
   categoryDedup: string;
   fingerprint: string;
 };
@@ -58,20 +59,20 @@ function parseImportDate(value: string): string | null {
 
 function buildFingerprint(input: {
   txnDate: string;
-  vendorNormalizedLower: string;
+  descriptionNormalizedLower: string;
   amountCents: number;
   categoryNormalizedLower: string;
   currency?: string;
 }): string {
   const currency = input.currency ?? "CAD";
-  const base = `${input.txnDate}|${input.vendorNormalizedLower}|${input.amountCents}|${input.categoryNormalizedLower}|${currency}`;
+  const base = `${input.txnDate}|${input.descriptionNormalizedLower}|${input.amountCents}|${input.categoryNormalizedLower}|${currency}`;
   return createHash("sha256").update(base).digest("hex");
 }
 
 export function validateRow(row: {
   rowNumber: number;
   date: string;
-  vendor: string;
+  description: string;
   amount: string;
   category: string;
 }): { value: ValidatedTransactionInput } | { error: ImportError } {
@@ -87,37 +88,29 @@ export function validateRow(row: {
     };
   }
 
-  const vendorDisplay = normalizeDisplayValue(row.vendor);
-  if (!vendorDisplay) {
+  const descriptionDisplay = normalizeDisplayValue(row.description);
+  if (!descriptionDisplay) {
     return {
       error: {
         row: row.rowNumber,
-        field: "vendor",
-        message: "Vendor is required.",
+        field: "description",
+        message: "Description is required.",
       },
     };
   }
 
-  if (vendorDisplay.length > MAX_TEXT_LENGTH) {
+  if (descriptionDisplay.length > MAX_TEXT_LENGTH) {
     return {
       error: {
         row: row.rowNumber,
-        field: "vendor",
-        message: `Vendor exceeds maximum length of ${MAX_TEXT_LENGTH} characters.`,
+        field: "description",
+        message: `Description exceeds maximum length of ${MAX_TEXT_LENGTH} characters.`,
       },
     };
   }
 
-  const categoryDisplay = normalizeDisplayValue(row.category);
-  if (!categoryDisplay) {
-    return {
-      error: {
-        row: row.rowNumber,
-        field: "category",
-        message: "Category is required.",
-      },
-    };
-  }
+  const categoryDisplay =
+    normalizeDisplayValue(row.category) || categorize(descriptionDisplay);
 
   if (categoryDisplay.length > MAX_TEXT_LENGTH) {
     return {
@@ -142,20 +135,20 @@ export function validateRow(row: {
     };
   }
 
-  const vendorDedup = normalizeForDedup(vendorDisplay);
+  const descriptionDedup = normalizeForDedup(descriptionDisplay);
   const categoryDedup = normalizeForDedup(categoryDisplay);
 
   return {
     value: {
       txnDate: parsedDate,
-      vendor: vendorDisplay,
+      description: descriptionDisplay,
       amountCents,
       category: categoryDisplay,
-      vendorDedup,
+      descriptionDedup,
       categoryDedup,
       fingerprint: buildFingerprint({
         txnDate: parsedDate,
-        vendorNormalizedLower: vendorDedup,
+        descriptionNormalizedLower: descriptionDedup,
         amountCents,
         categoryNormalizedLower: categoryDedup,
         currency: "CAD",

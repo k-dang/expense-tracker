@@ -38,7 +38,7 @@ export function ImportUploadForm() {
         <CardHeader>
           <CardTitle>Import CSV</CardTitle>
           <CardDescription>
-            Upload CSV with exact headers: `date,vendor,amount,category` with
+            Upload CSV with exact headers: `date,description,amount,category` with
             date in MM-DD-YYYY
           </CardDescription>
         </CardHeader>

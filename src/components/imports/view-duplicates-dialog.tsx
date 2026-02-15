@@ -121,7 +121,7 @@ export function ViewDuplicatesDialog({ importId, duplicateCount }: Props) {
                     />
                   </TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Vendor</TableHead>
+                  <TableHead>Description</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Reason</TableHead>
@@ -138,7 +138,7 @@ export function ViewDuplicatesDialog({ importId, duplicateCount }: Props) {
                       />
                     </TableCell>
                     <TableCell>{dup.txnDate}</TableCell>
-                    <TableCell>{dup.vendor}</TableCell>
+                    <TableCell>{dup.description}</TableCell>
                     <TableCell>
                       {formatCurrencyFromCents(dup.amountCents)}
                     </TableCell>

@@ -4,7 +4,7 @@ import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
 import { RecentTransactionsCard } from "@/components/dashboard/recent-transactions-card";
-import { TopVendorsCard } from "@/components/dashboard/top-vendors-card";
+import { TopDescriptionsCard } from "@/components/dashboard/top-descriptions-card";
 import { Card, CardHeader } from "@/components/ui/card";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
 
@@ -35,7 +35,7 @@ export default async function Page({ searchParams }: PageProps) {
 
       <MonthlyTrendCard range={range} />
       <CategoryBreakdownCard range={range} />
-      <TopVendorsCard range={range} />
+      <TopDescriptionsCard range={range} />
       <RecentTransactionsCard range={range} />
     </main>
   );

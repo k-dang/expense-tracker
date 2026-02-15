@@ -2,7 +2,7 @@ import type { ImportStatus } from "@/db/schema";
 
 export type ImportErrorField =
   | "date"
-  | "vendor"
+  | "description"
   | "amount"
   | "category"
   | "file"

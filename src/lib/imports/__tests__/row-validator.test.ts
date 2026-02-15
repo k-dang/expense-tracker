@@ -6,7 +6,7 @@ describe("row-validator", () => {
     const valid = validateRow({
       rowNumber: 2,
       date: "02-07-2026",
-      vendor: "Store",
+      description: "Store",
       amount: "5.00",
       category: "Food",
     });
@@ -18,7 +18,7 @@ describe("row-validator", () => {
     const invalid = validateRow({
       rowNumber: 3,
       date: "2026-02-07",
-      vendor: "Store",
+      description: "Store",
       amount: "5.00",
       category: "Food",
     });
@@ -32,7 +32,7 @@ describe("row-validator", () => {
     const validAmount = validateRow({
       rowNumber: 2,
       date: "01-01-2025",
-      vendor: "Store",
+      description: "Store",
       amount: "$1,234.56",
       category: "Food",
     });
@@ -44,7 +44,7 @@ describe("row-validator", () => {
     const invalidAmount = validateRow({
       rowNumber: 3,
       date: "01-01-2025",
-      vendor: "Store",
+      description: "Store",
       amount: "1e3",
       category: "Food",
     });
@@ -58,14 +58,14 @@ describe("row-validator", () => {
     const result = validateRow({
       rowNumber: 2,
       date: "01-01-2025",
-      vendor: "  Cafe   Nero  ",
+      description: "  Cafe   Nero  ",
       amount: "5.00",
       category: "  Food   And   Drink  ",
     });
     expect("value" in result).toBe(true);
     if ("value" in result) {
-      expect(result.value.vendor).toBe("Cafe Nero");
-      expect(result.value.vendorDedup).toBe("cafe nero");
+      expect(result.value.description).toBe("Cafe Nero");
+      expect(result.value.descriptionDedup).toBe("cafe nero");
       expect(result.value.category).toBe("Food And Drink");
       expect(result.value.categoryDedup).toBe("food and drink");
     }
@@ -75,7 +75,7 @@ describe("row-validator", () => {
     const one = validateRow({
       rowNumber: 2,
       date: "01-01-2025",
-      vendor: "Coffee Shop",
+      description: "Coffee Shop",
       amount: "15.00",
       category: "Food",
     });
@@ -83,7 +83,7 @@ describe("row-validator", () => {
     const two = validateRow({
       rowNumber: 3,
       date: "01-01-2025",
-      vendor: "Coffee Shop",
+      description: "Coffee Shop",
       amount: "15.00",
       category: "Food",
     });
@@ -100,7 +100,7 @@ describe("row-validator", () => {
     const valid = validateRow({
       rowNumber: 2,
       date: "01-01-2025",
-      vendor: "Store",
+      description: "Store",
       amount: "$5.00",
       category: "Food",
     });
@@ -109,7 +109,7 @@ describe("row-validator", () => {
     const invalid = validateRow({
       rowNumber: 3,
       date: "bad-date",
-      vendor: "",
+      description: "",
       amount: "-1",
       category: "",
     });
@@ -117,6 +117,35 @@ describe("row-validator", () => {
     if ("error" in invalid) {
       expect(invalid.error.row).toBe(3);
       expect(invalid.error.field).toBe("date");
+    }
+  });
+
+  it("auto-categorizes when category is empty", () => {
+    const result = validateRow({
+      rowNumber: 2,
+      date: "01-01-2025",
+      description: "Loblaws Grocery Store",
+      amount: "50.00",
+      category: "",
+    });
+    expect("value" in result).toBe(true);
+    if ("value" in result) {
+      expect(result.value.category).toBe("Groceries");
+      expect(result.value.categoryDedup).toBe("groceries");
+    }
+  });
+
+  it("falls back to Uncategorized for unknown descriptions", () => {
+    const result = validateRow({
+      rowNumber: 2,
+      date: "01-01-2025",
+      description: "Random Place XYZ",
+      amount: "10.00",
+      category: "",
+    });
+    expect("value" in result).toBe(true);
+    if ("value" in result) {
+      expect(result.value.category).toBe("Uncategorized");
     }
   });
 });

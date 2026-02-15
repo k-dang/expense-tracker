@@ -1,19 +1,15 @@
 import Papa from "papaparse";
 import type { ImportError } from "@/lib/types/api";
 
-type CanonicalHeader = "date" | "vendor" | "amount" | "category";
+type CanonicalHeader = "date" | "description" | "amount" | "category";
 
 export type ParsedCsvRow = Record<CanonicalHeader, string>;
 export type ParsedCsv = { rows: ParsedCsvRow[] };
 
 export const MAX_CSV_FILE_BYTES = 2 * 1024 * 1024;
 
-const REQUIRED_HEADERS: CanonicalHeader[] = [
-  "date",
-  "vendor",
-  "amount",
-  "category",
-];
+const REQUIRED_HEADERS: CanonicalHeader[] = ["date", "description", "amount"];
+const OPTIONAL_HEADERS: CanonicalHeader[] = ["category"];
 
 const CSV_MIME_TYPES = new Set([
   "text/csv",
@@ -138,8 +134,9 @@ export function parseCsvText(csvText: string): ParsedCsv | ImportError {
     };
   }
 
+  const allHeaders = [...REQUIRED_HEADERS, ...OPTIONAL_HEADERS];
   const extraHeaders = headers.filter(
-    (header) => !REQUIRED_HEADERS.includes(header as CanonicalHeader),
+    (header) => !allHeaders.includes(header as CanonicalHeader),
   );
   if (extraHeaders.length > 0) {
     return {
@@ -151,7 +148,7 @@ export function parseCsvText(csvText: string): ParsedCsv | ImportError {
 
   const rows = parseResult.data.map((row) => ({
     date: toText(row.date),
-    vendor: toText(row.vendor),
+    description: toText(row.description),
     amount: toText(row.amount),
     category: toText(row.category),
   }));

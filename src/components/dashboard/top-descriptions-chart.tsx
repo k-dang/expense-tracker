@@ -7,10 +7,10 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import type { DashboardTopVendorItem } from "@/db/queries/dashboard";
+import type { DashboardTopDescriptionItem } from "@/db/queries/dashboard";
 import { formatCurrencyFromCents } from "@/lib/format";
 
-const TOP_VENDOR_CHART_CONFIG = {
+const TOP_DESCRIPTION_CHART_CONFIG = {
   totalCents: {
     label: "Spend",
     color: "var(--chart-1)",
@@ -18,18 +18,18 @@ const TOP_VENDOR_CHART_CONFIG = {
 } satisfies ChartConfig;
 
 type Props = {
-  data: DashboardTopVendorItem[];
+  data: DashboardTopDescriptionItem[];
 };
 
-export function TopVendorsChart({ data }: Props) {
+export function TopDescriptionsChart({ data }: Props) {
   return data.length === 0 ? (
     <p className="text-muted-foreground text-sm">
-      No vendor data for selected range.
+      No data for selected range.
     </p>
   ) : (
     <ChartContainer
       className="h-full w-full min-w-0 aspect-auto"
-      config={TOP_VENDOR_CHART_CONFIG}
+      config={TOP_DESCRIPTION_CHART_CONFIG}
     >
       <BarChart data={data} layout="vertical" margin={{ left: 32 }}>
         <XAxis
@@ -41,7 +41,7 @@ export function TopVendorsChart({ data }: Props) {
         />
         <YAxis
           type="category"
-          dataKey="vendor"
+          dataKey="description"
           width={180}
           tickLine={false}
           axisLine={false}
@@ -103,7 +103,7 @@ export function TopVendorsChart({ data }: Props) {
         <Bar dataKey="totalCents" radius={[0, 4, 4, 0]}>
           {data.map((_, index) => (
             <Cell
-              key={data[index].vendor}
+              key={data[index].description}
               fill="var(--color-totalCents)"
               fillOpacity={1 - index * 0.08}
             />

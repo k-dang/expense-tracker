@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { and, count, desc, gte, lte, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
 import { transactionsTable } from "@/db/schema";
@@ -11,6 +12,9 @@ function getRangeFilter(range: DateRange) {
 }
 
 export async function getDashboardTotals(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("transactions");
   const rangeFilter = getRangeFilter(range);
 
   const totalsRow = await db
@@ -37,6 +41,9 @@ export async function getDashboardTotals(range: DateRange) {
 export type DashboardTotals = Awaited<ReturnType<typeof getDashboardTotals>>;
 
 export async function getDashboardMonthlyTrend(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("transactions");
   const rangeFilter = getRangeFilter(range);
 
   const monthlyRows = await db
@@ -60,6 +67,9 @@ export type DashboardMonthlyTrendItem = Awaited<
 >[number];
 
 export async function getDashboardCategoryBreakdown(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("transactions");
   const rangeFilter = getRangeFilter(range);
 
   const categoryRows = await db
@@ -92,40 +102,46 @@ export type DashboardCategoryBreakdownItem = Awaited<
   ReturnType<typeof getDashboardCategoryBreakdown>
 >[number];
 
-export async function getDashboardTopVendors(range: DateRange) {
+export async function getDashboardTopDescriptions(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("transactions");
   const rangeFilter = getRangeFilter(range);
 
-  const vendorRows = await db
+  const descriptionRows = await db
     .select({
-      vendor: transactionsTable.vendor,
+      description: transactionsTable.description,
       totalCents: sum(transactionsTable.amountCents),
       count: count(transactionsTable.id),
     })
     .from(transactionsTable)
     .where(rangeFilter)
-    .groupBy(transactionsTable.vendor)
+    .groupBy(transactionsTable.description)
     .orderBy(desc(sum(transactionsTable.amountCents)))
     .limit(8);
 
-  return vendorRows.map((row) => ({
-    vendor: row.vendor,
+  return descriptionRows.map((row) => ({
+    description: row.description,
     totalCents: Number(row.totalCents ?? 0),
     count: Number(row.count ?? 0),
   }));
 }
 
-export type DashboardTopVendorItem = Awaited<
-  ReturnType<typeof getDashboardTopVendors>
+export type DashboardTopDescriptionItem = Awaited<
+  ReturnType<typeof getDashboardTopDescriptions>
 >[number];
 
 export async function getDashboardRecentTransactions(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("transactions");
   const rangeFilter = getRangeFilter(range);
 
   const recentRows = await db
     .select({
       id: transactionsTable.id,
       txnDate: transactionsTable.txnDate,
-      vendor: transactionsTable.vendor,
+      description: transactionsTable.description,
       category: transactionsTable.category,
       amountCents: transactionsTable.amountCents,
     })
@@ -137,7 +153,7 @@ export async function getDashboardRecentTransactions(range: DateRange) {
   return recentRows.map((row) => ({
     id: row.id,
     txnDate: row.txnDate,
-    vendor: row.vendor,
+    description: row.description,
     category: row.category,
     amountCents: row.amountCents,
   }));

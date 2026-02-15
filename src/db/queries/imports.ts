@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { cacheLife, cacheTag } from "next/cache";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
@@ -10,6 +11,9 @@ import { processImportFileInput } from "@/lib/imports/process-import-file";
 import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
 
 export async function listImports() {
+  "use cache";
+  cacheLife("max");
+  cacheTag("imports");
   return db
     .select({
       id: importsTable.id,
@@ -66,7 +70,7 @@ export async function processImportFile(options: {
   const rowsToInsert: typeof processed.rows = [];
   const duplicateRows: {
     txnDate: string;
-    vendor: string;
+    description: string;
     amountCents: number;
     category: string;
     fingerprint: string;
@@ -100,7 +104,7 @@ export async function processImportFile(options: {
         rowsToInsert.map((txn) => ({
           id: randomUUID(),
           txnDate: txn.txnDate,
-          vendor: txn.vendor,
+          description: txn.description,
           amountCents: txn.amountCents,
           category: txn.category,
           currency: "CAD",
@@ -116,7 +120,7 @@ export async function processImportFile(options: {
           id: randomUUID(),
           importId,
           txnDate: dup.txnDate,
-          vendor: dup.vendor,
+          description: dup.description,
           amountCents: dup.amountCents,
           category: dup.category,
           currency: "CAD",
@@ -177,11 +181,14 @@ export async function deleteImportById(options: {
 }
 
 export async function listDuplicatesByImportId(options: { importId: string }) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("imports");
   return db
     .select({
       id: importDuplicatesTable.id,
       txnDate: importDuplicatesTable.txnDate,
-      vendor: importDuplicatesTable.vendor,
+      description: importDuplicatesTable.description,
       amountCents: importDuplicatesTable.amountCents,
       category: importDuplicatesTable.category,
       currency: importDuplicatesTable.currency,
@@ -216,7 +223,7 @@ export async function importSelectedDuplicates(options: {
       rows.map((row) => ({
         id: randomUUID(),
         txnDate: row.txnDate,
-        vendor: row.vendor,
+        description: row.description,
         amountCents: row.amountCents,
         category: row.category,
         currency: row.currency,

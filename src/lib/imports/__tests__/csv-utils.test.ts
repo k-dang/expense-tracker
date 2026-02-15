@@ -8,22 +8,38 @@ import {
 describe("csv-utils", () => {
   it("parses canonical CSV", () => {
     const parsed = parseCsvText(
-      "date,vendor,amount,category\n01-01-2025,Store,5.00,Food",
+      "date,description,amount,category\n01-01-2025,Store,5.00,Food",
     );
     expect("field" in parsed).toBe(false);
     if (!("field" in parsed)) {
       expect(parsed.rows).toHaveLength(1);
       expect(parsed.rows[0]).toEqual({
         date: "01-01-2025",
-        vendor: "Store",
+        description: "Store",
         amount: "5.00",
         category: "Food",
       });
     }
   });
 
+  it("parses CSV without optional category column", () => {
+    const parsed = parseCsvText(
+      "date,description,amount\n01-01-2025,Store,5.00",
+    );
+    expect("field" in parsed).toBe(false);
+    if (!("field" in parsed)) {
+      expect(parsed.rows).toHaveLength(1);
+      expect(parsed.rows[0]).toEqual({
+        date: "01-01-2025",
+        description: "Store",
+        amount: "5.00",
+        category: "",
+      });
+    }
+  });
+
   it("rejects non-canonical headers", () => {
-    const missing = parseCsvText("date,vendor,amount\n01-01-2025,Store,5.00");
+    const missing = parseCsvText("description,amount\n Store,5.00");
     expect("field" in missing).toBe(true);
     if ("field" in missing) {
       expect(missing.field).toBe("header");
@@ -31,7 +47,7 @@ describe("csv-utils", () => {
     }
 
     const extra = parseCsvText(
-      "date,vendor,amount,category,notes\n01-01-2025,Store,5.00,Food,n/a",
+      "date,description,amount,category,notes\n01-01-2025,Store,5.00,Food,n/a",
     );
     expect("field" in extra).toBe(true);
     if ("field" in extra) {
@@ -42,7 +58,7 @@ describe("csv-utils", () => {
 
   it("rejects duplicate headers", () => {
     const duplicate = parseCsvText(
-      "date,vendor,amount,category,date\n01-01-2025,Store,5.00,Food,01-01-2025",
+      "date,description,amount,category,date\n01-01-2025,Store,5.00,Food,01-01-2025",
     );
     expect("field" in duplicate).toBe(true);
     if ("field" in duplicate) {
@@ -53,12 +69,12 @@ describe("csv-utils", () => {
 
   it("catches malformed CSV and field mismatch rows", () => {
     const malformed = parseCsvText(
-      'date,vendor,amount,category\n"01-01-2025,Store,5.00,Food',
+      'date,description,amount,category\n"01-01-2025,Store,5.00,Food',
     );
     expect("field" in malformed).toBe(true);
 
     const tooManyFields = parseCsvText(
-      "date,vendor,amount,category\n01-01-2025,Store,5.00,Food,unexpected",
+      "date,description,amount,category\n01-01-2025,Store,5.00,Food,unexpected",
     );
     expect("field" in tooManyFields).toBe(true);
   });
@@ -82,7 +98,7 @@ describe("csv-utils", () => {
   });
 
   it("decodes UTF-8 bytes and reports decode failures", () => {
-    const decoded = decodeCsvBytes(new TextEncoder().encode("date,vendor"));
+    const decoded = decodeCsvBytes(new TextEncoder().encode("date,description"));
     expect(decoded.ok).toBe(true);
 
     const invalidUtf8 = new Uint8Array([0xc3, 0x28]);

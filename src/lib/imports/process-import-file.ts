@@ -38,7 +38,7 @@ function validateCsvRows(rows: ParsedCsvRow[]): ProcessImportFileResult {
     const result = validateRow({
       rowNumber: index + 2,
       date: row.date,
-      vendor: row.vendor,
+      description: row.description,
       amount: row.amount,
       category: row.category,
     });

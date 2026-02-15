@@ -32,7 +32,7 @@ export async function RecentTransactionsContent({ range }: Props) {
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
-            <TableHead>Vendor</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead>Category</TableHead>
             <TableHead className="text-right">Amount</TableHead>
           </TableRow>
@@ -43,7 +43,7 @@ export async function RecentTransactionsContent({ range }: Props) {
               <TableCell className="text-muted-foreground">
                 {formatIsoDateLabel(transaction.txnDate)}
               </TableCell>
-              <TableCell>{transaction.vendor}</TableCell>
+              <TableCell>{transaction.description}</TableCell>
               <TableCell>
                 <Badge variant="secondary">{transaction.category}</Badge>
               </TableCell>

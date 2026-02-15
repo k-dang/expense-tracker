@@ -11,7 +11,7 @@ describe("process-import-file", () => {
       filename: "expenses.csv",
       contentType: "text/csv",
       bytes: toBytes(
-        "date,vendor,amount,category\n01-01-2025,Store A,$10.00,Food\n01-02-2025,Store B,20.50,Transport",
+        "date,description,amount,category\n01-01-2025,Store A,$10.00,Food\n01-02-2025,Store B,20.50,Transport",
       ),
     });
 
@@ -28,7 +28,7 @@ describe("process-import-file", () => {
       filename: "expenses.csv",
       contentType: "text/csv",
       bytes: toBytes(
-        "date,vendor,amount,category\n99-99-2025,,10.00,Food\n01-02-2025,Store B,-5,",
+        "date,description,amount,category\n99-99-2025,,10.00,Food\n01-02-2025,Store B,-5,",
       ),
     });
 
@@ -37,7 +37,24 @@ describe("process-import-file", () => {
       expect(result.errors.length).toBe(2);
       expect(result.rowCountTotal).toBe(2);
       expect(result.errors[0]?.field).toBe("date");
-      expect(result.errors[1]?.field).toBe("category");
+      expect(result.errors[1]?.field).toBe("amount");
+    }
+  });
+
+  it("processes CSV without category column", () => {
+    const result = processImportFileInput({
+      filename: "expenses.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        "date,description,amount\n01-01-2025,Loblaws Grocery,$10.00\n01-02-2025,Netflix Subscription,20.50",
+      ),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.totalRows).toBe(2);
+      expect(result.rows[0]?.category).toBe("Groceries");
+      expect(result.rows[1]?.category).toBe("Entertainment");
     }
   });
 });

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import {
   deleteImportById,
   importSelectedDuplicates,
@@ -37,7 +37,8 @@ export async function uploadImportAction(
       bytes,
     });
 
-    revalidatePath("/");
+    updateTag("transactions");
+    updateTag("imports");
     return result;
   } catch {
     return {
@@ -66,7 +67,8 @@ export async function importDuplicatesAction(
       importId,
       duplicateIds,
     });
-    revalidatePath("/");
+    updateTag("transactions");
+    updateTag("imports");
     return { status: "succeeded", importedCount };
   } catch {
     return { status: "failed", error: "Failed to import duplicates." };
@@ -87,7 +89,8 @@ export async function deleteImportAction(
   try {
     const result = await deleteImportById({ importId: normalizedImportId });
     if (result.status === "succeeded") {
-      revalidatePath("/");
+      updateTag("transactions");
+      updateTag("imports");
     }
     return result;
   } catch {

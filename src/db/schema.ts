@@ -16,7 +16,7 @@ export const importsTable = sqliteTable("imports", {
 export const transactionsTable = sqliteTable("transactions", {
   id: text("id").primaryKey(),
   txnDate: text("txn_date").notNull(),
-  vendor: text("vendor").notNull(),
+  description: text("description").notNull(),
   amountCents: integer("amount_cents").notNull(),
   category: text("category").notNull(),
   currency: text("currency").notNull().default("CAD"),
@@ -38,7 +38,7 @@ export const importDuplicatesTable = sqliteTable("import_duplicates", {
     .notNull()
     .references(() => importsTable.id),
   txnDate: text("txn_date").notNull(),
-  vendor: text("vendor").notNull(),
+  description: text("description").notNull(),
   amountCents: integer("amount_cents").notNull(),
   category: text("category").notNull(),
   currency: text("currency").notNull().default("CAD"),
