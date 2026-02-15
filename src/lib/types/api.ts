@@ -14,8 +14,9 @@ export type ImportError = {
   message: string;
 };
 
-export type ImportPostResult =
+export type ImportFileResult =
   | {
+      filename: string;
       status: Extract<ImportStatus, "succeeded">;
       importId: string;
       totalRows: number;
@@ -23,9 +24,24 @@ export type ImportPostResult =
       duplicateRows: number;
     }
   | {
+      filename: string;
       status: Extract<ImportStatus, "failed">;
       errors: ImportError[];
     };
+
+export type ImportPostStatus = "succeeded" | "partial" | "failed";
+
+export type ImportPostResult = {
+  status: ImportPostStatus;
+  totalFiles: number;
+  succeededFiles: number;
+  failedFiles: number;
+  totalRows: number;
+  insertedRows: number;
+  duplicateRows: number;
+  files: ImportFileResult[];
+  errors: ImportError[];
+};
 
 export type ImportDeleteResult =
   | {

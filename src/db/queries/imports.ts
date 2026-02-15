@@ -8,7 +8,7 @@ import {
   transactionsTable,
 } from "@/db/schema";
 import { processImportFileInput } from "@/lib/imports/process-import-file";
-import type { ImportDeleteResult, ImportPostResult } from "@/lib/types/api";
+import type { ImportDeleteResult, ImportFileResult } from "@/lib/types/api";
 
 export async function listImports() {
   "use cache";
@@ -35,7 +35,7 @@ export async function processImportFile(options: {
   filename: string;
   contentType: string;
   bytes: Uint8Array;
-}): Promise<ImportPostResult> {
+}): Promise<ImportFileResult> {
   const processed = processImportFileInput({
     filename: options.filename,
     contentType: options.contentType,
@@ -47,7 +47,11 @@ export async function processImportFile(options: {
       message: processed.errors[0]?.message ?? "Import failed.",
       rowCountTotal: processed.rowCountTotal,
     });
-    return { status: "failed", errors: processed.errors };
+    return {
+      filename: options.filename,
+      status: "failed",
+      errors: processed.errors,
+    };
   }
 
   const importId = randomUUID();
@@ -132,6 +136,7 @@ export async function processImportFile(options: {
   });
 
   return {
+    filename: options.filename,
     importId,
     totalRows: processed.totalRows,
     insertedRows: rowsToInsert.length,
