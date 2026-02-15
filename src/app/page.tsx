@@ -5,7 +5,7 @@ import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
 import { RecentTransactionsCard } from "@/components/dashboard/recent-transactions-card";
 import { TopVendorsCard } from "@/components/dashboard/top-vendors-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
 
 type PageProps = {
@@ -33,23 +33,10 @@ export default async function Page({ searchParams }: PageProps) {
         <KpiCards range={range} />
       </Suspense>
 
-      <Suspense
-        fallback={<CardFallback title="Monthly trend" className="h-80" />}
-      >
-        <MonthlyTrendCard range={range} />
-      </Suspense>
-
-      <Suspense fallback={<CardFallback title="Category breakdown" />}>
-        <CategoryBreakdownCard range={range} />
-      </Suspense>
-
-      <Suspense fallback={<CardFallback title="Top vendors" />}>
-        <TopVendorsCard range={range} />
-      </Suspense>
-
-      <Suspense fallback={<CardFallback title="Recent transactions" />}>
-        <RecentTransactionsCard range={range} />
-      </Suspense>
+      <MonthlyTrendCard range={range} />
+      <CategoryBreakdownCard range={range} />
+      <TopVendorsCard range={range} />
+      <RecentTransactionsCard range={range} />
     </main>
   );
 }
@@ -69,26 +56,5 @@ function KpiCardsFallback() {
         </Card>
       ))}
     </section>
-  );
-}
-
-function CardFallback({
-  title,
-  className,
-}: {
-  title: string;
-  className?: string;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div
-          className={`bg-muted h-72 animate-pulse rounded ${className ?? ""}`}
-        />
-      </CardContent>
-    </Card>
   );
 }

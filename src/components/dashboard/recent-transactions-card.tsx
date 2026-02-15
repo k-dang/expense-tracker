@@ -1,65 +1,26 @@
+import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { getDashboardRecentTransactions } from "@/db/queries/dashboard";
+import { RecentTransactionsContent } from "./recent-transactions-content";
 import type { DateRange } from "@/lib/dashboard/date-range";
-import { formatIsoDateLabel } from "@/lib/date/utils";
-import { formatCurrencyFromCents } from "@/lib/format";
 
 type Props = {
   range: DateRange;
 };
 
-export async function RecentTransactionsCard({ range }: Props) {
-  const data = await getDashboardRecentTransactions(range);
+function RecentTransactionsFallback() {
+  return <div className="bg-muted h-72 w-full min-w-0 animate-pulse rounded" />;
+}
 
+export function RecentTransactionsCard({ range }: Props) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent transactions</CardTitle>
       </CardHeader>
       <CardContent>
-        {data.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No transactions for selected range.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="text-muted-foreground">
-                      {formatIsoDateLabel(transaction.txnDate)}
-                    </TableCell>
-                    <TableCell>{transaction.vendor}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{transaction.category}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {formatCurrencyFromCents(transaction.amountCents)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <Suspense fallback={<RecentTransactionsFallback />}>
+          <RecentTransactionsContent range={range} />
+        </Suspense>
       </CardContent>
     </Card>
   );

@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import { AreaChartIcon, BarChart3Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -197,31 +196,28 @@ export function MonthlyTrendChart({ data }: Props) {
   }
 
   return (
-    <Card className="min-w-0">
-      <CardHeader className="flex-row items-center justify-between gap-2">
-        <CardTitle>Monthly trend</CardTitle>
-        {chartData.length > 0 && (
-          <div className="flex gap-1">
-            <Button
-              variant={view === "area" ? "secondary" : "ghost"}
-              size="icon-xs"
-              aria-label="Area chart"
-              onClick={() => setView("area")}
-            >
-              <AreaChartIcon />
-            </Button>
-            <Button
-              variant={view === "bar" ? "secondary" : "ghost"}
-              size="icon-xs"
-              aria-label="Bar chart"
-              onClick={() => setView("bar")}
-            >
-              <BarChart3Icon />
-            </Button>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="min-w-0">{renderChart()}</CardContent>
-    </Card>
+    <div className="min-w-0 space-y-4">
+      {chartData.length > 0 && (
+        <div className="flex justify-end gap-1">
+          <Button
+            variant={view === "area" ? "secondary" : "ghost"}
+            size="icon-xs"
+            aria-label="Area chart"
+            onClick={() => setView("area")}
+          >
+            <AreaChartIcon />
+          </Button>
+          <Button
+            variant={view === "bar" ? "secondary" : "ghost"}
+            size="icon-xs"
+            aria-label="Bar chart"
+            onClick={() => setView("bar")}
+          >
+            <BarChart3Icon />
+          </Button>
+        </div>
+      )}
+      {renderChart()}
+    </div>
   );
 }

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -64,133 +63,128 @@ export function CategoryBreakdownChart({ data }: Props) {
   });
 
   return (
-    <Card className="min-w-0">
-      <CardHeader>
-        <CardTitle>Category breakdown</CardTitle>
-      </CardHeader>
-      <CardContent className="min-w-0">
-        {chartData.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No category data for selected range.
-          </p>
-        ) : (
-          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-            <ChartContainer
-              className="h-52 w-52 shrink-0 aspect-square"
-              config={chartConfig}
-            >
-              <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value, name, item) => {
-                        const numericValue = Array.isArray(value)
-                          ? Number(value[0] ?? 0)
-                          : typeof value === "number"
-                            ? value
-                            : Number(value ?? 0);
-                        const displayLabel =
-                          typeof item.payload?.category === "string"
-                            ? item.payload.category
-                            : name == null
-                              ? "Value"
-                              : String(name);
+    <>
+      {chartData.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          No category data for selected range.
+        </p>
+      ) : (
+        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+          <ChartContainer
+            className="h-52 w-52 shrink-0 aspect-square"
+            config={chartConfig}
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value, name, item) => {
+                      const numericValue = Array.isArray(value)
+                        ? Number(value[0] ?? 0)
+                        : typeof value === "number"
+                          ? value
+                          : Number(value ?? 0);
+                      const displayLabel =
+                        typeof item.payload?.category === "string"
+                          ? item.payload.category
+                          : name == null
+                            ? "Value"
+                            : String(name);
 
-                        return (
-                          <div className="flex min-w-0 items-center justify-between gap-2">
-                            <span className="text-muted-foreground truncate">
-                              {displayLabel}
-                            </span>
-                            <span className="text-foreground font-mono font-medium tabular-nums">
-                              {formatCurrencyFromCents(numericValue)}
-                            </span>
-                          </div>
-                        );
-                      }}
-                      nameKey="colorKey"
-                      indicator="dot"
-                    />
-                  }
-                />
-                <Pie
-                  data={chartData}
-                  dataKey="totalCents"
-                  nameKey="colorKey"
-                  innerRadius={48}
-                  outerRadius={80}
-                  stroke="var(--background)"
-                >
-                  {chartData.map((entry) => (
-                    <Cell key={entry.category} fill={entry.fill} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-
-            <div className="flex w-full min-w-0 flex-col gap-2">
-              <ul className="space-y-2">
-                {visibleItems.map((item, index) => (
-                  <li key={item.category} className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{
-                          backgroundColor:
-                            BASE_CHART_COLOR_KEYS[
-                              index % BASE_CHART_COLOR_KEYS.length
-                            ],
-                        }}
-                      />
-                      <span className="flex-1 truncate text-sm">
-                        {item.category}
-                      </span>
-                      <span className="text-muted-foreground w-10 shrink-0 text-right text-xs tabular-nums">
-                        {formatPercent(item.percent)}
-                      </span>
-                      <span className="w-16 shrink-0 text-right text-xs font-medium tabular-nums">
-                        {formatCurrencyFromCents(item.totalCents)}
-                      </span>
-                    </div>
-                    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${(item.percent * 100).toFixed(1)}%`,
-                          backgroundColor:
-                            BASE_CHART_COLOR_KEYS[
-                              index % BASE_CHART_COLOR_KEYS.length
-                            ],
-                        }}
-                      />
-                    </div>
-                  </li>
+                      return (
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="text-muted-foreground truncate">
+                            {displayLabel}
+                          </span>
+                          <span className="text-foreground font-mono font-medium tabular-nums">
+                            {formatCurrencyFromCents(numericValue)}
+                          </span>
+                        </div>
+                      );
+                    }}
+                    nameKey="colorKey"
+                    indicator="dot"
+                  />
+                }
+              />
+              <Pie
+                data={chartData}
+                dataKey="totalCents"
+                nameKey="colorKey"
+                innerRadius={48}
+                outerRadius={80}
+                stroke="var(--background)"
+              >
+                {chartData.map((entry) => (
+                  <Cell key={entry.category} fill={entry.fill} />
                 ))}
-              </ul>
-              {hiddenCount > 0 && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setExpanded(true)}
-                  className="text-muted-foreground hover:text-foreground h-auto p-0 text-left"
-                >
-                  Show the rest
-                </Button>
-              )}
-              {expanded && chartData.length > INITIAL_VISIBLE_COUNT && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setExpanded(false)}
-                  className="text-muted-foreground hover:text-foreground h-auto p-0 text-left"
-                >
-                  Hide
-                </Button>
-              )}
-            </div>
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+
+          <div className="flex w-full min-w-0 flex-col gap-2">
+            <ul className="space-y-2">
+              {visibleItems.map((item, index) => (
+                <li key={item.category} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{
+                        backgroundColor:
+                          BASE_CHART_COLOR_KEYS[
+                            index % BASE_CHART_COLOR_KEYS.length
+                          ],
+                      }}
+                    />
+                    <span className="flex-1 truncate text-sm">
+                      {item.category}
+                    </span>
+                    <span className="text-muted-foreground w-10 shrink-0 text-right text-xs tabular-nums">
+                      {formatPercent(item.percent)}
+                    </span>
+                    <span className="w-16 shrink-0 text-right text-xs font-medium tabular-nums">
+                      {formatCurrencyFromCents(item.totalCents)}
+                    </span>
+                  </div>
+                  <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${(item.percent * 100).toFixed(1)}%`,
+                        backgroundColor:
+                          BASE_CHART_COLOR_KEYS[
+                            index % BASE_CHART_COLOR_KEYS.length
+                          ],
+                      }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {hiddenCount > 0 && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setExpanded(true)}
+                className="text-muted-foreground hover:text-foreground h-auto p-0 text-left"
+              >
+                Show the rest
+              </Button>
+            )}
+            {expanded && chartData.length > INITIAL_VISIBLE_COUNT && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setExpanded(false)}
+                className="text-muted-foreground hover:text-foreground h-auto p-0 text-left"
+              >
+                Hide
+              </Button>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </>
   );
 }
