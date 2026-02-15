@@ -1,9 +1,5 @@
-import { config } from "dotenv";
+import 'dotenv/config';
 import { defineConfig } from "drizzle-kit";
-
-// Load .env.local (Next.js convention) then .env
-config({ path: ".env.local" });
-config({ path: ".env" });
 
 const dbUrl = process.env.DB_URL;
 if (!dbUrl) throw new Error("DB_URL is required. Set it in .env or .env.local");
