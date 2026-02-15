@@ -18,7 +18,7 @@ const initialState: ImportPostResult | null = null;
 export function ImportUploadForm() {
   const [state, formAction, isPending] = useActionState(
     uploadImportAction,
-    initialState,
+    initialState
   );
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,8 +38,8 @@ export function ImportUploadForm() {
         <CardHeader>
           <CardTitle>Import CSV</CardTitle>
           <CardDescription>
-            CSV only, UTF-8 text, date in MM-DD-YYYY, positive amounts with
-            optional `$` and commas.
+            Upload CSV with exact headers: `date,vendor,amount,category` with date
+            in MM-DD-YYYY
           </CardDescription>
         </CardHeader>
         <CardContent>

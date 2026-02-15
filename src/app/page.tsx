@@ -25,9 +25,6 @@ export default async function Page({ searchParams }: PageProps) {
         <h1 className="text-2xl font-semibold tracking-tight">
           Expense Dashboard
         </h1>
-        <p className="text-muted-foreground">
-          Single-user CAD expense analytics
-        </p>
       </header>
 
       <DateRangeFilter range={range} />
