@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
@@ -15,6 +17,8 @@ export type CategoryChartItem = DashboardCategoryBreakdownItem & {
   colorKey: string;
   fill: string;
 };
+
+const INITIAL_VISIBLE_COUNT = 5;
 
 const BASE_CHART_COLOR_KEYS = [
   "var(--chart-1)",
@@ -44,7 +48,13 @@ export function getTopCategoryShare(data: DashboardCategoryBreakdownItem[]) {
 }
 
 export function CategoryBreakdownChart({ data }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const chartData = toCategoryChartData(data);
+  const visibleItems = chartData.slice(
+    0,
+    expanded ? chartData.length : INITIAL_VISIBLE_COUNT,
+  );
+  const hiddenCount = chartData.length - visibleItems.length;
   const chartConfig: ChartConfig = {};
   chartData.forEach((item, index) => {
     chartConfig[item.colorKey] = {
@@ -118,44 +128,66 @@ export function CategoryBreakdownChart({ data }: Props) {
               </PieChart>
             </ChartContainer>
 
-            <ul className="w-full min-w-0 space-y-2">
-              {chartData.map((item, index) => (
-                <li key={item.category} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{
-                        backgroundColor:
-                          BASE_CHART_COLOR_KEYS[
-                            index % BASE_CHART_COLOR_KEYS.length
-                          ],
-                      }}
-                    />
-                    <span className="flex-1 truncate text-sm">
-                      {item.category}
-                    </span>
-                    <span className="text-muted-foreground w-10 shrink-0 text-right text-xs tabular-nums">
-                      {formatPercent(item.percent)}
-                    </span>
-                    <span className="w-16 shrink-0 text-right text-xs font-medium tabular-nums">
-                      {formatCurrencyFromCents(item.totalCents)}
-                    </span>
-                  </div>
-                  <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${(item.percent * 100).toFixed(1)}%`,
-                        backgroundColor:
-                          BASE_CHART_COLOR_KEYS[
-                            index % BASE_CHART_COLOR_KEYS.length
-                          ],
-                      }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="flex w-full min-w-0 flex-col gap-2">
+              <ul className="space-y-2">
+                {visibleItems.map((item, index) => (
+                  <li key={item.category} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor:
+                            BASE_CHART_COLOR_KEYS[
+                              index % BASE_CHART_COLOR_KEYS.length
+                            ],
+                        }}
+                      />
+                      <span className="flex-1 truncate text-sm">
+                        {item.category}
+                      </span>
+                      <span className="text-muted-foreground w-10 shrink-0 text-right text-xs tabular-nums">
+                        {formatPercent(item.percent)}
+                      </span>
+                      <span className="w-16 shrink-0 text-right text-xs font-medium tabular-nums">
+                        {formatCurrencyFromCents(item.totalCents)}
+                      </span>
+                    </div>
+                    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${(item.percent * 100).toFixed(1)}%`,
+                          backgroundColor:
+                            BASE_CHART_COLOR_KEYS[
+                              index % BASE_CHART_COLOR_KEYS.length
+                            ],
+                        }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {hiddenCount > 0 && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setExpanded(true)}
+                  className="text-muted-foreground hover:text-foreground h-auto p-0 text-left"
+                >
+                  Show the rest
+                </Button>
+              )}
+              {expanded && chartData.length > INITIAL_VISIBLE_COUNT && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setExpanded(false)}
+                  className="text-muted-foreground hover:text-foreground h-auto p-0 text-left"
+                >
+                  Hide
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
