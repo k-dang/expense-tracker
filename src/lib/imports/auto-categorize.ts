@@ -45,13 +45,7 @@ const KEYWORD_CATEGORIES: { keywords: string[]; category: string }[] = [
     category: "Transport",
   },
   {
-    keywords: [
-      "amazon",
-      "best buy",
-      "canadian tire",
-      "shoppers",
-      "dollarama",
-    ],
+    keywords: ["amazon", "best buy", "canadian tire", "shoppers", "dollarama"],
     category: "Shopping",
   },
   {

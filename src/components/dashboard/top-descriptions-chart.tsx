@@ -23,9 +23,7 @@ type Props = {
 
 export function TopDescriptionsChart({ data }: Props) {
   return data.length === 0 ? (
-    <p className="text-muted-foreground text-sm">
-      No data for selected range.
-    </p>
+    <p className="text-muted-foreground text-sm">No data for selected range.</p>
   ) : (
     <ChartContainer
       className="h-full w-full min-w-0 aspect-auto"

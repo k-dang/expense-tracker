@@ -98,7 +98,9 @@ describe("csv-utils", () => {
   });
 
   it("decodes UTF-8 bytes and reports decode failures", () => {
-    const decoded = decodeCsvBytes(new TextEncoder().encode("date,description"));
+    const decoded = decodeCsvBytes(
+      new TextEncoder().encode("date,description"),
+    );
     expect(decoded.ok).toBe(true);
 
     const invalidUtf8 = new Uint8Array([0xc3, 0x28]);
