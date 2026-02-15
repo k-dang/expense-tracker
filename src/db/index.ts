@@ -2,7 +2,9 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 function getDbUrl() {
-  return process.env.DB_URL ?? "file:mydb.sqlite";
+  const url = process.env.DB_URL;
+  if (!url) throw new Error("DB_URL is required. Set it in .env");
+  return url;
 }
 
 function getDbAuthToken(dbUrl: string) {

@@ -16,12 +16,7 @@ The app imports CSV files, deduplicates transactions across uploads, and renders
 bun install
 ```
 
-2. Create `.env` at the project root:
-
-```bash
-DB_URL=file:mydb.sqlite
-DB_AUTH_TOKEN= # only required for remote Turso/libSQL URLs
-```
+2. Copy `.env.example` to `.env` and set `DB_URL` (and `DB_AUTH_TOKEN` only for remote Turso/libSQL).
 
 3. Run DB migrations:
 
@@ -39,7 +34,7 @@ Open `http://localhost:3000`.
 
 ## Environment Profiles
 
-- Local development: `DB_URL=file:mydb.sqlite`
+- Local development: use a `file:` URL in `DB_URL` (e.g. `file:./mydb.sqlite`)
 - Production (Turso/libSQL):
 
 ```bash
