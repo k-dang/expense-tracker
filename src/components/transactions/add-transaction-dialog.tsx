@@ -19,8 +19,7 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { CategoryPicker } from "@/components/transactions/category-picker";
-import { CategoryBadge } from "@/components/category-badge";
+import { CategoryFieldPicker } from "@/components/transactions/category-field-picker";
 import { formatIsoDate } from "@/lib/date/utils";
 import {
   createTransactionAction,
@@ -34,7 +33,6 @@ type Props = {
 export function AddTransactionDialog({ categories }: Props) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const [state, formAction, pending] = useActionState<
@@ -55,10 +53,7 @@ export function AddTransactionDialog({ categories }: Props) {
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) {
-          setCategory("");
-          setShowCategoryPicker(false);
-        }
+        if (!nextOpen) setCategory("");
       }}
     >
       <Button
@@ -126,34 +121,11 @@ export function AddTransactionDialog({ categories }: Props) {
           <Field>
             <FieldLabel>Category</FieldLabel>
             <input type="hidden" name="category" value={category} />
-            <div className="relative">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 w-full justify-start gap-2 font-normal"
-                onClick={() => setShowCategoryPicker(!showCategoryPicker)}
-              >
-                {category ? (
-                  <CategoryBadge category={category} />
-                ) : (
-                  <span className="text-muted-foreground">Select...</span>
-                )}
-              </Button>
-              {showCategoryPicker && (
-                <div className="absolute left-0 top-full z-10 mt-1">
-                  <CategoryPicker
-                    categories={categories}
-                    currentCategory={category}
-                    onSelect={(cat) => {
-                      setCategory(cat);
-                      setShowCategoryPicker(false);
-                    }}
-                    onClose={() => setShowCategoryPicker(false)}
-                  />
-                </div>
-              )}
-            </div>
+            <CategoryFieldPicker
+              categories={categories}
+              value={category}
+              onValueChange={setCategory}
+            />
             {state?.errors?.category && (
               <FieldError>{state.errors.category}</FieldError>
             )}
