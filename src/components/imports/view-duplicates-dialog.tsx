@@ -9,6 +9,7 @@ import type { ImportDuplicateItem } from "@/db/queries/imports";
 import { formatCurrencyFromCents } from "@/lib/format";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogFooter,
@@ -17,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -114,10 +116,13 @@ export function ViewDuplicatesDialog({ importId, duplicateCount }: Props) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={allSelected}
-                      onChange={toggleAll}
+                      indeterminate={
+                        selected.size > 0 && selected.size < duplicates.length
+                      }
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all"
                     />
                   </TableHead>
                   <TableHead>Date</TableHead>
@@ -131,10 +136,10 @@ export function ViewDuplicatesDialog({ importId, duplicateCount }: Props) {
                 {duplicates.map((dup) => (
                   <TableRow key={dup.id}>
                     <TableCell>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selected.has(dup.id)}
-                        onChange={() => toggleOne(dup.id)}
+                        onCheckedChange={() => toggleOne(dup.id)}
+                        aria-label="Select row"
                       />
                     </TableCell>
                     <TableCell>{dup.txnDate}</TableCell>
@@ -159,14 +164,14 @@ export function ViewDuplicatesDialog({ importId, duplicateCount }: Props) {
 
         <AlertDialogFooter>
           <AlertDialogCancel>Close</AlertDialogCancel>
-          <Button
+          <AlertDialogAction
             onClick={handleImportSelected}
             disabled={selected.size === 0 || submitting}
           >
             {submitting
               ? "Importing..."
               : `Import Selected${selected.size > 0 ? ` (${selected.size})` : ""}`}
-          </Button>
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

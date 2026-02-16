@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { CategoryBadge } from "@/components/category-badge";
 import { getDashboardRecentTransactions } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
 import { formatIsoDateLabel } from "@/lib/date/utils";
@@ -45,7 +45,7 @@ export async function RecentTransactionsContent({ range }: Props) {
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>
-                <Badge variant="secondary">{transaction.category}</Badge>
+                <CategoryBadge category={transaction.category} />
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
                 {formatCurrencyFromCents(transaction.amountCents)}
