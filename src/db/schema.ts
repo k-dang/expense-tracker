@@ -53,3 +53,15 @@ export type ImportDuplicateRow = typeof importDuplicatesTable.$inferSelect;
 export type NewImportDuplicateRow = typeof importDuplicatesTable.$inferInsert;
 
 export type ImportStatus = ImportRow["status"];
+
+export const categoryRulesTable = sqliteTable("category_rules", {
+  id: text("id").primaryKey(),
+  descriptionPattern: text("description_pattern").notNull().unique(),
+  category: text("category").notNull(),
+  createdAt: integer("created_at")
+    .notNull()
+    .$defaultFn(() => Date.now()),
+});
+
+export type CategoryRuleRow = typeof categoryRulesTable.$inferSelect;
+export type NewCategoryRuleRow = typeof categoryRulesTable.$inferInsert;
