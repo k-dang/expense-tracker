@@ -7,6 +7,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ReferenceLine,
   XAxis,
   YAxis,
 } from "recharts";
@@ -21,10 +22,16 @@ import {
 import type { DashboardMonthlyTrendItem } from "@/db/queries/dashboard";
 import { formatMonthLabel, formatShortMonthLabel } from "@/lib/date/utils";
 
+const MONTHLY_TARGET_DOLLARS = 2000;
+
 const MONTHLY_TREND_CHART_CONFIG = {
   totalDollars: {
     label: "Monthly spend",
     color: "var(--chart-1)",
+  },
+  target: {
+    label: "Target",
+    color: "var(--chart-2)",
   },
 } satisfies ChartConfig;
 
@@ -134,6 +141,12 @@ export function MonthlyTrendChart({ data }: Props) {
                 />
               }
             />
+            <ReferenceLine
+              y={MONTHLY_TARGET_DOLLARS}
+              stroke="var(--chart-2)"
+              strokeDasharray="6 4"
+              label={{ value: dollarsFormatter.format(MONTHLY_TARGET_DOLLARS), position: "middle", fill: "var(--muted-foreground)" }}
+            />
             <Area
               dataKey="totalDollars"
               type="monotone"
@@ -184,6 +197,12 @@ export function MonthlyTrendChart({ data }: Props) {
                 indicator="line"
               />
             }
+          />
+          <ReferenceLine
+            y={MONTHLY_TARGET_DOLLARS}
+            stroke="var(--chart-2)"
+            strokeDasharray="6 4"
+            label={{ value: "Target", position: "right", fill: "var(--muted-foreground)" }}
           />
           <Bar
             dataKey="totalDollars"
