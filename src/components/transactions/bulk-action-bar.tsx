@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CategoryPicker } from "@/components/transactions/category-picker";
-import { X, Tag } from "lucide-react";
+import { X, Tag, Trash2 } from "lucide-react";
 
 type Props = {
   selectedCount: number;
   categories: string[];
   isApplying?: boolean;
   onBulkCategoryChange: (newCategory: string) => void;
+  onBulkDelete: () => void;
   onClearSelection: () => void;
 };
 
@@ -18,6 +19,7 @@ export function BulkActionBar({
   categories,
   isApplying,
   onBulkCategoryChange,
+  onBulkDelete,
   onClearSelection,
 }: Props) {
   const [showPicker, setShowPicker] = useState(false);
@@ -55,6 +57,16 @@ export function BulkActionBar({
           </div>
         )}
       </div>
+
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onBulkDelete}
+        className="gap-1.5"
+      >
+        <Trash2 className="size-3.5" />
+        Delete
+      </Button>
 
       <Button
         variant="ghost"

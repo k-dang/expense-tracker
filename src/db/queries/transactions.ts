@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
 import { and, count, desc, asc, eq, inArray, like, sql } from "drizzle-orm";
 import { db } from "@/db";
@@ -143,4 +144,32 @@ export async function countTransactionsByDescription(description: string) {
     .where(eq(sql`lower(${transactionsTable.description})`, normalized));
 
   return Number(rows[0]?.count ?? 0);
+}
+
+export async function createTransaction(input: {
+  txnDate: string;
+  description: string;
+  amountCents: number;
+  category: string;
+}) {
+  const id = randomUUID();
+  await db.insert(transactionsTable).values({
+    id,
+    txnDate: input.txnDate,
+    description: input.description,
+    amountCents: input.amountCents,
+    category: input.category,
+    currency: "CAD",
+    fingerprint: randomUUID(),
+    importId: null,
+  });
+  return id;
+}
+
+export async function deleteTransactions(txnIds: string[]) {
+  if (txnIds.length === 0) return 0;
+  const result = await db
+    .delete(transactionsTable)
+    .where(inArray(transactionsTable.id, txnIds));
+  return result.rowsAffected;
 }

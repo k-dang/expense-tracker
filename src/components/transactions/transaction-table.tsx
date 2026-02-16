@@ -17,13 +17,14 @@ import { CategoryPicker } from "@/components/transactions/category-picker";
 import { BulkActionBar } from "@/components/transactions/bulk-action-bar";
 import { LearnRuleDialog } from "@/components/transactions/learn-rule-dialog";
 import { BulkLearnRuleDialog } from "@/components/transactions/bulk-learn-rule-dialog";
+import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 import { bulkUpdateCategoryAction } from "@/lib/actions/transactions";
 import type { TransactionListItem } from "@/db/queries/transactions";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
 
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 type Props = {
   transactions: TransactionListItem[];
@@ -60,6 +61,7 @@ export function TransactionTable({
   const [learnRule, setLearnRule] = useState<LearnRuleState>(null);
   const [bulkLearnRule, setBulkLearnRule] = useState<BulkLearnRuleState>(null);
   const [isBulkApplying, setIsBulkApplying] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -148,7 +150,7 @@ export function TransactionTable({
       <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-sm">
         <p>No transactions found.</p>
         <p className="text-xs">
-          Try adjusting your filters or import some transactions.
+          Try adjusting your filters, import a CSV, or add a transaction manually.
         </p>
       </div>
     );
@@ -178,6 +180,7 @@ export function TransactionTable({
               <TableHead>Description</TableHead>
               <TableHead className="w-48">Category</TableHead>
               <TableHead className="w-28 text-right">Amount</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -235,6 +238,16 @@ export function TransactionTable({
                   <TableCell className="text-right font-mono text-sm tabular-nums">
                     {formatCurrencyFromCents(txn.amountCents)}
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-muted-foreground hover:text-destructive opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={() => setDeleteTarget([txn.id])}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -275,6 +288,7 @@ export function TransactionTable({
           categories={categories}
           isApplying={isBulkApplying}
           onBulkCategoryChange={handleBulkCategoryChange}
+          onBulkDelete={() => setDeleteTarget([...selectedIds])}
           onClearSelection={clearSelection}
         />
       )}
@@ -295,6 +309,21 @@ export function TransactionTable({
           descriptions={bulkLearnRule.descriptions}
           newCategory={bulkLearnRule.newCategory}
           onClose={() => setBulkLearnRule(null)}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteTransactionDialog
+          txnIds={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => {
+            setSelectedIds((prev) => {
+              const next = new Set(prev);
+              for (const id of deleteTarget) next.delete(id);
+              return next;
+            });
+            setDeleteTarget(null);
+          }}
         />
       )}
     </>

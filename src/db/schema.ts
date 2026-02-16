@@ -21,9 +21,7 @@ export const transactionsTable = sqliteTable("transactions", {
   category: text("category").notNull(),
   currency: text("currency").notNull().default("CAD"),
   fingerprint: text("fingerprint").notNull().unique(),
-  importId: text("import_id")
-    .notNull()
-    .references(() => importsTable.id),
+  importId: text("import_id").references(() => importsTable.id),
   createdAt: integer("created_at")
     .notNull()
     .$defaultFn(() => Date.now()),
