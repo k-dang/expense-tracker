@@ -7,6 +7,8 @@ import {
   importsTable,
   transactionsTable,
 } from "@/db/schema";
+import { findCategoryRule } from "@/db/queries/category-rules";
+import { categorize } from "@/lib/imports/auto-categorize";
 import { processImportFileInput } from "@/lib/imports/process-import-file";
 import type { ImportDeleteResult, ImportFileResult } from "@/lib/types/api";
 
@@ -56,7 +58,15 @@ export async function processImportFile(options: {
 
   const importId = randomUUID();
 
-  // Collect all fingerprints and query existing ones in batches
+  for (const row of processed.rows) {
+    const ruleCategory =
+      (await findCategoryRule(row.description)) ?? categorize(row.description);
+    if (ruleCategory !== row.category) {
+      row.category = ruleCategory;
+      row.categoryDedup = ruleCategory.toLowerCase();
+    }
+  }
+
   const allFingerprints = processed.rows.map((r) => r.fingerprint);
   const existingFingerprints = new Set<string>();
   const BATCH_SIZE = 500;
@@ -69,7 +79,6 @@ export async function processImportFile(options: {
     for (const r of rows) existingFingerprints.add(r.fingerprint);
   }
 
-  // Partition rows into inserts vs duplicates
   const seenInFile = new Set<string>();
   const rowsToInsert: typeof processed.rows = [];
   const duplicateRows: {
@@ -215,7 +224,6 @@ export async function importSelectedDuplicates(options: {
   if (duplicateIds.length === 0) return 0;
 
   return db.transaction(async (tx) => {
-    // Fetch selected duplicate rows
     const rows = await tx
       .select()
       .from(importDuplicatesTable)
@@ -223,7 +231,6 @@ export async function importSelectedDuplicates(options: {
 
     if (rows.length === 0) return 0;
 
-    // Insert into transactions with unique fingerprints
     await tx.insert(transactionsTable).values(
       rows.map((row) => ({
         id: randomUUID(),
@@ -237,12 +244,10 @@ export async function importSelectedDuplicates(options: {
       })),
     );
 
-    // Delete from duplicates table
     await tx
       .delete(importDuplicatesTable)
       .where(inArray(importDuplicatesTable.id, duplicateIds));
 
-    // Update import counters
     const current = await tx
       .select({
         rowCountInserted: importsTable.rowCountInserted,
