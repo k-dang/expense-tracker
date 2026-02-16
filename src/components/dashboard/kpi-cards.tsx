@@ -81,3 +81,21 @@ export async function KpiCards({ range }: Props) {
     </section>
   );
 }
+
+export function KpiCardsFallback() {
+  return (
+    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }, (_, i) => (
+        <Card key={i}>
+          <CardHeader className="flex-row items-center gap-3">
+            <div className="bg-muted size-8 animate-pulse rounded-md" />
+            <div className="min-w-0 space-y-2">
+              <div className="bg-muted h-4 w-24 animate-pulse rounded" />
+              <div className="bg-muted h-8 w-32 animate-pulse rounded" />
+            </div>
+          </CardHeader>
+        </Card>
+      ))}
+    </section>
+  );
+}
