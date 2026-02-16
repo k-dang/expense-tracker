@@ -37,6 +37,24 @@ export async function applyCategoryRuleAction(
   }
 }
 
+export async function bulkApplyCategoryRulesAction(
+  descriptionPatterns: string[],
+  newCategory: string,
+  applyToExisting: boolean,
+) {
+  for (const pattern of descriptionPatterns) {
+    await upsertCategoryRule(pattern, newCategory);
+  }
+  updateTag("category-rules");
+
+  if (applyToExisting) {
+    for (const pattern of descriptionPatterns) {
+      await applyRuleToMatchingTransactions(pattern, newCategory);
+    }
+    updateTag("transactions");
+  }
+}
+
 export async function countMatchingTransactionsAction(
   description: string,
 ): Promise<number> {

@@ -16,6 +16,8 @@ import { CategoryBadge } from "@/components/category-badge";
 import { CategoryPicker } from "@/components/transactions/category-picker";
 import { BulkActionBar } from "@/components/transactions/bulk-action-bar";
 import { LearnRuleDialog } from "@/components/transactions/learn-rule-dialog";
+import { BulkLearnRuleDialog } from "@/components/transactions/bulk-learn-rule-dialog";
+import { bulkUpdateCategoryAction } from "@/lib/actions/transactions";
 import type { TransactionListItem } from "@/db/queries/transactions";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
@@ -38,6 +40,11 @@ type LearnRuleState = {
   newCategory: string;
 } | null;
 
+type BulkLearnRuleState = {
+  descriptions: string[];
+  newCategory: string;
+} | null;
+
 export function TransactionTable({
   transactions,
   totalCount,
@@ -51,6 +58,8 @@ export function TransactionTable({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [learnRule, setLearnRule] = useState<LearnRuleState>(null);
+  const [bulkLearnRule, setBulkLearnRule] = useState<BulkLearnRuleState>(null);
+  const [isBulkApplying, setIsBulkApplying] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -95,6 +104,30 @@ export function TransactionTable({
       });
     },
     [transactions]
+  );
+
+  const handleBulkCategoryChange = useCallback(
+    async (newCategory: string) => {
+      const ids = [...selectedIds];
+      setIsBulkApplying(true);
+      try {
+        await bulkUpdateCategoryAction(ids, newCategory);
+
+        const uniqueDescriptions = [
+          ...new Set(
+            transactions
+              .filter((t) => selectedIds.has(t.id))
+              .map((t) => t.description.toLowerCase())
+          ),
+        ];
+
+        setSelectedIds(new Set());
+        setBulkLearnRule({ descriptions: uniqueDescriptions, newCategory });
+      } finally {
+        setIsBulkApplying(false);
+      }
+    },
+    [selectedIds, transactions],
   );
 
   const navigateToPage = useCallback(
@@ -239,8 +272,9 @@ export function TransactionTable({
       {selectedIds.size > 0 && (
         <BulkActionBar
           selectedCount={selectedIds.size}
-          selectedIds={[...selectedIds]}
           categories={categories}
+          isApplying={isBulkApplying}
+          onBulkCategoryChange={handleBulkCategoryChange}
           onClearSelection={clearSelection}
         />
       )}
@@ -253,6 +287,14 @@ export function TransactionTable({
           newCategory={learnRule.newCategory}
           onCancel={() => setLearnRule(null)}
           onClose={() => setLearnRule(null)}
+        />
+      )}
+
+      {bulkLearnRule && (
+        <BulkLearnRuleDialog
+          descriptions={bulkLearnRule.descriptions}
+          newCategory={bulkLearnRule.newCategory}
+          onClose={() => setBulkLearnRule(null)}
         />
       )}
     </>
