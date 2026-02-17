@@ -79,20 +79,10 @@ const deleteTransactionsSchema = z
   .object({ txnIds: z.array(z.string().trim()) })
   .refine((data) => data.txnIds.length > 0, "No transactions selected.");
 
-function zodErrorsToRecord(error: z.ZodError): Record<string, string> {
-  const record: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const path = issue.path.join(".");
-    if (path && issue.message) record[path] = issue.message;
-  }
-  return record;
-}
-
 export async function updateCategoryAction(txnId: string, newCategory: string) {
   const parsed = updateCategorySchema.safeParse({ txnId, newCategory });
   if (!parsed.success) return;
-  const { txnId: id, newCategory: cat } = parsed.data;
-  await updateTransactionCategory(id, cat);
+  await updateTransactionCategory(parsed.data.txnId, parsed.data.newCategory);
   updateTag("transactions");
 }
 
@@ -102,8 +92,7 @@ export async function bulkUpdateCategoryAction(
 ) {
   const parsed = bulkUpdateCategorySchema.safeParse({ txnIds, newCategory });
   if (!parsed.success) return;
-  const { txnIds: ids, newCategory: cat } = parsed.data;
-  await bulkUpdateTransactionCategories(ids, cat);
+  await bulkUpdateTransactionCategories(parsed.data.txnIds, parsed.data.newCategory);
   updateTag("transactions");
 }
 
@@ -194,7 +183,12 @@ export async function createTransactionAction(
 
   const result = createTransactionSchema.safeParse(input);
   if (!result.success) {
-    return { status: "error", errors: zodErrorsToRecord(result.error) };
+    const errors: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const path = issue.path.join(".");
+      if (path && issue.message) errors[path] = issue.message;
+    }
+    return { status: "error", errors };
   }
 
   const { date, description, amountCents, category } = result.data;

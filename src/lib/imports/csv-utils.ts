@@ -17,21 +17,6 @@ const CSV_MIME_TYPES = new Set([
   "application/vnd.ms-excel",
 ]);
 
-function mapPapaParseError(error: Papa.ParseError): ImportError {
-  const rowNumber =
-    typeof error.row === "number"
-      ? error.type === "FieldMismatch"
-        ? error.row + 2
-        : error.row + 1
-      : 1;
-
-  return {
-    row: rowNumber,
-    field: "file",
-    message: `CSV parse error [${error.code}]: ${error.message}`,
-  };
-}
-
 function normalizeHeader(header: string): string {
   return header.trim().toLowerCase();
 }
@@ -103,7 +88,18 @@ export function parseCsvText(csvText: string): ParsedCsv | ImportError {
   });
 
   if (parseResult.errors.length > 0) {
-    return mapPapaParseError(parseResult.errors[0]);
+    const error = parseResult.errors[0];
+    const rowNumber =
+      typeof error.row === "number"
+        ? error.type === "FieldMismatch"
+          ? error.row + 2
+          : error.row + 1
+        : 1;
+    return {
+      row: rowNumber,
+      field: "file",
+      message: `CSV parse error [${error.code}]: ${error.message}`,
+    };
   }
 
   if (parseResult.data.length === 0) {

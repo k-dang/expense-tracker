@@ -40,7 +40,7 @@ export function TransactionFilters({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [_, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState(currentSearch);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 

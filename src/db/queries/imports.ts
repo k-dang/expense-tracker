@@ -44,10 +44,14 @@ export async function processImportFile(options: {
     bytes: options.bytes,
   });
   if (processed.status === "failed") {
-    await recordFailedImport({
+    await db.insert(importsTable).values({
+      id: randomUUID(),
       filename: options.filename,
-      message: processed.errors[0]?.message ?? "Import failed.",
-      rowCountTotal: processed.rowCountTotal,
+      rowCountTotal: processed.rowCountTotal ?? 0,
+      rowCountInserted: 0,
+      rowCountDuplicates: 0,
+      status: "failed",
+      errorMessage: processed.errors[0]?.message ?? "Import failed.",
     });
     return {
       filename: options.filename,
@@ -81,14 +85,9 @@ export async function processImportFile(options: {
 
   const seenInFile = new Set<string>();
   const rowsToInsert: typeof processed.rows = [];
-  const duplicateRows: {
-    txnDate: string;
-    description: string;
-    amountCents: number;
-    category: string;
-    fingerprint: string;
+  const duplicateRows: ((typeof processed.rows)[number] & {
     reason: "cross_import" | "within_file";
-  }[] = [];
+  })[] = [];
 
   for (const row of processed.rows) {
     if (existingFingerprints.has(row.fingerprint)) {
@@ -273,18 +272,3 @@ export async function importSelectedDuplicates(options: {
   });
 }
 
-async function recordFailedImport(options: {
-  filename: string;
-  message: string;
-  rowCountTotal?: number;
-}) {
-  await db.insert(importsTable).values({
-    id: randomUUID(),
-    filename: options.filename,
-    rowCountTotal: options.rowCountTotal ?? 0,
-    rowCountInserted: 0,
-    rowCountDuplicates: 0,
-    status: "failed",
-    errorMessage: options.message,
-  });
-}

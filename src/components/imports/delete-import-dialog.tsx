@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { deleteImportAction } from "@/lib/actions/imports";
-import type { ImportDeleteResult } from "@/lib/types/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,18 +15,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-const initialState: ImportDeleteResult | null = null;
-
 type Props = {
   importId: string;
 };
 
 export function DeleteImportDialog({ importId }: Props) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState(
-    deleteImportAction,
-    initialState,
-  );
+  const [state, formAction, pending] = useActionState(deleteImportAction, null);
 
   const deleteError =
     state?.status === "failed"

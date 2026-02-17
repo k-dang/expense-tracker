@@ -40,27 +40,6 @@ const fetchDuplicatesSchema = z.object({
   importId: z.string().trim().min(1),
 });
 
-function getBaseResult(
-  overrides?: Partial<ImportPostResult>,
-): ImportPostResult {
-  return {
-    status: "failed",
-    totalFiles: 0,
-    succeededFiles: 0,
-    failedFiles: 0,
-    totalRows: 0,
-    insertedRows: 0,
-    duplicateRows: 0,
-    files: [],
-    errors: [],
-    ...overrides,
-  };
-}
-
-function toUploadError(message: string): ImportPostResult["errors"][number] {
-  return { row: 0, field: "file", message };
-}
-
 export async function uploadImportAction(
   _previousState: ImportPostResult | null,
   formData: FormData,
@@ -72,7 +51,17 @@ export async function uploadImportAction(
   const parsed = uploadFilesSchema.safeParse(uploadedFiles);
   if (!parsed.success) {
     const msg = parsed.error.issues[0]?.message ?? "Invalid file input.";
-    return getBaseResult({ errors: [toUploadError(msg)] });
+    return {
+      status: "failed",
+      totalFiles: 0,
+      succeededFiles: 0,
+      failedFiles: 0,
+      totalRows: 0,
+      insertedRows: 0,
+      duplicateRows: 0,
+      files: [],
+      errors: [{ row: 0, field: "file", message: msg }],
+    };
   }
 
   const fileResults: ImportFileResult[] = [];
@@ -124,7 +113,7 @@ export async function uploadImportAction(
     updateTag("imports");
   }
 
-  return getBaseResult({
+  return {
     status,
     totalFiles: fileResults.length,
     succeededFiles: succeededFiles.length,
@@ -133,7 +122,8 @@ export async function uploadImportAction(
     insertedRows,
     duplicateRows,
     files: fileResults,
-  });
+    errors: [],
+  };
 }
 
 export async function fetchDuplicatesAction(

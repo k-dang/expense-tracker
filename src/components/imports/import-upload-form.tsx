@@ -64,12 +64,10 @@ const statusConfig: Record<
   },
 };
 
-const initialState: ImportPostResult | null = null;
-
 export function ImportUploadForm() {
   const [state, formAction, isPending] = useActionState(
     uploadImportAction,
-    initialState,
+    null,
   );
   const inputRef = useRef<HTMLInputElement>(null);
 
