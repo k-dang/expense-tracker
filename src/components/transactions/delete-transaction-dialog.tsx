@@ -57,9 +57,7 @@ export function DeleteTransactionDialog({ txnIds, onClose, onDeleted }: Props) {
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {error && (
-          <p className="text-destructive text-sm">{error}</p>
-        )}
+        {error && <p className="text-destructive text-sm">{error}</p>}
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>

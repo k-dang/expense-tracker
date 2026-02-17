@@ -96,7 +96,9 @@ export function ViewDuplicatesDialog({ importId, duplicateCount }: Props) {
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={<Button variant="link" size="sm" className="p-0" />}>
+      <AlertDialogTrigger
+        render={<Button variant="link" size="sm" className="p-0" />}
+      >
         {duplicateCount}
       </AlertDialogTrigger>
       <AlertDialogContent size="xl">

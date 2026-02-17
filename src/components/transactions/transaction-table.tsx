@@ -105,7 +105,7 @@ export function TransactionTable({
         newCategory,
       });
     },
-    [transactions]
+    [transactions],
   );
 
   const handleBulkCategoryChange = useCallback(
@@ -119,7 +119,7 @@ export function TransactionTable({
           ...new Set(
             transactions
               .filter((t) => selectedIds.has(t.id))
-              .map((t) => t.description.toLowerCase())
+              .map((t) => t.description.toLowerCase()),
           ),
         ];
 
@@ -142,7 +142,7 @@ export function TransactionTable({
       }
       router.push(`${pathname}?${params.toString()}`);
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
   if (transactions.length === 0) {
@@ -150,7 +150,8 @@ export function TransactionTable({
       <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-sm">
         <p>No transactions found.</p>
         <p className="text-xs">
-          Try adjusting your filters, import a CSV, or add a transaction manually.
+          Try adjusting your filters, import a CSV, or add a transaction
+          manually.
         </p>
       </div>
     );
@@ -194,7 +195,7 @@ export function TransactionTable({
                   className={cn(
                     "group",
                     isSelected && "bg-primary/5",
-                    isUncategorized && "border-l-2 border-l-amber-500/40"
+                    isUncategorized && "border-l-2 border-l-amber-500/40",
                   )}
                 >
                   <TableCell>

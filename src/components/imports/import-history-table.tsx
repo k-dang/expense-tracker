@@ -56,3 +56,33 @@ export async function ImportHistoryTable() {
     </Table>
   );
 }
+
+export function ImportHistoryTableSkeleton() {
+  return (
+    <Table className="min-w-[700px]">
+      <TableHeader>
+        <TableRow className="text-muted-foreground hover:bg-transparent">
+          <TableHead>Uploaded</TableHead>
+          <TableHead>File</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Total</TableHead>
+          <TableHead>Inserted</TableHead>
+          <TableHead>Duplicates</TableHead>
+          <TableHead>Error</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <TableRow key={i}>
+            {Array.from({ length: 8 }).map((_, j) => (
+              <TableCell key={j}>
+                <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}

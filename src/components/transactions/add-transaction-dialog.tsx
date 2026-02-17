@@ -132,7 +132,9 @@ export function AddTransactionDialog({ categories }: Props) {
           </Field>
 
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" disabled={pending} />}>
+            <DialogClose
+              render={<Button variant="outline" disabled={pending} />}
+            >
               Cancel
             </DialogClose>
             <Button type="submit" disabled={pending}>

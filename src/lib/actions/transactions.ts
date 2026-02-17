@@ -132,6 +132,9 @@ export async function deleteTransactionsAction(txnIds: string[]) {
     updateTag("transactions");
     return { status: "success" as const, deletedCount };
   } catch {
-    return { status: "error" as const, error: "Failed to delete transactions." };
+    return {
+      status: "error" as const,
+      error: "Failed to delete transactions.",
+    };
   }
 }

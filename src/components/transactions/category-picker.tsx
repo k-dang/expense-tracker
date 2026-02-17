@@ -33,7 +33,7 @@ export function CategoryPicker({
 
   const filtered = search
     ? allCategories.filter((c) =>
-        c.toLowerCase().includes(search.toLowerCase())
+        c.toLowerCase().includes(search.toLowerCase()),
       )
     : allCategories;
 
@@ -72,7 +72,7 @@ export function CategoryPicker({
               <span
                 className={cn(
                   "inline-block size-2 shrink-0 rounded-full border",
-                  getCategoryColor(cat)
+                  getCategoryColor(cat),
                 )}
               />
               <span className="truncate">{cat}</span>

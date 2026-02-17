@@ -1,8 +1,10 @@
 import { Suspense } from "react";
-import { ImportHistoryTable } from "@/components/imports/import-history-table";
+import {
+  ImportHistoryTable,
+  ImportHistoryTableSkeleton,
+} from "@/components/imports/import-history-table";
 import { ImportUploadForm } from "@/components/imports/import-upload-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 
 export default function ImportsPage() {
   return (
@@ -18,13 +20,7 @@ export default function ImportsPage() {
           <CardTitle>Import history</CardTitle>
         </CardHeader>
         <CardContent>
-          <Suspense
-            fallback={
-              <div className="flex justify-center items-center">
-                <Spinner className="size-8" />
-              </div>
-            }
-          >
+          <Suspense fallback={<ImportHistoryTableSkeleton />}>
             <ImportHistoryTable />
           </Suspense>
         </CardContent>
