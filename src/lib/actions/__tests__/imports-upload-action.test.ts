@@ -10,14 +10,29 @@ vi.mock("next/cache", () => ({
   updateTag: updateTagMock,
 }));
 
-vi.mock("@/db/queries/imports", () => ({
-  processImportFile: processImportFileMock,
-  deleteImportById: vi.fn(),
-  importSelectedDuplicates: vi.fn(),
-  listDuplicatesByImportId: vi.fn(),
+const {
+  importSelectedDuplicatesMock,
+  deleteImportByIdMock,
+  listDuplicatesByImportIdMock,
+} = vi.hoisted(() => ({
+  importSelectedDuplicatesMock: vi.fn(),
+  deleteImportByIdMock: vi.fn(),
+  listDuplicatesByImportIdMock: vi.fn(),
 }));
 
-import { uploadImportAction } from "@/lib/actions/imports";
+vi.mock("@/db/queries/imports", () => ({
+  processImportFile: processImportFileMock,
+  deleteImportById: deleteImportByIdMock,
+  importSelectedDuplicates: importSelectedDuplicatesMock,
+  listDuplicatesByImportId: listDuplicatesByImportIdMock,
+}));
+
+import {
+  uploadImportAction,
+  importDuplicatesAction,
+  deleteImportAction,
+  fetchDuplicatesAction,
+} from "@/lib/actions/imports";
 
 function makeCsvFile(name: string) {
   return new File(["date,description,amount\n01-01-2025,Coffee,3.50"], name, {
@@ -142,5 +157,112 @@ describe("uploadImportAction", () => {
     expect(result.totalFiles).toBe(0);
     expect(result.errors[0]?.message).toContain("up to 10");
     expect(processImportFileMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("importDuplicatesAction", () => {
+  beforeEach(() => {
+    updateTagMock.mockReset();
+    importSelectedDuplicatesMock.mockReset();
+  });
+
+  it("returns succeeded when importId and duplicateIds are valid", async () => {
+    importSelectedDuplicatesMock.mockResolvedValue(3);
+
+    const result = await importDuplicatesAction("imp-1", [
+      "dup-1",
+      "dup-2",
+      "dup-3",
+    ]);
+
+    expect(result).toEqual({ status: "succeeded", importedCount: 3 });
+    expect(importSelectedDuplicatesMock).toHaveBeenCalledWith({
+      importId: "imp-1",
+      duplicateIds: ["dup-1", "dup-2", "dup-3"],
+    });
+    expect(updateTagMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns failed when duplicateIds is empty", async () => {
+    const result = await importDuplicatesAction("imp-1", []);
+
+    expect(result).toEqual({
+      status: "failed",
+      error: "No duplicates selected.",
+    });
+    expect(importSelectedDuplicatesMock).not.toHaveBeenCalled();
+  });
+
+  it("returns failed when importId is empty", async () => {
+    const result = await importDuplicatesAction("", ["dup-1"]);
+
+    expect(result?.status).toBe("failed");
+    expect(importSelectedDuplicatesMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteImportAction", () => {
+  beforeEach(() => {
+    updateTagMock.mockReset();
+    deleteImportByIdMock.mockReset();
+  });
+
+  it("returns succeeded when importId is valid", async () => {
+    deleteImportByIdMock.mockResolvedValue({
+      status: "succeeded",
+      importId: "imp-1",
+      deletedTransactionCount: 5,
+    });
+
+    const formData = new FormData();
+    formData.set("importId", "imp-1");
+
+    const result = await deleteImportAction(null, formData);
+
+    expect(result).toEqual({
+      status: "succeeded",
+      importId: "imp-1",
+      deletedTransactionCount: 5,
+    });
+    expect(deleteImportByIdMock).toHaveBeenCalledWith({ importId: "imp-1" });
+    expect(updateTagMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns failed when importId is empty", async () => {
+    const formData = new FormData();
+    formData.set("importId", "   ");
+
+    const result = await deleteImportAction(null, formData);
+
+    expect(result).toEqual({
+      status: "failed",
+      error: "Import id is required.",
+    });
+    expect(deleteImportByIdMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchDuplicatesAction", () => {
+  beforeEach(() => {
+    listDuplicatesByImportIdMock.mockReset();
+  });
+
+  it("returns duplicates when importId is valid", async () => {
+    const items = [{ id: "dup-1", description: "Test" }];
+    listDuplicatesByImportIdMock.mockResolvedValue(items);
+
+    const result = await fetchDuplicatesAction("imp-1");
+
+    expect(result).toEqual(items);
+    expect(listDuplicatesByImportIdMock).toHaveBeenCalledWith({
+      importId: "imp-1",
+    });
+  });
+
+  it("returns empty array when importId is empty", async () => {
+    const result = await fetchDuplicatesAction("");
+
+    expect(result).toEqual([]);
+    expect(listDuplicatesByImportIdMock).not.toHaveBeenCalled();
   });
 });

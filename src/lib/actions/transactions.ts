@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { z } from "zod";
 import { upsertCategoryRule } from "@/db/queries/category-rules";
 import {
   updateTransactionCategory,
@@ -12,8 +13,86 @@ import {
 } from "@/db/queries/transactions";
 import { parseStrictDate } from "@/lib/date/utils";
 
+const updateCategorySchema = z.object({
+  txnId: z.string().trim().min(1, "Transaction ID is required."),
+  newCategory: z.string().trim().min(1, "Category is required."),
+});
+
+const bulkUpdateCategorySchema = z.object({
+  txnIds: z
+    .array(z.string().trim())
+    .min(1, "At least one transaction is required."),
+  newCategory: z.string().trim().min(1, "Category is required."),
+});
+
+const applyCategoryRuleSchema = z.object({
+  descriptionPattern: z
+    .string()
+    .trim()
+    .min(1, "Description pattern is required."),
+  newCategory: z.string().trim().min(1, "Category is required."),
+  applyToExisting: z.boolean(),
+});
+
+const bulkApplyCategoryRulesSchema = z.object({
+  descriptionPatterns: z
+    .array(z.string().trim())
+    .min(1, "At least one pattern is required."),
+  newCategory: z.string().trim().min(1, "Category is required."),
+  applyToExisting: z.boolean(),
+});
+
+const countMatchingSchema = z.object({
+  description: z.string().trim(),
+});
+
+const createTransactionSchema = z
+  .object({
+    date: z.string().trim().min(1, "Valid date is required."),
+    description: z
+      .string()
+      .trim()
+      .min(1, "Description is required.")
+      .max(150, "Description must be 150 characters or less."),
+    amount: z.string().trim().min(1, "Amount must be a positive number."),
+    category: z.string().trim().min(1, "Category is required."),
+  })
+  .refine((data) => parseStrictDate(data.date) !== null, {
+    message: "Valid date is required.",
+    path: ["date"],
+  })
+  .refine(
+    (data) => {
+      const n = Number(data.amount);
+      return !Number.isNaN(n) && n > 0;
+    },
+    { message: "Amount must be a positive number.", path: ["amount"] },
+  )
+  .transform((data) => ({
+    date: parseStrictDate(data.date) as string,
+    description: data.description,
+    amountCents: Math.round(Number(data.amount) * 100),
+    category: data.category,
+  }));
+
+const deleteTransactionsSchema = z
+  .object({ txnIds: z.array(z.string().trim()) })
+  .refine((data) => data.txnIds.length > 0, "No transactions selected.");
+
+function zodErrorsToRecord(error: z.ZodError): Record<string, string> {
+  const record: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const path = issue.path.join(".");
+    if (path && issue.message) record[path] = issue.message;
+  }
+  return record;
+}
+
 export async function updateCategoryAction(txnId: string, newCategory: string) {
-  await updateTransactionCategory(txnId, newCategory);
+  const parsed = updateCategorySchema.safeParse({ txnId, newCategory });
+  if (!parsed.success) return;
+  const { txnId: id, newCategory: cat } = parsed.data;
+  await updateTransactionCategory(id, cat);
   updateTag("transactions");
 }
 
@@ -21,8 +100,10 @@ export async function bulkUpdateCategoryAction(
   txnIds: string[],
   newCategory: string,
 ) {
-  if (txnIds.length === 0) return;
-  await bulkUpdateTransactionCategories(txnIds, newCategory);
+  const parsed = bulkUpdateCategorySchema.safeParse({ txnIds, newCategory });
+  if (!parsed.success) return;
+  const { txnIds: ids, newCategory: cat } = parsed.data;
+  await bulkUpdateTransactionCategories(ids, cat);
   updateTag("transactions");
 }
 
@@ -31,11 +112,22 @@ export async function applyCategoryRuleAction(
   newCategory: string,
   applyToExisting: boolean,
 ) {
-  await upsertCategoryRule(descriptionPattern, newCategory);
+  const parsed = applyCategoryRuleSchema.safeParse({
+    descriptionPattern,
+    newCategory,
+    applyToExisting,
+  });
+  if (!parsed.success) return;
+  const {
+    descriptionPattern: pattern,
+    newCategory: cat,
+    applyToExisting: apply,
+  } = parsed.data;
+  await upsertCategoryRule(pattern, cat);
   updateTag("category-rules");
 
-  if (applyToExisting) {
-    await applyRuleToMatchingTransactions(descriptionPattern, newCategory);
+  if (apply) {
+    await applyRuleToMatchingTransactions(pattern, cat);
     updateTag("transactions");
   }
 }
@@ -45,14 +137,25 @@ export async function bulkApplyCategoryRulesAction(
   newCategory: string,
   applyToExisting: boolean,
 ) {
-  for (const pattern of descriptionPatterns) {
-    await upsertCategoryRule(pattern, newCategory);
+  const parsed = bulkApplyCategoryRulesSchema.safeParse({
+    descriptionPatterns,
+    newCategory,
+    applyToExisting,
+  });
+  if (!parsed.success) return;
+  const {
+    descriptionPatterns: patterns,
+    newCategory: cat,
+    applyToExisting: apply,
+  } = parsed.data;
+  for (const pattern of patterns) {
+    await upsertCategoryRule(pattern, cat);
   }
   updateTag("category-rules");
 
-  if (applyToExisting) {
-    for (const pattern of descriptionPatterns) {
-      await applyRuleToMatchingTransactions(pattern, newCategory);
+  if (apply) {
+    for (const pattern of patterns) {
+      await applyRuleToMatchingTransactions(pattern, cat);
     }
     updateTag("transactions");
   }
@@ -61,7 +164,9 @@ export async function bulkApplyCategoryRulesAction(
 export async function countMatchingTransactionsAction(
   description: string,
 ): Promise<number> {
-  return countTransactionsByDescription(description);
+  const parsed = countMatchingSchema.safeParse({ description });
+  const desc = parsed.success ? parsed.data.description : "";
+  return countTransactionsByDescription(desc);
 }
 
 export type CreateTransactionState = {
@@ -74,45 +179,27 @@ export async function createTransactionAction(
   _prevState: CreateTransactionState,
   formData: FormData,
 ): Promise<CreateTransactionState> {
-  const rawDate = formData.get("date");
-  const rawDescription = formData.get("description");
-  const rawAmount = formData.get("amount");
-  const rawCategory = formData.get("category");
+  const raw = {
+    date: formData.get("date"),
+    description: formData.get("description"),
+    amount: formData.get("amount"),
+    category: formData.get("category"),
+  };
+  const input = {
+    date: typeof raw.date === "string" ? raw.date : "",
+    description: typeof raw.description === "string" ? raw.description : "",
+    amount: typeof raw.amount === "string" ? raw.amount : "",
+    category: typeof raw.category === "string" ? raw.category : "",
+  };
 
-  const errors: Record<string, string> = {};
-
-  const date =
-    typeof rawDate === "string" ? parseStrictDate(rawDate.trim()) : null;
-  if (!date) {
-    errors.date = "Valid date is required.";
+  const result = createTransactionSchema.safeParse(input);
+  if (!result.success) {
+    return { status: "error", errors: zodErrorsToRecord(result.error) };
   }
 
-  const description =
-    typeof rawDescription === "string" ? rawDescription.trim() : "";
-  if (!description) {
-    errors.description = "Description is required.";
-  } else if (description.length > 150) {
-    errors.description = "Description must be 150 characters or less.";
-  }
-
-  const amountStr = typeof rawAmount === "string" ? rawAmount.trim() : "";
-  const amountNum = Number(amountStr);
-  if (!amountStr || Number.isNaN(amountNum) || amountNum <= 0) {
-    errors.amount = "Amount must be a positive number.";
-  }
-
-  const category = typeof rawCategory === "string" ? rawCategory.trim() : "";
-  if (!category) {
-    errors.category = "Category is required.";
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return { status: "error", errors };
-  }
-
-  const amountCents = Math.round(amountNum * 100);
+  const { date, description, amountCents, category } = result.data;
   const txnId = await createTransaction({
-    txnDate: date!,
+    txnDate: date,
     description,
     amountCents,
     category,
@@ -123,12 +210,16 @@ export async function createTransactionAction(
 }
 
 export async function deleteTransactionsAction(txnIds: string[]) {
-  if (txnIds.length === 0) {
-    return { status: "error" as const, error: "No transactions selected." };
+  const parsed = deleteTransactionsSchema.safeParse({ txnIds });
+  if (!parsed.success) {
+    return {
+      status: "error" as const,
+      error: parsed.error.issues[0]?.message ?? "No transactions selected.",
+    };
   }
 
   try {
-    const deletedCount = await deleteTransactions(txnIds);
+    const deletedCount = await deleteTransactions(parsed.data.txnIds);
     updateTag("transactions");
     return { status: "success" as const, deletedCount };
   } catch {

@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { z } from "zod";
 import {
   deleteImportById,
   importSelectedDuplicates,
@@ -16,6 +17,28 @@ import type {
 } from "@/lib/types/api";
 
 const MAX_FILES_PER_UPLOAD = 10;
+
+const uploadFilesSchema = z
+  .array(z.instanceof(File))
+  .min(1, { message: "Missing file in form-data." })
+  .max(MAX_FILES_PER_UPLOAD, {
+    message: `You can upload up to ${MAX_FILES_PER_UPLOAD} CSV files at once.`,
+  });
+
+const deleteImportSchema = z.object({
+  importId: z.string().trim().min(1, "Import id is required."),
+});
+
+const importDuplicatesSchema = z
+  .object({
+    importId: z.string().trim().min(1),
+    duplicateIds: z.array(z.string().trim()),
+  })
+  .refine((data) => data.duplicateIds.length > 0, "No duplicates selected.");
+
+const fetchDuplicatesSchema = z.object({
+  importId: z.string().trim().min(1),
+});
 
 function getBaseResult(
   overrides?: Partial<ImportPostResult>,
@@ -34,6 +57,10 @@ function getBaseResult(
   };
 }
 
+function toUploadError(message: string): ImportPostResult["errors"][number] {
+  return { row: 0, field: "file", message };
+}
+
 export async function uploadImportAction(
   _previousState: ImportPostResult | null,
   formData: FormData,
@@ -42,28 +69,14 @@ export async function uploadImportAction(
     .getAll("file")
     .filter((entry): entry is File => entry instanceof File);
 
-  if (uploadedFiles.length === 0) {
-    return getBaseResult({
-      errors: [
-        { row: 0, field: "file", message: "Missing file in form-data." },
-      ],
-    });
-  }
-
-  if (uploadedFiles.length > MAX_FILES_PER_UPLOAD) {
-    return getBaseResult({
-      errors: [
-        {
-          row: 0,
-          field: "file",
-          message: `You can upload up to ${MAX_FILES_PER_UPLOAD} CSV files at once.`,
-        },
-      ],
-    });
+  const parsed = uploadFilesSchema.safeParse(uploadedFiles);
+  if (!parsed.success) {
+    const msg = parsed.error.issues[0]?.message ?? "Invalid file input.";
+    return getBaseResult({ errors: [toUploadError(msg)] });
   }
 
   const fileResults: ImportFileResult[] = [];
-  for (const file of uploadedFiles) {
+  for (const file of parsed.data) {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const result = await processImportFile({
@@ -126,21 +139,25 @@ export async function uploadImportAction(
 export async function fetchDuplicatesAction(
   importId: string,
 ): Promise<ImportDuplicateItem[]> {
-  return listDuplicatesByImportId({ importId });
+  const parsed = fetchDuplicatesSchema.safeParse({ importId });
+  if (!parsed.success) return [];
+  return listDuplicatesByImportId({ importId: parsed.data.importId });
 }
 
 export async function importDuplicatesAction(
   importId: string,
   duplicateIds: string[],
 ): Promise<ImportDuplicatesResult> {
-  if (!importId || duplicateIds.length === 0) {
-    return { status: "failed", error: "No duplicates selected." };
+  const parsed = importDuplicatesSchema.safeParse({ importId, duplicateIds });
+  if (!parsed.success) {
+    const msg = parsed.error.issues[0]?.message ?? "No duplicates selected.";
+    return { status: "failed", error: msg };
   }
 
   try {
     const importedCount = await importSelectedDuplicates({
-      importId,
-      duplicateIds,
+      importId: parsed.data.importId,
+      duplicateIds: parsed.data.duplicateIds,
     });
     updateTag("transactions");
     updateTag("imports");
@@ -155,14 +172,17 @@ export async function deleteImportAction(
   formData: FormData,
 ): Promise<ImportDeleteResult> {
   const rawImportId = formData.get("importId");
-  const importId = typeof rawImportId === "string" ? rawImportId : "";
-  const normalizedImportId = importId.trim();
-  if (!normalizedImportId) {
-    return { status: "failed", error: "Import id is required." };
+  const input = {
+    importId: typeof rawImportId === "string" ? rawImportId : "",
+  };
+  const parsed = deleteImportSchema.safeParse(input);
+  if (!parsed.success) {
+    const msg = parsed.error.issues[0]?.message ?? "Import id is required.";
+    return { status: "failed", error: msg };
   }
 
   try {
-    const result = await deleteImportById({ importId: normalizedImportId });
+    const result = await deleteImportById({ importId: parsed.data.importId });
     if (result.status === "succeeded") {
       updateTag("transactions");
       updateTag("imports");

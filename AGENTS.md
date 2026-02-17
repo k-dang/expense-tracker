@@ -19,6 +19,7 @@
 - Formatting is enforced by Biome (`biome.json`): 2-space indentation, spaces (no tabs), organized imports.
 - Component files in `src/components` use `kebab-case` filenames (for example `alert-dialog.tsx`, `input-group.tsx`).
 - Keep utility helpers in `src/lib` and UI primitives in `src/components/ui` to avoid duplication.
+- Use Zod for validation where appropriate.
 
 ## Guidelines
 - Always try to use an existing component or utility before creating a new one.
