@@ -145,7 +145,11 @@ export function MonthlyTrendChart({ data }: Props) {
               y={MONTHLY_TARGET_DOLLARS}
               stroke="var(--chart-2)"
               strokeDasharray="6 4"
-              label={{ value: dollarsFormatter.format(MONTHLY_TARGET_DOLLARS), position: "middle", fill: "var(--muted-foreground)" }}
+              label={{
+                value: dollarsFormatter.format(MONTHLY_TARGET_DOLLARS),
+                position: "middle",
+                fill: "var(--muted-foreground)",
+              }}
             />
             <Area
               dataKey="totalDollars"
@@ -202,7 +206,11 @@ export function MonthlyTrendChart({ data }: Props) {
             y={MONTHLY_TARGET_DOLLARS}
             stroke="var(--chart-2)"
             strokeDasharray="6 4"
-            label={{ value: "Target", position: "right", fill: "var(--muted-foreground)" }}
+            label={{
+              value: "Target",
+              position: "right",
+              fill: "var(--muted-foreground)",
+            }}
           />
           <Bar
             dataKey="totalDollars"

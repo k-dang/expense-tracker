@@ -27,10 +27,7 @@ const VALID_SORT_BY = new Set<FiltersType["sortBy"]>([
   "description",
   "category",
 ]);
-const VALID_SORT_ORDER = new Set<FiltersType["sortOrder"]>([
-  "asc",
-  "desc",
-]);
+const VALID_SORT_ORDER = new Set<FiltersType["sortOrder"]>(["asc", "desc"]);
 
 function parseSortBy(v?: string): FiltersType["sortBy"] {
   return VALID_SORT_BY.has(v as FiltersType["sortBy"])

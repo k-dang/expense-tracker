@@ -106,13 +106,13 @@ export async function createTransactionAction(
     errors.category = "Category is required.";
   }
 
-  if (Object.keys(errors).length > 0) {
+  if (Object.keys(errors).length > 0 || !date) {
     return { status: "error", errors };
   }
 
   const amountCents = Math.round(amountNum * 100);
   const txnId = await createTransaction({
-    txnDate: date!,
+    txnDate: date,
     description,
     amountCents,
     category,
@@ -132,6 +132,9 @@ export async function deleteTransactionsAction(txnIds: string[]) {
     updateTag("transactions");
     return { status: "success" as const, deletedCount };
   } catch {
-    return { status: "error" as const, error: "Failed to delete transactions." };
+    return {
+      status: "error" as const,
+      error: "Failed to delete transactions.",
+    };
   }
 }

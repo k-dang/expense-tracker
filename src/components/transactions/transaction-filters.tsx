@@ -63,7 +63,7 @@ export function TransactionFilters({
         router.push(`${pathname}?${params.toString()}`);
       });
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
   const handleSearchChange = useCallback(
@@ -75,7 +75,7 @@ export function TransactionFilters({
         updateParams({ search: value || undefined });
       }, 300);
     },
-    [updateParams]
+    [updateParams],
   );
 
   const handleCategoryChange = useCallback(
@@ -84,7 +84,7 @@ export function TransactionFilters({
         category: !value || value === "__all__" ? undefined : value,
       });
     },
-    [updateParams]
+    [updateParams],
   );
 
   const handleSortToggle = useCallback(
@@ -97,7 +97,7 @@ export function TransactionFilters({
         updateParams({ sortBy: field, sortOrder: "desc" });
       }
     },
-    [updateParams, currentSortBy, currentSortOrder]
+    [updateParams, currentSortBy, currentSortOrder],
   );
 
   const showUncategorized = currentCategory === "Uncategorized";
@@ -155,7 +155,7 @@ export function TransactionFilters({
                 <span
                   className={cn(
                     "mr-1.5 inline-block size-2 rounded-full self-center",
-                    getCategoryColor(cat).split(" ")[0]
+                    getCategoryColor(cat).split(" ")[0],
                   )}
                 />
                 {cat}
@@ -176,7 +176,7 @@ export function TransactionFilters({
         className={cn(
           "gap-1.5",
           showUncategorized &&
-            "bg-amber-500/15 text-amber-400 border-amber-500/25 hover:bg-amber-500/25 border"
+            "bg-amber-500/15 text-amber-400 border-amber-500/25 hover:bg-amber-500/25 border",
         )}
       >
         <CircleAlert className="size-3.5" />

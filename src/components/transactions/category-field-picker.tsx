@@ -19,7 +19,11 @@ type Props = {
   onValueChange: (value: string) => void;
 };
 
-export function CategoryFieldPicker({ categories, value, onValueChange }: Props) {
+export function CategoryFieldPicker({
+  categories,
+  value,
+  onValueChange,
+}: Props) {
   const [search, setSearch] = useState("");
 
   const allCategories = [
@@ -28,7 +32,7 @@ export function CategoryFieldPicker({ categories, value, onValueChange }: Props)
 
   const filtered = search
     ? allCategories.filter((c) =>
-        c.toLowerCase().includes(search.toLowerCase())
+        c.toLowerCase().includes(search.toLowerCase()),
       )
     : allCategories;
 
@@ -56,7 +60,7 @@ export function CategoryFieldPicker({ categories, value, onValueChange }: Props)
             <span
               className={cn(
                 "inline-block size-2 shrink-0 rounded-full border",
-                getCategoryColor(value)
+                getCategoryColor(value),
               )}
             />
           </InputGroupAddon>
@@ -73,7 +77,7 @@ export function CategoryFieldPicker({ categories, value, onValueChange }: Props)
               <span
                 className={cn(
                   "inline-block size-2 shrink-0 rounded-full border",
-                  getCategoryColor(cat)
+                  getCategoryColor(cat),
                 )}
               />
               <span className="truncate">{cat}</span>

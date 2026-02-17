@@ -42,8 +42,7 @@ const statusConfig: Record<
       `${r.totalFiles} file${r.totalFiles !== 1 ? "s" : ""} processed — ${r.insertedRows} row${r.insertedRows !== 1 ? "s" : ""} imported`,
     accent: "text-green-400",
     border: "border-l-green-500",
-    badgeClass:
-      "bg-green-500/15 text-green-400 border-green-500/25 border",
+    badgeClass: "bg-green-500/15 text-green-400 border-green-500/25 border",
   },
   partial: {
     icon: AlertTriangle,
@@ -52,8 +51,7 @@ const statusConfig: Record<
       `${r.succeededFiles} of ${r.totalFiles} file${r.totalFiles !== 1 ? "s" : ""} imported`,
     accent: "text-amber-400",
     border: "border-l-amber-500",
-    badgeClass:
-      "bg-amber-500/15 text-amber-400 border-amber-500/25 border",
+    badgeClass: "bg-amber-500/15 text-amber-400 border-amber-500/25 border",
   },
   failed: {
     icon: XCircle,
@@ -174,9 +172,7 @@ export function ImportUploadForm() {
                               : "bg-red-500/15 text-red-400 border-red-500/25 border"
                           }
                         >
-                          {file.status === "succeeded"
-                            ? "Succeeded"
-                            : "Failed"}
+                          {file.status === "succeeded" ? "Succeeded" : "Failed"}
                         </Badge>
                       </div>
                       {file.status === "succeeded" ? (
