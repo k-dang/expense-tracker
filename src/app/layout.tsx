@@ -1,7 +1,9 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import "./globals.css";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
-        <Navbar />
-        {children}
+        <Suspense fallback={<div>Loading...</div>}>
+          <ClerkProvider>
+            <Navbar />
+            {children}
+          </ClerkProvider>
+        </Suspense>
       </body>
     </html>
   );

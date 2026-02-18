@@ -1,9 +1,11 @@
 "use client";
 
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/" },
@@ -26,7 +28,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {NAV_ITEMS.map(({ label, href }) => {
             const isActive =
               href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -39,13 +41,28 @@ export function Navbar() {
                   "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
                 {label}
               </Link>
             );
           })}
+
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button
+                variant="ghost"
+                className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 hover:cursor-pointer"
+              >
+                Sign in
+              </Button>
+            </SignInButton>
+          </SignedOut>
+
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
       </div>
     </nav>
