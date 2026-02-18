@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getDashboardMonthlyTrend } from "@/db/queries/dashboard";
+import { getDashboardMonthlyTrend, getDashboardCategoryBreakdown } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
 import { getCategoryChartColor } from "@/lib/categories";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { MonthlyTrendCategoryFilter } from "./monthly-trend-category-filter";
 type Props = {
   range: DateRange;
   category?: string;
-  categories: string[];
 };
 
 async function MonthlyTrendContent({
@@ -27,7 +26,10 @@ function MonthlyTrendFallback() {
   return <div className="bg-muted h-80 w-full min-w-0 animate-pulse rounded" />;
 }
 
-export function MonthlyTrendCard({ range, category, categories }: Props) {
+export async function MonthlyTrendCard({ range, category }: Props) {
+  const categoryBreakdown = await getDashboardCategoryBreakdown(range);
+  const categories = categoryBreakdown.slice(0, 5).map((c) => c.category);
+
   return (
     <Card className="min-w-0">
       <CardHeader>
