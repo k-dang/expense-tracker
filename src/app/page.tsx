@@ -5,18 +5,22 @@ import { KpiCards, KpiCardsFallback } from "@/components/dashboard/kpi-cards";
 import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
 import { RecentTransactionsCard } from "@/components/dashboard/recent-transactions-card";
 import { TopDescriptionsCard } from "@/components/dashboard/top-descriptions-card";
+import { getDashboardCategoryBreakdown } from "@/db/queries/dashboard";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
 
 type PageProps = {
   searchParams: Promise<{
     from?: string;
     to?: string;
+    trendCategory?: string;
   }>;
 };
 
 async function DashboardContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const range = resolveDashboardPageDateRange(params);
+  const categoryBreakdown = await getDashboardCategoryBreakdown(range);
+  const categories = categoryBreakdown.slice(0, 5).map((c) => c.category);
 
   return (
     <>
@@ -24,7 +28,11 @@ async function DashboardContent({ searchParams }: PageProps) {
       <Suspense fallback={<KpiCardsFallback />}>
         <KpiCards range={range} />
       </Suspense>
-      <MonthlyTrendCard range={range} />
+      <MonthlyTrendCard
+        range={range}
+        category={params.trendCategory}
+        categories={categories}
+      />
       <CategoryBreakdownCard range={range} />
       <TopDescriptionsCard range={range} />
       <RecentTransactionsCard range={range} />
