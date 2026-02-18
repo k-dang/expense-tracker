@@ -1,12 +1,18 @@
 import { Suspense } from "react";
+import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
+import { getDistinctCategories } from "@/db/queries/transactions";
 import type { SearchParams } from "./_lib/search-params";
-import { AddTransactionDialogLoader } from "./_components/add-transaction-dialog-loader";
 import { TransactionPageContent } from "./_components/transaction-page-content";
 import { TransactionPageContentSkeleton } from "./_components/transaction-page-content-skeleton";
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
 };
+
+async function AddTransactionDialogLoader() {
+  const categories = await getDistinctCategories();
+  return <AddTransactionDialog categories={categories} />;
+}
 
 export default function TransactionsPage({ searchParams }: PageProps) {
   return (

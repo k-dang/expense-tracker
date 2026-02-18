@@ -1,8 +1,11 @@
 import { TransactionFilters } from "@/components/transactions/transaction-filters";
-import { getDistinctCategories } from "@/db/queries/transactions";
+import { TransactionTable } from "@/components/transactions/transaction-table";
+import {
+  getDistinctCategories,
+  listTransactions,
+} from "@/db/queries/transactions";
 import type { SearchParams } from "../_lib/search-params";
 import { parsePage, parseSortBy, parseSortOrder } from "../_lib/search-params";
-import { TransactionTableLoader } from "./transaction-table-loader";
 
 type TransactionPageContentProps = {
   searchParams: Promise<SearchParams>;
@@ -12,7 +15,16 @@ export async function TransactionPageContent({
   searchParams,
 }: TransactionPageContentProps) {
   const params = await searchParams;
-  const categories = await getDistinctCategories();
+  const [categories, data] = await Promise.all([
+    getDistinctCategories(),
+    listTransactions({
+      search: params.search,
+      category: params.category,
+      sortBy: parseSortBy(params.sortBy),
+      sortOrder: parseSortOrder(params.sortOrder),
+      page: parsePage(params.page),
+    }),
+  ]);
 
   return (
     <>
@@ -24,12 +36,11 @@ export async function TransactionPageContent({
         currentSortOrder={params.sortOrder ?? "desc"}
       />
 
-      <TransactionTableLoader
-        search={params.search}
-        category={params.category}
-        sortBy={parseSortBy(params.sortBy)}
-        sortOrder={parseSortOrder(params.sortOrder)}
-        page={parsePage(params.page)}
+      <TransactionTable
+        transactions={data.transactions}
+        totalCount={data.totalCount}
+        page={data.page}
+        pageSize={data.pageSize}
         categories={categories}
       />
     </>
