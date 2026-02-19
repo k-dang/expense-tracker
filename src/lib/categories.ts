@@ -1,25 +1,21 @@
 export const DEFAULT_CATEGORIES = [
-  "Groceries",
-  "Dining",
+  "Food",
   "Transport",
   "Shopping",
   "Entertainment",
   "Utilities",
   "Health",
-  "Housing",
 ] as const;
 
 export type DefaultCategory = (typeof DEFAULT_CATEGORIES)[number];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Groceries: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
-  Dining: "bg-orange-500/15 text-orange-400 border-orange-500/25",
+  Food: "bg-orange-500/15 text-orange-400 border-orange-500/25",
   Transport: "bg-sky-500/15 text-sky-400 border-sky-500/25",
   Shopping: "bg-violet-500/15 text-violet-400 border-violet-500/25",
   Entertainment: "bg-pink-500/15 text-pink-400 border-pink-500/25",
   Utilities: "bg-slate-400/15 text-slate-400 border-slate-400/25",
   Health: "bg-rose-500/15 text-rose-400 border-rose-500/25",
-  Housing: "bg-amber-500/15 text-amber-400 border-amber-500/25",
   Uncategorized:
     "bg-zinc-500/10 text-zinc-500 border-zinc-500/30 border-dashed",
 };
@@ -32,14 +28,12 @@ export function getCategoryColor(category: string): string {
 }
 
 const CATEGORY_CHART_COLORS: Record<string, string> = {
-  Groceries: "#34d399",
-  Dining: "#fb923c",
+  Food: "#fb923c",
   Transport: "#38bdf8",
   Shopping: "#a78bfa",
   Entertainment: "#f472b6",
   Utilities: "#94a3b8",
   Health: "#fb7185",
-  Housing: "#fbbf24",
   Uncategorized: "#a1a1aa",
 };
 
@@ -47,4 +41,15 @@ const CUSTOM_CATEGORY_CHART_COLOR = "#818cf8";
 
 export function getCategoryChartColor(category: string): string {
   return CATEGORY_CHART_COLORS[category] ?? CUSTOM_CATEGORY_CHART_COLOR;
+}
+
+const CATEGORY_MONTHLY_TARGETS: Record<string, number> = {
+  Food: 700,
+};
+
+export function getCategoryMonthlyTarget(
+  category?: string,
+): number | undefined {
+  if (!category) return undefined;
+  return CATEGORY_MONTHLY_TARGETS[category];
 }

@@ -10,11 +10,6 @@ const KEYWORD_CATEGORIES: { keywords: string[]; category: string }[] = [
       "sobeys",
       "walmart",
       "costco",
-    ],
-    category: "Groceries",
-  },
-  {
-    keywords: [
       "restaurant",
       "mcdonald",
       "tim horton",
@@ -27,7 +22,7 @@ const KEYWORD_CATEGORIES: { keywords: string[]; category: string }[] = [
       "uber eats",
       "skip the dishes",
     ],
-    category: "Dining",
+    category: "Food",
   },
   {
     keywords: [
@@ -76,10 +71,6 @@ const KEYWORD_CATEGORIES: { keywords: string[]; category: string }[] = [
   {
     keywords: ["pharmacy", "dentist", "doctor", "medical", "health", "clinic"],
     category: "Health",
-  },
-  {
-    keywords: ["rent", "mortgage", "condo"],
-    category: "Housing",
   },
 ];
 

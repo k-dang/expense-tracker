@@ -41,7 +41,7 @@ export function Navbar() {
                   "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 {label}

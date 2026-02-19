@@ -92,7 +92,10 @@ export async function bulkUpdateCategoryAction(
 ) {
   const parsed = bulkUpdateCategorySchema.safeParse({ txnIds, newCategory });
   if (!parsed.success) return;
-  await bulkUpdateTransactionCategories(parsed.data.txnIds, parsed.data.newCategory);
+  await bulkUpdateTransactionCategories(
+    parsed.data.txnIds,
+    parsed.data.newCategory,
+  );
   updateTag("transactions");
 }
 

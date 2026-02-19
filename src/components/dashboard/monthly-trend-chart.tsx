@@ -40,6 +40,7 @@ type ChartView = "area" | "bar";
 type Props = {
   data: DashboardMonthlyTrendItem[];
   accentColor?: string;
+  categoryTarget?: number;
 };
 
 export type MonthlyTotalsRow = {
@@ -69,7 +70,11 @@ function toNumber(value: unknown): number {
   return Number(value ?? 0);
 }
 
-export function MonthlyTrendChart({ data, accentColor }: Props) {
+export function MonthlyTrendChart({
+  data,
+  accentColor,
+  categoryTarget,
+}: Props) {
   const [view, setView] = useState<ChartView>("area");
   const chartData = toMonthlyTrendChartData(data);
   const dollarsFormatter = new Intl.NumberFormat("en-CA", {
@@ -86,7 +91,8 @@ export function MonthlyTrendChart({ data, accentColor }: Props) {
         },
       }
     : MONTHLY_TREND_CHART_CONFIG;
-  const showTarget = !accentColor;
+  const targetDollars = accentColor ? categoryTarget : MONTHLY_TARGET_DOLLARS;
+  const showTarget = targetDollars != null;
 
   function renderChart() {
     if (chartData.length === 0) {
@@ -108,11 +114,7 @@ export function MonthlyTrendChart({ data, accentColor }: Props) {
           <AreaChart data={chartData} margin={{ top: 12, right: 8 }}>
             <defs>
               <linearGradient id="monthlyTrendFill" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="0%"
-                  stopColor={gradientColor}
-                  stopOpacity={0.3}
-                />
+                <stop offset="0%" stopColor={gradientColor} stopOpacity={0.3} />
                 <stop
                   offset="100%"
                   stopColor={gradientColor}
@@ -157,11 +159,11 @@ export function MonthlyTrendChart({ data, accentColor }: Props) {
             />
             {showTarget && (
               <ReferenceLine
-                y={MONTHLY_TARGET_DOLLARS}
+                y={targetDollars}
                 stroke="var(--chart-2)"
                 strokeDasharray="6 4"
                 label={{
-                  value: dollarsFormatter.format(MONTHLY_TARGET_DOLLARS),
+                  value: dollarsFormatter.format(targetDollars),
                   position: "middle",
                   fill: "var(--muted-foreground)",
                 }}
@@ -220,11 +222,11 @@ export function MonthlyTrendChart({ data, accentColor }: Props) {
           />
           {showTarget && (
             <ReferenceLine
-              y={MONTHLY_TARGET_DOLLARS}
+              y={targetDollars}
               stroke="var(--chart-2)"
               strokeDasharray="6 4"
               label={{
-                value: "Target",
+                value: dollarsFormatter.format(targetDollars),
                 position: "right",
                 fill: "var(--muted-foreground)",
               }}
