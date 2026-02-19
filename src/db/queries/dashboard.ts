@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { and, count, desc, gte, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
 import { transactionsTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
@@ -40,11 +40,17 @@ export async function getDashboardTotals(range: DateRange) {
 
 export type DashboardTotals = Awaited<ReturnType<typeof getDashboardTotals>>;
 
-export async function getDashboardMonthlyTrend(range: DateRange) {
+export async function getDashboardMonthlyTrend(
+  range: DateRange,
+  category?: string,
+) {
   "use cache";
   cacheLife("max");
   cacheTag("transactions");
   const rangeFilter = getRangeFilter(range);
+  const whereClause = category
+    ? and(rangeFilter, eq(transactionsTable.category, category))
+    : rangeFilter;
 
   const monthlyRows = await db
     .select({
@@ -52,7 +58,7 @@ export async function getDashboardMonthlyTrend(range: DateRange) {
       totalCents: sum(transactionsTable.amountCents),
     })
     .from(transactionsTable)
-    .where(rangeFilter)
+    .where(whereClause)
     .groupBy(sql`substr(${transactionsTable.txnDate}, 1, 7)`)
     .orderBy(sql`substr(${transactionsTable.txnDate}, 1, 7)`);
 

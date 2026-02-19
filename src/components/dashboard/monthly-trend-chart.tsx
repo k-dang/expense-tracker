@@ -39,6 +39,7 @@ type ChartView = "area" | "bar";
 
 type Props = {
   data: DashboardMonthlyTrendItem[];
+  accentColor?: string;
 };
 
 export type MonthlyTotalsRow = {
@@ -68,13 +69,24 @@ function toNumber(value: unknown): number {
   return Number(value ?? 0);
 }
 
-export function MonthlyTrendChart({ data }: Props) {
+export function MonthlyTrendChart({ data, accentColor }: Props) {
   const [view, setView] = useState<ChartView>("area");
   const chartData = toMonthlyTrendChartData(data);
   const dollarsFormatter = new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency: "CAD",
   });
+
+  const chartConfig = accentColor
+    ? {
+        ...MONTHLY_TREND_CHART_CONFIG,
+        totalDollars: {
+          ...MONTHLY_TREND_CHART_CONFIG.totalDollars,
+          color: accentColor,
+        },
+      }
+    : MONTHLY_TREND_CHART_CONFIG;
+  const showTarget = !accentColor;
 
   function renderChart() {
     if (chartData.length === 0) {
@@ -85,23 +97,25 @@ export function MonthlyTrendChart({ data }: Props) {
       );
     }
 
+    const gradientColor = accentColor ?? "var(--color-totalDollars)";
+
     if (view === "area") {
       return (
         <ChartContainer
           className="h-80 w-full min-w-0 aspect-auto"
-          config={MONTHLY_TREND_CHART_CONFIG}
+          config={chartConfig}
         >
           <AreaChart data={chartData} margin={{ top: 12, right: 8 }}>
             <defs>
               <linearGradient id="monthlyTrendFill" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
-                  stopColor="var(--color-totalDollars)"
+                  stopColor={gradientColor}
                   stopOpacity={0.3}
                 />
                 <stop
                   offset="100%"
-                  stopColor="var(--color-totalDollars)"
+                  stopColor={gradientColor}
                   stopOpacity={0.02}
                 />
               </linearGradient>
@@ -141,21 +155,23 @@ export function MonthlyTrendChart({ data }: Props) {
                 />
               }
             />
-            <ReferenceLine
-              y={MONTHLY_TARGET_DOLLARS}
-              stroke="var(--chart-2)"
-              strokeDasharray="6 4"
-              label={{
-                value: dollarsFormatter.format(MONTHLY_TARGET_DOLLARS),
-                position: "middle",
-                fill: "var(--muted-foreground)",
-              }}
-            />
+            {showTarget && (
+              <ReferenceLine
+                y={MONTHLY_TARGET_DOLLARS}
+                stroke="var(--chart-2)"
+                strokeDasharray="6 4"
+                label={{
+                  value: dollarsFormatter.format(MONTHLY_TARGET_DOLLARS),
+                  position: "middle",
+                  fill: "var(--muted-foreground)",
+                }}
+              />
+            )}
             <Area
               dataKey="totalDollars"
               type="monotone"
               fill="url(#monthlyTrendFill)"
-              stroke="var(--color-totalDollars)"
+              stroke={accentColor ?? "var(--color-totalDollars)"}
               strokeWidth={2}
             />
           </AreaChart>
@@ -166,7 +182,7 @@ export function MonthlyTrendChart({ data }: Props) {
     return (
       <ChartContainer
         className="h-80 w-full min-w-0 aspect-auto"
-        config={MONTHLY_TREND_CHART_CONFIG}
+        config={chartConfig}
       >
         <BarChart data={chartData} margin={{ top: 12, right: 8 }}>
           <CartesianGrid vertical={false} />
@@ -202,19 +218,21 @@ export function MonthlyTrendChart({ data }: Props) {
               />
             }
           />
-          <ReferenceLine
-            y={MONTHLY_TARGET_DOLLARS}
-            stroke="var(--chart-2)"
-            strokeDasharray="6 4"
-            label={{
-              value: "Target",
-              position: "right",
-              fill: "var(--muted-foreground)",
-            }}
-          />
+          {showTarget && (
+            <ReferenceLine
+              y={MONTHLY_TARGET_DOLLARS}
+              stroke="var(--chart-2)"
+              strokeDasharray="6 4"
+              label={{
+                value: "Target",
+                position: "right",
+                fill: "var(--muted-foreground)",
+              }}
+            />
+          )}
           <Bar
             dataKey="totalDollars"
-            fill="var(--color-totalDollars)"
+            fill={accentColor ?? "var(--color-totalDollars)"}
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

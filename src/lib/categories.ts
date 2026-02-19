@@ -30,3 +30,21 @@ const CUSTOM_CATEGORY_COLOR =
 export function getCategoryColor(category: string): string {
   return CATEGORY_COLORS[category] ?? CUSTOM_CATEGORY_COLOR;
 }
+
+const CATEGORY_CHART_COLORS: Record<string, string> = {
+  Groceries: "#34d399",
+  Dining: "#fb923c",
+  Transport: "#38bdf8",
+  Shopping: "#a78bfa",
+  Entertainment: "#f472b6",
+  Utilities: "#94a3b8",
+  Health: "#fb7185",
+  Housing: "#fbbf24",
+  Uncategorized: "#a1a1aa",
+};
+
+const CUSTOM_CATEGORY_CHART_COLOR = "#818cf8";
+
+export function getCategoryChartColor(category: string): string {
+  return CATEGORY_CHART_COLORS[category] ?? CUSTOM_CATEGORY_CHART_COLOR;
+}
