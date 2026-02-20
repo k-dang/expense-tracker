@@ -49,17 +49,6 @@ export function Navbar() {
             );
           })}
 
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button
-                variant="ghost"
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 hover:cursor-pointer"
-              >
-                Sign in
-              </Button>
-            </SignInButton>
-          </SignedOut>
-
           <SignedIn>
             <UserButton />
           </SignedIn>

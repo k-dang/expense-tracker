@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import "./globals.css";
 import { Suspense } from "react";
+import { shadcn } from "@clerk/themes";
+import { Spinner } from "@/components/ui/spinner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,17 +28,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+    <Suspense
+      fallback={
+        <main className="flex min-h-[50vh] w-full items-center justify-center">
+          <Spinner className="size-8" />
+        </main>
+      }
+    >
+      <ClerkProvider
+        appearance={{
+          theme: shadcn,
+        }}
       >
-        <Suspense fallback={<div>Loading...</div>}>
-          <ClerkProvider>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+          >
             <Navbar />
             {children}
-          </ClerkProvider>
-        </Suspense>
-      </body>
-    </html>
+          </body>
+        </html>
+      </ClerkProvider>
+    </Suspense>
   );
 }
