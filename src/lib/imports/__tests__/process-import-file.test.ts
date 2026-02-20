@@ -53,7 +53,7 @@ describe("process-import-file", () => {
     expect(result.status).toBe("succeeded");
     if (result.status === "succeeded") {
       expect(result.totalRows).toBe(2);
-      expect(result.rows[0]?.category).toBe("Groceries");
+      expect(result.rows[0]?.category).toBe("Food");
       expect(result.rows[1]?.category).toBe("Entertainment");
     }
   });

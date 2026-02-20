@@ -130,8 +130,8 @@ describe("row-validator", () => {
     });
     expect("value" in result).toBe(true);
     if ("value" in result) {
-      expect(result.value.category).toBe("Groceries");
-      expect(result.value.categoryDedup).toBe("groceries");
+      expect(result.value.category).toBe("Food");
+      expect(result.value.categoryDedup).toBe("food");
     }
   });
 

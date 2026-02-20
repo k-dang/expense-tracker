@@ -25,10 +25,7 @@ async function DashboardContent({ searchParams }: PageProps) {
       <Suspense fallback={<KpiCardsFallback />}>
         <KpiCards range={range} />
       </Suspense>
-      <MonthlyTrendCard
-        range={range}
-        category={params.trendCategory}
-      />
+      <MonthlyTrendCard range={range} category={params.trendCategory} />
       <CategoryBreakdownCard range={range} />
       <TopDescriptionsCard range={range} />
       <RecentTransactionsCard range={range} />

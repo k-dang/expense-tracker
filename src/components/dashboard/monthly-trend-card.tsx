@@ -1,7 +1,13 @@
 import { Suspense } from "react";
-import { getDashboardMonthlyTrend, getDashboardCategoryBreakdown } from "@/db/queries/dashboard";
+import {
+  getDashboardMonthlyTrend,
+  getDashboardCategoryBreakdown,
+} from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
-import { getCategoryChartColor } from "@/lib/categories";
+import {
+  getCategoryChartColor,
+  getCategoryMonthlyTarget,
+} from "@/lib/categories";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthlyTrendChart } from "./monthly-trend-chart";
 import { MonthlyTrendCategoryFilter } from "./monthly-trend-category-filter";
@@ -14,12 +20,22 @@ type Props = {
 async function MonthlyTrendContent({
   range,
   category,
-}: { range: DateRange; category?: string }) {
+}: {
+  range: DateRange;
+  category?: string;
+}) {
   const data = await getDashboardMonthlyTrend(range, category);
-  const accentColor = category
-    ? getCategoryChartColor(category)
+  const accentColor = category ? getCategoryChartColor(category) : undefined;
+  const categoryTarget = category
+    ? getCategoryMonthlyTarget(category)
     : undefined;
-  return <MonthlyTrendChart data={data} accentColor={accentColor} />;
+  return (
+    <MonthlyTrendChart
+      data={data}
+      accentColor={accentColor}
+      categoryTarget={categoryTarget}
+    />
+  );
 }
 
 function MonthlyTrendFallback() {
