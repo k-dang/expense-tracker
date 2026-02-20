@@ -9,6 +9,18 @@ export const DEFAULT_CATEGORIES = [
 
 export type DefaultCategory = (typeof DEFAULT_CATEGORIES)[number];
 
+function findCaseInsensitive<T>(
+  map: Record<string, T>,
+  key: string,
+): T | undefined {
+  if (map[key] !== undefined) return map[key];
+  const lower = key.toLowerCase();
+  for (const k in map) {
+    if (k.toLowerCase() === lower) return map[k];
+  }
+  return undefined;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   Food: "bg-orange-500/15 text-orange-400 border-orange-500/25",
   Transport: "bg-sky-500/15 text-sky-400 border-sky-500/25",
@@ -24,23 +36,19 @@ const CUSTOM_CATEGORY_COLOR =
   "bg-indigo-500/15 text-indigo-400 border-indigo-500/25";
 
 export function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category] ?? CUSTOM_CATEGORY_COLOR;
+  return findCaseInsensitive(CATEGORY_COLORS, category) ?? CUSTOM_CATEGORY_COLOR;
 }
 
 const CATEGORY_CHART_COLORS: Record<string, string> = {
   Food: "#fb923c",
-  Transport: "#38bdf8",
-  Shopping: "#a78bfa",
-  Entertainment: "#f472b6",
-  Utilities: "#94a3b8",
-  Health: "#fb7185",
-  Uncategorized: "#a1a1aa",
+  Vacation: "#38bdf8",
+  Gifts: "#a78bfa",
+  Pochi: "#f472b6",
+  Education: "#94a3b8",
 };
 
-const CUSTOM_CATEGORY_CHART_COLOR = "#818cf8";
-
 export function getCategoryChartColor(category: string): string {
-  return CATEGORY_CHART_COLORS[category] ?? CUSTOM_CATEGORY_CHART_COLOR;
+  return findCaseInsensitive(CATEGORY_CHART_COLORS, category) ?? "#818cf8";
 }
 
 const CATEGORY_MONTHLY_TARGETS: Record<string, number> = {
@@ -51,5 +59,5 @@ export function getCategoryMonthlyTarget(
   category?: string,
 ): number | undefined {
   if (!category) return undefined;
-  return CATEGORY_MONTHLY_TARGETS[category];
+  return findCaseInsensitive(CATEGORY_MONTHLY_TARGETS, category);
 }
