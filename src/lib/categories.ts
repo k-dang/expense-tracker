@@ -36,7 +36,9 @@ const CUSTOM_CATEGORY_COLOR =
   "bg-indigo-500/15 text-indigo-400 border-indigo-500/25";
 
 export function getCategoryColor(category: string): string {
-  return findCaseInsensitive(CATEGORY_COLORS, category) ?? CUSTOM_CATEGORY_COLOR;
+  return (
+    findCaseInsensitive(CATEGORY_COLORS, category) ?? CUSTOM_CATEGORY_COLOR
+  );
 }
 
 const CATEGORY_CHART_COLORS: Record<string, string> = {

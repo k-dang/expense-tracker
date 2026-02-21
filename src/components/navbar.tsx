@@ -1,11 +1,10 @@
 "use client";
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/" },
@@ -48,17 +47,6 @@ export function Navbar() {
               </Link>
             );
           })}
-
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button
-                variant="ghost"
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 hover:cursor-pointer"
-              >
-                Sign in
-              </Button>
-            </SignInButton>
-          </SignedOut>
 
           <SignedIn>
             <UserButton />
