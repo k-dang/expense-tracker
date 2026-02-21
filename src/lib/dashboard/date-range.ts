@@ -1,4 +1,4 @@
-import { endOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { formatIsoDate, parseStrictDate } from "@/lib/date/utils";
 
 export type DateRange = {
@@ -7,12 +7,12 @@ export type DateRange = {
 };
 
 export function getDefaultDashboardDateRange(now = new Date()): DateRange {
-  const toDate = endOfMonth(
-    new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
+  const utcNow = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const toDate = endOfMonth(utcNow);
+  const fromDate = startOfMonth(subMonths(utcNow, 23));
 
   return {
-    from: "2025-01-01",
+    from: formatIsoDate(fromDate),
     to: formatIsoDate(toDate),
   };
 }
