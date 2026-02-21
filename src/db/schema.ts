@@ -11,6 +11,9 @@ export const importsTable = sqliteTable("imports", {
   rowCountDuplicates: integer("row_count_duplicates").notNull(),
   status: text("status", { enum: ["succeeded", "failed"] }).notNull(),
   errorMessage: text("error_message"),
+  type: text("type", { enum: ["transaction", "income"] })
+    .notNull()
+    .default("transaction"),
 });
 
 export const transactionsTable = sqliteTable("transactions", {
@@ -42,6 +45,9 @@ export const importDuplicatesTable = sqliteTable("import_duplicates", {
   currency: text("currency").notNull().default("CAD"),
   fingerprint: text("fingerprint").notNull(),
   reason: text("reason", { enum: ["cross_import", "within_file"] }).notNull(),
+  type: text("type", { enum: ["transaction", "income"] })
+    .notNull()
+    .default("transaction"),
 });
 
 export type TransactionRow = typeof transactionsTable.$inferSelect;
@@ -63,3 +69,20 @@ export const categoryRulesTable = sqliteTable("category_rules", {
 
 export type CategoryRuleRow = typeof categoryRulesTable.$inferSelect;
 export type NewCategoryRuleRow = typeof categoryRulesTable.$inferInsert;
+
+export const incomesTable = sqliteTable("incomes", {
+  id: text("id").primaryKey(),
+  incomeDate: text("income_date").notNull(),
+  description: text("description").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  source: text("source").notNull().default("Other"),
+  currency: text("currency").notNull().default("CAD"),
+  fingerprint: text("fingerprint").notNull().unique(),
+  importId: text("import_id").references(() => importsTable.id),
+  createdAt: integer("created_at")
+    .notNull()
+    .$defaultFn(() => Date.now()),
+});
+
+export type IncomeRow = typeof incomesTable.$inferSelect;
+export type NewIncomeRow = typeof incomesTable.$inferInsert;
