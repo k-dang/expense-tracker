@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
-import { transactionsTable } from "@/db/schema";
+import { incomesTable, transactionsTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
 
 function getRangeFilter(range: DateRange) {
@@ -167,4 +167,61 @@ export async function getDashboardRecentTransactions(range: DateRange) {
 
 export type DashboardRecentTransactionItem = Awaited<
   ReturnType<typeof getDashboardRecentTransactions>
+>[number];
+
+function getIncomeRangeFilter(range: DateRange) {
+  return and(
+    gte(incomesTable.incomeDate, range.from),
+    lte(incomesTable.incomeDate, range.to),
+  );
+}
+
+export async function getDashboardIncomeTotals(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("income");
+  const rangeFilter = getIncomeRangeFilter(range);
+
+  const totalsRow = await db
+    .select({
+      totalIncomeCents: sum(incomesTable.amountCents),
+      incomeCount: count(incomesTable.id),
+    })
+    .from(incomesTable)
+    .where(rangeFilter);
+
+  return {
+    totalIncomeCents: Number(totalsRow[0]?.totalIncomeCents ?? 0),
+    incomeCount: Number(totalsRow[0]?.incomeCount ?? 0),
+  };
+}
+
+export type DashboardIncomeTotals = Awaited<
+  ReturnType<typeof getDashboardIncomeTotals>
+>;
+
+export async function getDashboardMonthlyIncomeTrend(range: DateRange) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("income");
+  const rangeFilter = getIncomeRangeFilter(range);
+
+  const monthlyRows = await db
+    .select({
+      month: sql<string>`substr(${incomesTable.incomeDate}, 1, 7)`,
+      totalCents: sum(incomesTable.amountCents),
+    })
+    .from(incomesTable)
+    .where(rangeFilter)
+    .groupBy(sql`substr(${incomesTable.incomeDate}, 1, 7)`)
+    .orderBy(sql`substr(${incomesTable.incomeDate}, 1, 7)`);
+
+  return monthlyRows.map((row) => ({
+    month: row.month,
+    totalCents: Number(row.totalCents ?? 0),
+  }));
+}
+
+export type DashboardMonthlyIncomeTrendItem = Awaited<
+  ReturnType<typeof getDashboardMonthlyIncomeTrend>
 >[number];
