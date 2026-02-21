@@ -28,27 +28,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <Suspense
-      fallback={
-        <main className="flex min-h-[50vh] w-full items-center justify-center">
-          <Spinner className="size-8" />
-        </main>
-      }
-    >
-      <ClerkProvider
-        appearance={{
-          theme: shadcn,
-        }}
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
-        <html lang="en">
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+        <Suspense
+          fallback={
+            <main className="flex min-h-[50vh] w-full items-center justify-center">
+              <Spinner className="size-8" />
+            </main>
+          }
+        >
+          <ClerkProvider
+            appearance={{
+              theme: shadcn,
+            }}
           >
             <Navbar />
             {children}
-          </body>
-        </html>
-      </ClerkProvider>
-    </Suspense>
+          </ClerkProvider>
+        </Suspense>
+      </body>
+    </html>
   );
 }
