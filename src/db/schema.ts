@@ -73,7 +73,6 @@ export type NewCategoryRuleRow = typeof categoryRulesTable.$inferInsert;
 export const incomesTable = sqliteTable("incomes", {
   id: text("id").primaryKey(),
   incomeDate: text("income_date").notNull(),
-  description: text("description").notNull(),
   amountCents: integer("amount_cents").notNull(),
   source: text("source").notNull().default("Other"),
   currency: text("currency").notNull().default("CAD"),

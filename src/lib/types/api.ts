@@ -5,6 +5,7 @@ export type ImportErrorField =
   | "description"
   | "amount"
   | "category"
+  | "source"
   | "file"
   | "header";
 

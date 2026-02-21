@@ -1,13 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
-import { and, asc, count, desc, eq, inArray, like } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { incomesTable } from "@/db/schema";
 
 export type IncomeFilters = {
-  search?: string;
   source?: string;
-  sortBy?: "date" | "amount" | "description" | "source";
+  sortBy?: "date" | "amount" | "source";
   sortOrder?: "asc" | "desc";
   page?: number;
   pageSize?: number;
@@ -19,7 +18,6 @@ export async function listIncomes(filters: IncomeFilters = {}) {
   cacheTag("income");
 
   const {
-    search,
     source,
     sortBy = "date",
     sortOrder = "desc",
@@ -28,10 +26,6 @@ export async function listIncomes(filters: IncomeFilters = {}) {
   } = filters;
 
   const conditions = [];
-
-  if (search) {
-    conditions.push(like(incomesTable.description, `%${search}%`));
-  }
 
   if (source) {
     conditions.push(eq(incomesTable.source, source));
@@ -42,7 +36,6 @@ export async function listIncomes(filters: IncomeFilters = {}) {
   const sortColumn = {
     date: incomesTable.incomeDate,
     amount: incomesTable.amountCents,
-    description: incomesTable.description,
     source: incomesTable.source,
   }[sortBy];
 
@@ -54,7 +47,6 @@ export async function listIncomes(filters: IncomeFilters = {}) {
       .select({
         id: incomesTable.id,
         incomeDate: incomesTable.incomeDate,
-        description: incomesTable.description,
         source: incomesTable.source,
         amountCents: incomesTable.amountCents,
       })
@@ -83,7 +75,6 @@ export type IncomeListItem = Awaited<
 
 export async function createIncome(input: {
   incomeDate: string;
-  description: string;
   amountCents: number;
   source: string;
 }) {
@@ -91,7 +82,6 @@ export async function createIncome(input: {
   await db.insert(incomesTable).values({
     id,
     incomeDate: input.incomeDate,
-    description: input.description,
     amountCents: input.amountCents,
     source: input.source,
     currency: "CAD",
@@ -105,7 +95,6 @@ export async function updateIncome(
   id: string,
   input: {
     incomeDate?: string;
-    description?: string;
     amountCents?: number;
     source?: string;
   },
