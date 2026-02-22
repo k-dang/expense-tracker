@@ -2,7 +2,12 @@
 
 import { updateTag } from "next/cache";
 import { z } from "zod";
-import { createIncome, deleteIncomes, updateIncome } from "@/db/queries/income";
+import {
+  bulkUpdateIncomeSource,
+  createIncome,
+  deleteIncomes,
+  updateIncome,
+} from "@/db/queries/income";
 import { processIncomeImportFile } from "@/db/queries/income-imports";
 import { parseStrictDate } from "@/lib/date/utils";
 import type { ImportFileResult, ImportPostResult } from "@/lib/types/api";
@@ -58,6 +63,11 @@ const updateIncomeSchema = z
 const deleteIncomesSchema = z
   .object({ ids: z.array(z.string().trim()) })
   .refine((data) => data.ids.length > 0, "No income entries selected.");
+
+const bulkUpdateSourceSchema = z.object({
+  ids: z.array(z.string().trim()).min(1, "No income entries selected."),
+  newSource: z.string().trim().min(1, "Source is required."),
+});
 
 const MAX_FILES_PER_UPLOAD = 10;
 
@@ -170,6 +180,30 @@ export async function deleteIncomesAction(ids: string[]) {
     return {
       status: "error" as const,
       error: "Failed to delete income entries.",
+    };
+  }
+}
+
+export async function bulkUpdateSourceAction(ids: string[], newSource: string) {
+  const parsed = bulkUpdateSourceSchema.safeParse({ ids, newSource });
+  if (!parsed.success) {
+    return {
+      status: "error" as const,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  try {
+    const updatedCount = await bulkUpdateIncomeSource(
+      parsed.data.ids,
+      parsed.data.newSource,
+    );
+    updateTag("income");
+    return { status: "success" as const, updatedCount };
+  } catch {
+    return {
+      status: "error" as const,
+      error: "Failed to update income sources.",
     };
   }
 }

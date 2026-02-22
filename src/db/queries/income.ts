@@ -110,6 +110,20 @@ export async function deleteIncomes(ids: string[]) {
   return result.rowsAffected;
 }
 
+export async function bulkUpdateIncomeSource(
+  ids: string[],
+  newSource: string,
+) {
+  if (ids.length === 0) return 0;
+
+  const result = await db
+    .update(incomesTable)
+    .set({ source: newSource })
+    .where(inArray(incomesTable.id, ids));
+
+  return result.rowsAffected;
+}
+
 export async function getDistinctSources() {
   "use cache";
   cacheLife("max");

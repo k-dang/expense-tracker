@@ -17,6 +17,7 @@ import { BulkActionBar } from "@/components/income/bulk-action-bar";
 import { DeleteIncomeDialog } from "@/components/income/delete-income-dialog";
 import { EditIncomeDialog } from "@/components/income/edit-income-dialog";
 import type { IncomeListItem } from "@/db/queries/income";
+import { bulkUpdateSourceAction } from "@/lib/actions/income";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
 
@@ -44,6 +45,7 @@ export function IncomeTable({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editTarget, setEditTarget] = useState<IncomeListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -70,6 +72,19 @@ export function IncomeTable({
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
+
+  const handleBulkSourceChange = useCallback(
+    async (newSource: string) => {
+      setIsApplying(true);
+      try {
+        await bulkUpdateSourceAction([...selectedIds], newSource);
+        setSelectedIds(new Set());
+      } finally {
+        setIsApplying(false);
+      }
+    },
+    [selectedIds],
+  );
 
   const navigateToPage = useCallback(
     (newPage: number) => {
@@ -202,6 +217,9 @@ export function IncomeTable({
       {selectedIds.size > 0 && (
         <BulkActionBar
           selectedCount={selectedIds.size}
+          sources={sources}
+          isApplying={isApplying}
+          onBulkSourceChange={handleBulkSourceChange}
           onBulkDelete={() => setDeleteTarget([...selectedIds])}
           onClearSelection={clearSelection}
         />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -11,6 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import {
   InputGroup,
@@ -20,7 +26,7 @@ import {
 } from "@/components/ui/input-group";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { CategoryFieldPicker } from "@/components/transactions/category-field-picker";
-import { formatIsoDate } from "@/lib/date/utils";
+import { formatIsoDate, formatDateLabel } from "@/lib/date/utils";
 import {
   createTransactionAction,
   type CreateTransactionState,
@@ -33,6 +39,8 @@ type Props = {
 export function AddTransactionDialog({ categories }: Props) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
+  const [date, setDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const [state, formAction, pending] = useActionState<
@@ -44,6 +52,7 @@ export function AddTransactionDialog({ categories }: Props) {
     if (state?.status === "success") {
       setOpen(false);
       setCategory("");
+      setDate(new Date());
       formRef.current?.reset();
     }
   }, [state]);
@@ -53,7 +62,10 @@ export function AddTransactionDialog({ categories }: Props) {
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) setCategory("");
+        if (!nextOpen) {
+          setCategory("");
+          setDate(new Date());
+        }
       }}
     >
       <Button
@@ -74,12 +86,33 @@ export function AddTransactionDialog({ categories }: Props) {
         <form ref={formRef} action={formAction} className="grid gap-4">
           <Field>
             <FieldLabel>Date</FieldLabel>
-            <Input
-              type="date"
-              name="date"
-              defaultValue={formatIsoDate(new Date())}
-              required
-            />
+            <input type="hidden" name="date" value={formatIsoDate(date)} />
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  />
+                }
+              >
+                <CalendarIcon className="mr-2 size-4" />
+                {formatDateLabel(date)}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(d) => {
+                    if (d) {
+                      setDate(d);
+                      setCalendarOpen(false);
+                    }
+                  }}
+                  defaultMonth={date}
+                />
+              </PopoverContent>
+            </Popover>
             {state?.errors?.date && (
               <FieldError>{state.errors.date}</FieldError>
             )}

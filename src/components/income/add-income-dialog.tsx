@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -11,7 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   InputGroup,
   InputGroupAddon,
@@ -20,7 +25,7 @@ import {
 } from "@/components/ui/input-group";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { SourceFieldPicker } from "@/components/income/source-field-picker";
-import { formatIsoDate } from "@/lib/date/utils";
+import { formatIsoDate, formatDateLabel } from "@/lib/date/utils";
 import {
   createIncomeAction,
   type CreateIncomeState,
@@ -33,6 +38,8 @@ type Props = {
 export function AddIncomeDialog({ sources }: Props) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState("");
+  const [date, setDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const [state, formAction, pending] = useActionState<
@@ -44,6 +51,7 @@ export function AddIncomeDialog({ sources }: Props) {
     if (state?.status === "success") {
       setOpen(false);
       setSource("");
+      setDate(new Date());
       formRef.current?.reset();
     }
   }, [state]);
@@ -53,7 +61,10 @@ export function AddIncomeDialog({ sources }: Props) {
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) setSource("");
+        if (!nextOpen) {
+          setSource("");
+          setDate(new Date());
+        }
       }}
     >
       <Button
@@ -74,12 +85,33 @@ export function AddIncomeDialog({ sources }: Props) {
         <form ref={formRef} action={formAction} className="grid gap-4">
           <Field>
             <FieldLabel>Date</FieldLabel>
-            <Input
-              type="date"
-              name="date"
-              defaultValue={formatIsoDate(new Date())}
-              required
-            />
+            <input type="hidden" name="date" value={formatIsoDate(date)} />
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  />
+                }
+              >
+                <CalendarIcon className="mr-2 size-4" />
+                {formatDateLabel(date)}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(d) => {
+                    if (d) {
+                      setDate(d);
+                      setCalendarOpen(false);
+                    }
+                  }}
+                  defaultMonth={date}
+                />
+              </PopoverContent>
+            </Popover>
             {state?.errors?.date && (
               <FieldError>{state.errors.date}</FieldError>
             )}
