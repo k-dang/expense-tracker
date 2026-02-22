@@ -3,6 +3,7 @@ import { CategoryBreakdownCard } from "@/components/dashboard/category-breakdown
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { KpiCards, KpiCardsFallback } from "@/components/dashboard/kpi-cards";
 import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
+import { SavingsTrendCard } from "@/components/dashboard/savings-trend-card";
 import { RecentTransactionsCard } from "@/components/dashboard/recent-transactions-card";
 import { TopDescriptionsCard } from "@/components/dashboard/top-descriptions-card";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
@@ -26,6 +27,7 @@ async function DashboardContent({ searchParams }: PageProps) {
         <KpiCards range={range} />
       </Suspense>
       <MonthlyTrendCard range={range} category={params.trendCategory} />
+      <SavingsTrendCard range={range} />
       <CategoryBreakdownCard range={range} />
       <TopDescriptionsCard range={range} />
       <RecentTransactionsCard range={range} />
