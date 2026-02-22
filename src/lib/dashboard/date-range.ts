@@ -7,7 +7,11 @@ export type DateRange = {
 };
 
 export function getDefaultDashboardDateRange(now = new Date()): DateRange {
-  const utcNow = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const utcNow = new Date(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
   const toDate = endOfMonth(utcNow);
   const fromDate = startOfMonth(subMonths(utcNow, 23));
 

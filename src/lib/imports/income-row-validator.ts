@@ -82,7 +82,17 @@ export function validateIncomeRow(row: {
     };
   }
 
-  const sourceDisplay = normalizeDisplayValue(row.source) || "Other";
+  const sourceDisplay = normalizeDisplayValue(row.source);
+
+  if (sourceDisplay.length === 0) {
+    return {
+      error: {
+        row: row.rowNumber,
+        field: "source",
+        message: "Source is required.",
+      },
+    };
+  }
 
   if (sourceDisplay.length > MAX_TEXT_LENGTH) {
     return {

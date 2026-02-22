@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  importDuplicatesTable,
-  importsTable,
-  incomesTable,
-} from "@/db/schema";
+import { importDuplicatesTable, importsTable, incomesTable } from "@/db/schema";
 import { processIncomeImportFileInput } from "@/lib/imports/process-income-import-file";
 import type { ImportFileResult } from "@/lib/types/api";
 

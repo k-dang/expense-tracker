@@ -7,6 +7,8 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ComposedChart,
+  Line,
   ReferenceLine,
   XAxis,
   YAxis,
@@ -19,7 +21,10 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import type { DashboardMonthlyTrendItem } from "@/db/queries/dashboard";
+import type {
+  DashboardMonthlyTrendItem,
+  DashboardMonthlyIncomeTrendItem,
+} from "@/db/queries/dashboard";
 import { formatMonthLabel, formatShortMonthLabel } from "@/lib/date/utils";
 
 const MONTHLY_TARGET_DOLLARS = 2000;
@@ -28,6 +33,14 @@ const MONTHLY_TREND_CHART_CONFIG = {
   totalDollars: {
     label: "Monthly spend",
     color: "var(--chart-1)",
+  },
+  incomeDollars: {
+    label: "Income",
+    color: "var(--color-green-500, #22c55e)",
+  },
+  savingsDollars: {
+    label: "Savings",
+    color: "var(--color-blue-500, #3b82f6)",
   },
   target: {
     label: "Target",
@@ -41,6 +54,7 @@ type Props = {
   data: DashboardMonthlyTrendItem[];
   accentColor?: string;
   categoryTarget?: number;
+  incomeData?: DashboardMonthlyIncomeTrendItem[];
 };
 
 export type MonthlyTotalsRow = {
@@ -49,11 +63,38 @@ export type MonthlyTotalsRow = {
   totalCents: number;
 };
 
-export function toMonthlyTrendChartData(data: DashboardMonthlyTrendItem[]) {
-  return data.map((item) => ({
-    ...item,
-    totalDollars: item.totalCents / 100,
-  }));
+export function toMonthlyTrendChartData(
+  data: DashboardMonthlyTrendItem[],
+  incomeData?: DashboardMonthlyIncomeTrendItem[],
+) {
+  if (!incomeData || incomeData.length === 0) {
+    return data.map((item) => ({
+      ...item,
+      totalDollars: item.totalCents / 100,
+    }));
+  }
+
+  const incomeByMonth = new Map(
+    incomeData.map((item) => [item.month, item.totalCents]),
+  );
+  const expenseByMonth = new Map(
+    data.map((item) => [item.month, item.totalCents]),
+  );
+  const allMonths = [
+    ...new Set([...expenseByMonth.keys(), ...incomeByMonth.keys()]),
+  ].sort();
+
+  return allMonths.map((month) => {
+    const expenseCents = expenseByMonth.get(month) ?? 0;
+    const incomeCents = incomeByMonth.get(month) ?? 0;
+    return {
+      month,
+      totalCents: expenseCents,
+      totalDollars: expenseCents / 100,
+      incomeDollars: incomeCents / 100,
+      savingsDollars: (incomeCents - expenseCents) / 100,
+    };
+  });
 }
 
 export function toMonthlyTotalsRows(data: DashboardMonthlyTrendItem[]) {
@@ -74,9 +115,11 @@ export function MonthlyTrendChart({
   data,
   accentColor,
   categoryTarget,
+  incomeData,
 }: Props) {
   const [view, setView] = useState<ChartView>("area");
-  const chartData = toMonthlyTrendChartData(data);
+  const chartData = toMonthlyTrendChartData(data, incomeData);
+  const showIncome = incomeData && incomeData.length > 0;
   const dollarsFormatter = new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency: "CAD",
@@ -106,12 +149,14 @@ export function MonthlyTrendChart({
     const gradientColor = accentColor ?? "var(--color-totalDollars)";
 
     if (view === "area") {
+      const AreaOrComposed = showIncome ? ComposedChart : AreaChart;
+
       return (
         <ChartContainer
           className="h-80 w-full min-w-0 aspect-auto"
           config={chartConfig}
         >
-          <AreaChart data={chartData} margin={{ top: 12, right: 8 }}>
+          <AreaOrComposed data={chartData} margin={{ top: 12, right: 8 }}>
             <defs>
               <linearGradient id="monthlyTrendFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={gradientColor} stopOpacity={0.3} />
@@ -176,17 +221,38 @@ export function MonthlyTrendChart({
               stroke={accentColor ?? "var(--color-totalDollars)"}
               strokeWidth={2}
             />
-          </AreaChart>
+            {showIncome && (
+              <Line
+                dataKey="incomeDollars"
+                type="monotone"
+                stroke="var(--color-incomeDollars)"
+                strokeWidth={2}
+                dot={false}
+              />
+            )}
+            {showIncome && (
+              <Line
+                dataKey="savingsDollars"
+                type="monotone"
+                stroke="var(--color-savingsDollars)"
+                strokeWidth={2}
+                strokeDasharray="4 3"
+                dot={false}
+              />
+            )}
+          </AreaOrComposed>
         </ChartContainer>
       );
     }
+
+    const BarOrComposed = showIncome ? ComposedChart : BarChart;
 
     return (
       <ChartContainer
         className="h-80 w-full min-w-0 aspect-auto"
         config={chartConfig}
       >
-        <BarChart data={chartData} margin={{ top: 12, right: 8 }}>
+        <BarOrComposed data={chartData} margin={{ top: 12, right: 8 }}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="month"
@@ -237,7 +303,24 @@ export function MonthlyTrendChart({
             fill={accentColor ?? "var(--color-totalDollars)"}
             radius={[4, 4, 0, 0]}
           />
-        </BarChart>
+          {showIncome && (
+            <Bar
+              dataKey="incomeDollars"
+              fill="var(--color-incomeDollars)"
+              radius={[4, 4, 0, 0]}
+            />
+          )}
+          {showIncome && (
+            <Line
+              dataKey="savingsDollars"
+              type="monotone"
+              stroke="var(--color-savingsDollars)"
+              strokeWidth={2}
+              strokeDasharray="4 3"
+              dot={false}
+            />
+          )}
+        </BarOrComposed>
       </ChartContainer>
     );
   }

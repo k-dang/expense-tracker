@@ -1,8 +1,5 @@
 import Papa from "papaparse";
-import {
-  decodeCsvBytes,
-  validateCsvFileInput,
-} from "@/lib/imports/csv-utils";
+import { decodeCsvBytes, validateCsvFileInput } from "@/lib/imports/csv-utils";
 import {
   type ValidatedIncomeInput,
   validateIncomeRow,
@@ -13,8 +10,7 @@ type IncomeCanonicalHeader = "date" | "amount" | "source";
 
 type ParsedIncomeRow = Record<IncomeCanonicalHeader, string>;
 
-const REQUIRED_HEADERS: IncomeCanonicalHeader[] = ["date", "amount"];
-const OPTIONAL_HEADERS: IncomeCanonicalHeader[] = ["source"];
+const REQUIRED_HEADERS: IncomeCanonicalHeader[] = ["date", "source", "amount"];
 
 function normalizeHeader(header: string): string {
   return header.trim().toLowerCase();
@@ -81,9 +77,8 @@ function parseIncomeCsvText(
     };
   }
 
-  const allHeaders = [...REQUIRED_HEADERS, ...OPTIONAL_HEADERS];
   const extraHeaders = headers.filter(
-    (header) => !allHeaders.includes(header as IncomeCanonicalHeader),
+    (header) => !REQUIRED_HEADERS.includes(header as IncomeCanonicalHeader),
   );
   if (extraHeaders.length > 0) {
     return {

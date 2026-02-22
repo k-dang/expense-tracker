@@ -2,11 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { z } from "zod";
-import {
-  createIncome,
-  deleteIncomes,
-  updateIncome,
-} from "@/db/queries/income";
+import { createIncome, deleteIncomes, updateIncome } from "@/db/queries/income";
 import { processIncomeImportFile } from "@/db/queries/income-imports";
 import { parseStrictDate } from "@/lib/date/utils";
 import type { ImportFileResult, ImportPostResult } from "@/lib/types/api";

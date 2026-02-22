@@ -99,10 +99,7 @@ export async function updateIncome(
     source?: string;
   },
 ) {
-  await db
-    .update(incomesTable)
-    .set(input)
-    .where(eq(incomesTable.id, id));
+  await db.update(incomesTable).set(input).where(eq(incomesTable.id, id));
 }
 
 export async function deleteIncomes(ids: string[]) {

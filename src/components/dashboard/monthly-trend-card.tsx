@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import {
   getDashboardMonthlyTrend,
+  getDashboardMonthlyIncomeTrend,
   getDashboardCategoryBreakdown,
 } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
@@ -24,7 +25,12 @@ async function MonthlyTrendContent({
   range: DateRange;
   category?: string;
 }) {
-  const data = await getDashboardMonthlyTrend(range, category);
+  const [data, incomeData] = await Promise.all([
+    getDashboardMonthlyTrend(range, category),
+    category
+      ? Promise.resolve(undefined)
+      : getDashboardMonthlyIncomeTrend(range),
+  ]);
   const accentColor = category ? getCategoryChartColor(category) : undefined;
   const categoryTarget = category
     ? getCategoryMonthlyTarget(category)
@@ -34,6 +40,7 @@ async function MonthlyTrendContent({
       data={data}
       accentColor={accentColor}
       categoryTarget={categoryTarget}
+      incomeData={incomeData}
     />
   );
 }
