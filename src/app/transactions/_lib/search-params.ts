@@ -1,5 +1,7 @@
 import type { TransactionFilters as FiltersType } from "@/db/queries/transactions";
 
+export { parsePage } from "@/lib/search-params";
+
 export type SearchParams = {
   search?: string;
   category?: string;
@@ -28,10 +30,4 @@ export function parseSortOrder(
   return VALID_SORT_ORDER.has(v as FiltersType["sortOrder"])
     ? (v as FiltersType["sortOrder"])
     : undefined;
-}
-
-export function parsePage(v?: string): number {
-  if (!v) return 1;
-  const n = Number.parseInt(v, 10);
-  return Number.isNaN(n) || n < 1 ? 1 : n;
 }

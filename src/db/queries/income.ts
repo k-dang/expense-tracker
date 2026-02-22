@@ -110,10 +110,7 @@ export async function deleteIncomes(ids: string[]) {
   return result.rowsAffected;
 }
 
-export async function bulkUpdateIncomeSource(
-  ids: string[],
-  newSource: string,
-) {
+export async function bulkUpdateIncomeSource(ids: string[], newSource: string) {
   if (ids.length === 0) return 0;
 
   const result = await db

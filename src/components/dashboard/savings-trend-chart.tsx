@@ -21,6 +21,7 @@ import type {
 } from "@/db/queries/dashboard";
 import { toMonthlyTrendChartData } from "./monthly-trend-chart";
 import { formatShortMonthLabel } from "@/lib/date/utils";
+import { formatCurrency, formatCurrencyWhole } from "@/lib/format";
 
 const CHART_CONFIG = {
   savingsDollars: {
@@ -55,32 +56,26 @@ function IncomeBreakdown({
   const expensesPct = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
   const savingsPct = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
 
-  const dollarsFormatter = new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 0,
-  });
-
   const months = chartData.length;
 
   const columns = [
     {
       label: "Total income",
-      value: dollarsFormatter.format(totalIncome),
+      value: formatCurrencyWhole(totalIncome),
       pct: null as string | null,
       color: "bg-emerald-500",
       textColor: "text-emerald-600 dark:text-emerald-400",
     },
     {
       label: "Total expenses",
-      value: dollarsFormatter.format(totalExpenses),
+      value: formatCurrencyWhole(totalExpenses),
       pct: `${expensesPct.toFixed(1)}%`,
       color: "bg-red-500",
       textColor: "text-red-600 dark:text-red-400",
     },
     {
       label: "Total savings",
-      value: dollarsFormatter.format(totalSavings),
+      value: formatCurrencyWhole(totalSavings),
       pct: `${savingsPct >= 0 ? "" : ""}${savingsPct.toFixed(1)}%`,
       color: totalSavings >= 0 ? "bg-blue-500" : "bg-red-500",
       textColor:
@@ -116,7 +111,9 @@ function IncomeBreakdown({
             className="bg-muted/50 rounded-lg px-3 py-2.5 space-y-1"
           >
             <div className="flex items-center gap-1.5">
-              <span className={`inline-block size-2 rounded-full ${col.color}`} />
+              <span
+                className={`inline-block size-2 rounded-full ${col.color}`}
+              />
               <span className="text-muted-foreground text-xs tracking-wide">
                 {col.label}
               </span>
@@ -149,10 +146,6 @@ function IncomeBreakdown({
 
 export function SavingsTrendChart({ data, incomeData }: Props) {
   const chartData = toMonthlyTrendChartData(data, incomeData);
-  const dollarsFormatter = new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  });
 
   if (chartData.length === 0) {
     return (
@@ -179,9 +172,7 @@ export function SavingsTrendChart({ data, incomeData }: Props) {
           />
           <YAxis
             width={80}
-            tickFormatter={(value) =>
-              dollarsFormatter.format(Number(value ?? 0))
-            }
+            tickFormatter={(value) => formatCurrency(Number(value ?? 0))}
             tickLine={false}
             axisLine={false}
             tickMargin={8}
@@ -196,7 +187,7 @@ export function SavingsTrendChart({ data, incomeData }: Props) {
                       Savings
                     </span>
                     <span className="text-foreground font-mono font-medium tabular-nums">
-                      {dollarsFormatter.format(Number(value ?? 0))}
+                      {formatCurrency(Number(value ?? 0))}
                     </span>
                   </div>
                 )}

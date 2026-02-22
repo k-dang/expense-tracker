@@ -30,9 +30,7 @@ export function SourcePicker({
   const allSources = [...new Set([...DEFAULT_INCOME_SOURCES, ...sources])];
 
   const filtered = search
-    ? allSources.filter((s) =>
-        s.toLowerCase().includes(search.toLowerCase()),
-      )
+    ? allSources.filter((s) => s.toLowerCase().includes(search.toLowerCase()))
     : allSources;
 
   const isCustom =

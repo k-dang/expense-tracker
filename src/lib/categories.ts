@@ -1,3 +1,5 @@
+import { findCaseInsensitive } from "@/lib/utils";
+
 export const DEFAULT_CATEGORIES = [
   "Food",
   "Transport",
@@ -8,18 +10,6 @@ export const DEFAULT_CATEGORIES = [
 ] as const;
 
 export type DefaultCategory = (typeof DEFAULT_CATEGORIES)[number];
-
-function findCaseInsensitive<T>(
-  map: Record<string, T>,
-  key: string,
-): T | undefined {
-  if (map[key] !== undefined) return map[key];
-  const lower = key.toLowerCase();
-  for (const k in map) {
-    if (k.toLowerCase() === lower) return map[k];
-  }
-  return undefined;
-}
 
 const CATEGORY_COLORS: Record<string, string> = {
   Food: "bg-orange-500/15 text-orange-400 border-orange-500/25",

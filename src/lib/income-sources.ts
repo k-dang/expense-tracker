@@ -1,18 +1,8 @@
+import { findCaseInsensitive } from "@/lib/utils";
+
 export const DEFAULT_INCOME_SOURCES = ["Salary", "Other"] as const;
 
 export type DefaultIncomeSource = (typeof DEFAULT_INCOME_SOURCES)[number];
-
-function findCaseInsensitive<T>(
-  map: Record<string, T>,
-  key: string,
-): T | undefined {
-  if (map[key] !== undefined) return map[key];
-  const lower = key.toLowerCase();
-  for (const k in map) {
-    if (k.toLowerCase() === lower) return map[k];
-  }
-  return undefined;
-}
 
 const SOURCE_COLORS: Record<string, string> = {
   Salary: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",

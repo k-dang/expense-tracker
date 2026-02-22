@@ -1,5 +1,7 @@
 import type { IncomeFilters } from "@/db/queries/income";
 
+export { parsePage } from "@/lib/search-params";
+
 export type SearchParams = {
   source?: string;
   sortBy?: string;
@@ -26,10 +28,4 @@ export function parseSortOrder(
   return VALID_SORT_ORDER.has(v as IncomeFilters["sortOrder"])
     ? (v as IncomeFilters["sortOrder"])
     : undefined;
-}
-
-export function parsePage(v?: string): number {
-  if (!v) return 1;
-  const n = Number.parseInt(v, 10);
-  return Number.isNaN(n) || n < 1 ? 1 : n;
 }

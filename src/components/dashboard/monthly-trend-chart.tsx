@@ -28,6 +28,7 @@ import type {
   DashboardMonthlyIncomeTrendItem,
 } from "@/db/queries/dashboard";
 import { formatMonthLabel, formatShortMonthLabel } from "@/lib/date/utils";
+import { formatCurrency } from "@/lib/format";
 
 const MONTHLY_TARGET_DOLLARS = 2000;
 
@@ -122,10 +123,6 @@ export function MonthlyTrendChart({
   const [view, setView] = useState<ChartView>("area");
   const chartData = toMonthlyTrendChartData(data, incomeData);
   const showIncome = incomeData && incomeData.length > 0;
-  const dollarsFormatter = new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  });
 
   const chartConfig = accentColor
     ? {
@@ -158,7 +155,10 @@ export function MonthlyTrendChart({
           className="h-80 w-full min-w-0 aspect-auto"
           config={chartConfig}
         >
-          <AreaOrComposed data={chartData} margin={{ top: 12, right: 8, bottom: 4 }}>
+          <AreaOrComposed
+            data={chartData}
+            margin={{ top: 12, right: 8, bottom: 4 }}
+          >
             <defs>
               <linearGradient id="monthlyTrendFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={gradientColor} stopOpacity={0.3} />
@@ -179,9 +179,7 @@ export function MonthlyTrendChart({
             />
             <YAxis
               width={80}
-              tickFormatter={(value) =>
-                dollarsFormatter.format(toNumber(value))
-              }
+              tickFormatter={(value) => formatCurrency(toNumber(value))}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
@@ -196,7 +194,7 @@ export function MonthlyTrendChart({
                         {name == null ? "Value" : String(name)}
                       </span>
                       <span className="text-foreground font-mono font-medium tabular-nums">
-                        {dollarsFormatter.format(toNumber(value))}
+                        {formatCurrency(toNumber(value))}
                       </span>
                     </div>
                   )}
@@ -210,7 +208,7 @@ export function MonthlyTrendChart({
                 stroke="var(--chart-2)"
                 strokeDasharray="6 4"
                 label={{
-                  value: dollarsFormatter.format(targetDollars),
+                  value: formatCurrency(targetDollars),
                   position: "middle",
                   fill: "var(--muted-foreground)",
                 }}
@@ -255,7 +253,10 @@ export function MonthlyTrendChart({
         className="h-80 w-full min-w-0 aspect-auto"
         config={chartConfig}
       >
-        <BarOrComposed data={chartData} margin={{ top: 12, right: 8, bottom: 4 }}>
+        <BarOrComposed
+          data={chartData}
+          margin={{ top: 12, right: 8, bottom: 4 }}
+        >
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="month"
@@ -266,7 +267,7 @@ export function MonthlyTrendChart({
           />
           <YAxis
             width={80}
-            tickFormatter={(value) => dollarsFormatter.format(toNumber(value))}
+            tickFormatter={(value) => formatCurrency(toNumber(value))}
             tickLine={false}
             axisLine={false}
             tickMargin={8}
@@ -281,7 +282,7 @@ export function MonthlyTrendChart({
                       {name == null ? "Value" : String(name)}
                     </span>
                     <span className="text-foreground font-mono font-medium tabular-nums">
-                      {dollarsFormatter.format(toNumber(value))}
+                      {formatCurrency(toNumber(value))}
                     </span>
                   </div>
                 )}
@@ -295,7 +296,7 @@ export function MonthlyTrendChart({
               stroke="var(--chart-2)"
               strokeDasharray="6 4"
               label={{
-                value: dollarsFormatter.format(targetDollars),
+                value: formatCurrency(targetDollars),
                 position: "right",
                 fill: "var(--muted-foreground)",
               }}
