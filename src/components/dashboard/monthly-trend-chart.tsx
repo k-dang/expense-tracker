@@ -17,6 +17,8 @@ import { AreaChartIcon, BarChart3Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -156,7 +158,7 @@ export function MonthlyTrendChart({
           className="h-80 w-full min-w-0 aspect-auto"
           config={chartConfig}
         >
-          <AreaOrComposed data={chartData} margin={{ top: 12, right: 8 }}>
+          <AreaOrComposed data={chartData} margin={{ top: 12, right: 8, bottom: 4 }}>
             <defs>
               <linearGradient id="monthlyTrendFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={gradientColor} stopOpacity={0.3} />
@@ -240,6 +242,7 @@ export function MonthlyTrendChart({
                 dot={false}
               />
             )}
+            <ChartLegend content={<ChartLegendContent />} />
           </AreaOrComposed>
         </ChartContainer>
       );
@@ -252,7 +255,7 @@ export function MonthlyTrendChart({
         className="h-80 w-full min-w-0 aspect-auto"
         config={chartConfig}
       >
-        <BarOrComposed data={chartData} margin={{ top: 12, right: 8 }}>
+        <BarOrComposed data={chartData} margin={{ top: 12, right: 8, bottom: 4 }}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="month"
@@ -320,6 +323,7 @@ export function MonthlyTrendChart({
               dot={false}
             />
           )}
+          <ChartLegend content={<ChartLegendContent />} />
         </BarOrComposed>
       </ChartContainer>
     );
@@ -328,7 +332,7 @@ export function MonthlyTrendChart({
   return (
     <div className="min-w-0 space-y-4">
       {chartData.length > 0 && (
-        <div className="flex justify-end gap-1">
+        <div className="flex items-center justify-end gap-1">
           <Button
             variant={view === "area" ? "secondary" : "ghost"}
             size="icon-xs"
