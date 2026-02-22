@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
+import { ImportUploadForm } from "@/components/imports/import-upload-form";
 import { getDistinctCategories } from "@/db/queries/transactions";
 import type { SearchParams } from "./_lib/search-params";
 import { TransactionPageContent } from "./_components/transaction-page-content";
@@ -34,6 +35,8 @@ export default function TransactionsPage({ searchParams }: PageProps) {
           <AddTransactionDialogLoader />
         </Suspense>
       </div>
+
+      <ImportUploadForm />
 
       <Suspense fallback={<TransactionPageContentSkeleton />}>
         <TransactionPageContent searchParams={searchParams} />
