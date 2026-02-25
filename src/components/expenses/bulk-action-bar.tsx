@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CategoryPicker } from "@/components/transactions/category-picker";
+import { CategoryPicker } from "@/components/expenses/category-picker";
 import { X, Tag, Trash2 } from "lucide-react";
 
 type Props = {

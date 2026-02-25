@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CategoryBadge } from "@/components/category-badge";
-import { getDashboardRecentTransactions } from "@/db/queries/dashboard";
+import { getDashboardRecentExpenses } from "@/db/queries/dashboard";
 import type { DateRange } from "@/lib/dashboard/date-range";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
@@ -16,8 +16,8 @@ type Props = {
   range: DateRange;
 };
 
-export async function RecentTransactionsContent({ range }: Props) {
-  const data = await getDashboardRecentTransactions(range);
+export async function RecentExpensesContent({ range }: Props) {
+  const data = await getDashboardRecentExpenses(range);
   if (data.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
@@ -38,17 +38,17 @@ export async function RecentTransactionsContent({ range }: Props) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((transaction) => (
-            <TableRow key={transaction.id}>
+          {data.map((expense) => (
+            <TableRow key={expense.id}>
               <TableCell className="text-muted-foreground">
-                {formatIsoDateLabel(transaction.txnDate)}
+                {formatIsoDateLabel(expense.txnDate)}
               </TableCell>
-              <TableCell>{transaction.description}</TableCell>
+              <TableCell>{expense.description}</TableCell>
               <TableCell>
-                <CategoryBadge category={transaction.category} />
+                <CategoryBadge category={expense.category} />
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums">
-                {formatCurrencyFromCents(transaction.amountCents)}
+                {formatCurrencyFromCents(expense.amountCents)}
               </TableCell>
             </TableRow>
           ))}

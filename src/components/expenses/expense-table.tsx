@@ -13,13 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CategoryBadge } from "@/components/category-badge";
-import { CategoryPicker } from "@/components/transactions/category-picker";
-import { BulkActionBar } from "@/components/transactions/bulk-action-bar";
-import { LearnRuleDialog } from "@/components/transactions/learn-rule-dialog";
-import { BulkLearnRuleDialog } from "@/components/transactions/bulk-learn-rule-dialog";
-import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
-import { bulkUpdateCategoryAction } from "@/lib/actions/transactions";
-import type { TransactionListItem } from "@/db/queries/transactions";
+import { CategoryPicker } from "@/components/expenses/category-picker";
+import { BulkActionBar } from "@/components/expenses/bulk-action-bar";
+import { LearnRuleDialog } from "@/components/expenses/learn-rule-dialog";
+import { BulkLearnRuleDialog } from "@/components/expenses/bulk-learn-rule-dialog";
+import { DeleteExpenseDialog } from "@/components/expenses/delete-expense-dialog";
+import { bulkUpdateCategoryAction } from "@/lib/actions/expenses";
+import type { ExpenseListItem } from "@/db/queries/expenses";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
 
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 type Props = {
-  transactions: TransactionListItem[];
+  expenses: ExpenseListItem[];
   totalCount: number;
   page: number;
   pageSize: number;
@@ -35,7 +35,7 @@ type Props = {
 };
 
 type LearnRuleState = {
-  txnId: string;
+  expenseId: string;
   description: string;
   oldCategory: string;
   newCategory: string;
@@ -46,8 +46,8 @@ type BulkLearnRuleState = {
   newCategory: string;
 } | null;
 
-export function TransactionTable({
-  transactions,
+export function ExpenseTable({
+  expenses,
   totalCount,
   page,
   pageSize,
@@ -78,34 +78,34 @@ export function TransactionTable({
   }, []);
 
   const toggleSelectAll = useCallback(() => {
-    if (selectedIds.size === transactions.length) {
+    if (selectedIds.size === expenses.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(transactions.map((t) => t.id)));
+      setSelectedIds(new Set(expenses.map((t) => t.id)));
     }
-  }, [selectedIds.size, transactions]);
+  }, [selectedIds.size, expenses]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
 
   const handleCategoryChange = useCallback(
-    async (txnId: string, newCategory: string) => {
-      const txn = transactions.find((t) => t.id === txnId);
-      if (!txn || txn.category === newCategory) {
+    async (expenseId: string, newCategory: string) => {
+      const expense = expenses.find((t) => t.id === expenseId);
+      if (!expense || expense.category === newCategory) {
         setEditingId(null);
         return;
       }
 
       setEditingId(null);
       setLearnRule({
-        txnId,
-        description: txn.description,
-        oldCategory: txn.category,
+        expenseId,
+        description: expense.description,
+        oldCategory: expense.category,
         newCategory,
       });
     },
-    [transactions],
+    [expenses],
   );
 
   const handleBulkCategoryChange = useCallback(
@@ -117,7 +117,7 @@ export function TransactionTable({
 
         const uniqueDescriptions = [
           ...new Set(
-            transactions
+            expenses
               .filter((t) => selectedIds.has(t.id))
               .map((t) => t.description.toLowerCase()),
           ),
@@ -129,7 +129,7 @@ export function TransactionTable({
         setIsBulkApplying(false);
       }
     },
-    [selectedIds, transactions],
+    [selectedIds, expenses],
   );
 
   const navigateToPage = useCallback(
@@ -145,7 +145,7 @@ export function TransactionTable({
     [router, pathname, searchParams],
   );
 
-  if (transactions.length === 0) {
+  if (expenses.length === 0) {
     return (
       <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-sm">
         <p>No expenses found.</p>
@@ -165,12 +165,10 @@ export function TransactionTable({
               <TableHead className="w-10">
                 <Checkbox
                   checked={
-                    selectedIds.size === transactions.length &&
-                    transactions.length > 0
+                    selectedIds.size === expenses.length && expenses.length > 0
                   }
                   indeterminate={
-                    selectedIds.size > 0 &&
-                    selectedIds.size < transactions.length
+                    selectedIds.size > 0 && selectedIds.size < expenses.length
                   }
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all"
@@ -184,13 +182,13 @@ export function TransactionTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((txn) => {
-              const isUncategorized = txn.category === "Uncategorized";
-              const isSelected = selectedIds.has(txn.id);
+            {expenses.map((expense) => {
+              const isUncategorized = expense.category === "Uncategorized";
+              const isSelected = selectedIds.has(expense.id);
 
               return (
                 <TableRow
-                  key={txn.id}
+                  key={expense.id}
                   className={cn(
                     "group",
                     isSelected && "bg-primary/5",
@@ -200,34 +198,34 @@ export function TransactionTable({
                   <TableCell>
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => toggleSelect(txn.id)}
+                      onCheckedChange={() => toggleSelect(expense.id)}
                       aria-label="Select row"
                     />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {formatIsoDateLabel(txn.txnDate)}
+                    {formatIsoDateLabel(expense.txnDate)}
                   </TableCell>
                   <TableCell className="truncate text-sm font-medium">
-                    {txn.description}
+                    {expense.description}
                   </TableCell>
                   <TableCell>
                     <div className="relative">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingId(txn.id)}
+                        onClick={() => setEditingId(expense.id)}
                         className="h-auto p-0 font-normal"
-                        aria-hidden={editingId === txn.id}
+                        aria-hidden={editingId === expense.id}
                       >
-                        <CategoryBadge category={txn.category} />
+                        <CategoryBadge category={expense.category} />
                       </Button>
-                      {editingId === txn.id && (
+                      {editingId === expense.id && (
                         <div className="absolute left-0 top-1/2 z-10 -translate-y-1/2">
                           <CategoryPicker
                             categories={categories}
-                            currentCategory={txn.category}
+                            currentCategory={expense.category}
                             onSelect={(cat) =>
-                              handleCategoryChange(txn.id, cat)
+                              handleCategoryChange(expense.id, cat)
                             }
                             onClose={() => setEditingId(null)}
                           />
@@ -236,14 +234,14 @@ export function TransactionTable({
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm tabular-nums">
-                    {formatCurrencyFromCents(txn.amountCents)}
+                    {formatCurrencyFromCents(expense.amountCents)}
                   </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
                       size="icon-xs"
                       className="text-muted-foreground hover:text-destructive opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={() => setDeleteTarget([txn.id])}
+                      onClick={() => setDeleteTarget([expense.id])}
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -295,7 +293,7 @@ export function TransactionTable({
 
       {learnRule && (
         <LearnRuleDialog
-          txnId={learnRule.txnId}
+          expenseId={learnRule.expenseId}
           description={learnRule.description}
           oldCategory={learnRule.oldCategory}
           newCategory={learnRule.newCategory}
@@ -313,8 +311,8 @@ export function TransactionTable({
       )}
 
       {deleteTarget && (
-        <DeleteTransactionDialog
-          txnIds={deleteTarget}
+        <DeleteExpenseDialog
+          expenseIds={deleteTarget}
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {
             setSelectedIds((prev) => {

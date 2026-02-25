@@ -1,7 +1,7 @@
 # Expense Tracker v1 Specification (Source of Truth)
 
 ## Summary
-Build a single-user expense tracker web app that imports CSV files (`date,vendor,amount,category`), stores transactions in SQLite, deduplicates across repeated imports, and renders dashboard aggregations/charts.  
+Build a single-user expense tracker web app that imports CSV files (`date,vendor,amount,category`), stores expenses in SQLite, deduplicates across repeated imports, and renders dashboard aggregations/charts.  
 Tech baseline is existing Next.js 16 + TypeScript app, with SQLite + Drizzle ORM.
 
 ## Product Scope
@@ -9,7 +9,7 @@ Tech baseline is existing Next.js 16 + TypeScript app, with SQLite + Drizzle ORM
 ### Goals
 - Import expense CSV files repeatedly over time.
 - Persist imports and transactions in a database.
-- Prevent duplicate transactions from being inserted.
+- Prevent duplicate expenses from being inserted.
 - Show key totals and aggregations in a dashboard.
 - Provide clear import validation feedback.
 
@@ -30,7 +30,7 @@ Tech baseline is existing Next.js 16 + TypeScript app, with SQLite + Drizzle ORM
 - Amount semantics: positive expenses only.
 - Default currency: CAD.
 - Categories: use CSV category as-is, normalize whitespace/casing only.
-- Dashboard charts: core 4 (monthly trend, category breakdown, top vendors, recent transactions table).
+- Dashboard charts: core 4 (monthly trend, category breakdown, top vendors, recent expenses table).
 
 ## Architecture
 - Framework: Next.js App Router.
@@ -51,7 +51,7 @@ Tech baseline is existing Next.js 16 + TypeScript app, with SQLite + Drizzle ORM
 - `status` TEXT NOT NULL (`succeeded | failed`).
 - `error_message` TEXT NULL.
 
-### `transactions`
+### `expenses`
 - `id` TEXT PK.
 - `txn_date` TEXT NOT NULL (`YYYY-MM-DD`).
 - `vendor` TEXT NOT NULL (display-normalized).
@@ -63,11 +63,11 @@ Tech baseline is existing Next.js 16 + TypeScript app, with SQLite + Drizzle ORM
 - `created_at` DATETIME NOT NULL DEFAULT now.
 
 ### Indexes
-- `transactions(txn_date)`.
-- `transactions(category)`.
-- `transactions(vendor)`.
-- `transactions(import_id)`.
-- unique `transactions(fingerprint)` for dedup.
+- `expenses(txn_date)`.
+- `expenses(category)`.
+- `expenses(description)`.
+- `expenses(import_id)`.
+- unique `expenses(fingerprint)` for dedup.
 
 ## Canonicalization + Dedup Rules
 - Trim leading/trailing whitespace for `vendor`, `category`.

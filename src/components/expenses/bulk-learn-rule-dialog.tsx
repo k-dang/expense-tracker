@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { CategoryBadge } from "@/components/category-badge";
-import { bulkApplyCategoryRulesAction } from "@/lib/actions/transactions";
+import { bulkApplyCategoryRulesAction } from "@/lib/actions/expenses";
 import { Brain, Layers } from "lucide-react";
 
 type Props = {

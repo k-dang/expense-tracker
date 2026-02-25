@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { updateTagMock, createTransactionMock, deleteTransactionsMock } =
-  vi.hoisted(() => ({
+const { updateTagMock, createExpenseMock, deleteExpensesMock } = vi.hoisted(
+  () => ({
     updateTagMock: vi.fn(),
-    createTransactionMock: vi.fn(),
-    deleteTransactionsMock: vi.fn(),
-  }));
+    createExpenseMock: vi.fn(),
+    deleteExpensesMock: vi.fn(),
+  }),
+);
 
 vi.mock("next/cache", () => ({
   updateTag: updateTagMock,
@@ -15,28 +16,28 @@ vi.mock("@/db/queries/category-rules", () => ({
   upsertCategoryRule: vi.fn(),
 }));
 
-vi.mock("@/db/queries/transactions", () => ({
-  createTransaction: createTransactionMock,
-  deleteTransactions: deleteTransactionsMock,
-  updateTransactionCategory: vi.fn(),
-  bulkUpdateTransactionCategories: vi.fn(),
-  applyRuleToMatchingTransactions: vi.fn(),
-  countTransactionsByDescription: vi.fn(),
+vi.mock("@/db/queries/expenses", () => ({
+  createExpense: createExpenseMock,
+  deleteExpenses: deleteExpensesMock,
+  updateExpenseCategory: vi.fn(),
+  bulkUpdateExpenseCategories: vi.fn(),
+  applyRuleToMatchingExpenses: vi.fn(),
+  countExpensesByDescription: vi.fn(),
 }));
 
 import {
-  createTransactionAction,
-  deleteTransactionsAction,
-} from "@/lib/actions/transactions";
+  createExpenseAction,
+  deleteExpensesAction,
+} from "@/lib/actions/expenses";
 
-describe("createTransactionAction", () => {
+describe("createExpenseAction", () => {
   beforeEach(() => {
     updateTagMock.mockReset();
-    createTransactionMock.mockReset();
+    createExpenseMock.mockReset();
   });
 
-  it("returns success with txnId when form data is valid", async () => {
-    createTransactionMock.mockResolvedValue("txn-123");
+  it("returns success with expenseId when form data is valid", async () => {
+    createExpenseMock.mockResolvedValue("exp-123");
 
     const formData = new FormData();
     formData.set("date", "2025-01-15");
@@ -44,16 +45,16 @@ describe("createTransactionAction", () => {
     formData.set("amount", "3.50");
     formData.set("category", "Food");
 
-    const result = await createTransactionAction(null, formData);
+    const result = await createExpenseAction(null, formData);
 
-    expect(result).toEqual({ status: "success", txnId: "txn-123" });
-    expect(createTransactionMock).toHaveBeenCalledWith({
+    expect(result).toEqual({ status: "success", expenseId: "exp-123" });
+    expect(createExpenseMock).toHaveBeenCalledWith({
       txnDate: "2025-01-15",
       description: "Coffee",
       amountCents: 350,
       category: "Food",
     });
-    expect(updateTagMock).toHaveBeenCalledWith("transactions");
+    expect(updateTagMock).toHaveBeenCalledWith("expenses");
   });
 
   it("returns error with field errors when date is invalid", async () => {
@@ -63,13 +64,13 @@ describe("createTransactionAction", () => {
     formData.set("amount", "3.50");
     formData.set("category", "Food");
 
-    const result = await createTransactionAction(null, formData);
+    const result = await createExpenseAction(null, formData);
 
     expect(result).toEqual({
       status: "error",
       errors: { date: "Valid date is required." },
     });
-    expect(createTransactionMock).not.toHaveBeenCalled();
+    expect(createExpenseMock).not.toHaveBeenCalled();
   });
 
   it("returns error when description is empty", async () => {
@@ -79,11 +80,11 @@ describe("createTransactionAction", () => {
     formData.set("amount", "3.50");
     formData.set("category", "Food");
 
-    const result = await createTransactionAction(null, formData);
+    const result = await createExpenseAction(null, formData);
 
     expect(result?.status).toBe("error");
     expect(result?.errors?.description).toBe("Description is required.");
-    expect(createTransactionMock).not.toHaveBeenCalled();
+    expect(createExpenseMock).not.toHaveBeenCalled();
   });
 
   it("returns error when amount is not a positive number", async () => {
@@ -93,11 +94,11 @@ describe("createTransactionAction", () => {
     formData.set("amount", "0");
     formData.set("category", "Food");
 
-    const result = await createTransactionAction(null, formData);
+    const result = await createExpenseAction(null, formData);
 
     expect(result?.status).toBe("error");
     expect(result?.errors?.amount).toBe("Amount must be a positive number.");
-    expect(createTransactionMock).not.toHaveBeenCalled();
+    expect(createExpenseMock).not.toHaveBeenCalled();
   });
 
   it("returns error when category is empty", async () => {
@@ -107,37 +108,37 @@ describe("createTransactionAction", () => {
     formData.set("amount", "3.50");
     formData.set("category", "");
 
-    const result = await createTransactionAction(null, formData);
+    const result = await createExpenseAction(null, formData);
 
     expect(result?.status).toBe("error");
     expect(result?.errors?.category).toBe("Category is required.");
-    expect(createTransactionMock).not.toHaveBeenCalled();
+    expect(createExpenseMock).not.toHaveBeenCalled();
   });
 });
 
-describe("deleteTransactionsAction", () => {
+describe("deleteExpensesAction", () => {
   beforeEach(() => {
     updateTagMock.mockReset();
-    deleteTransactionsMock.mockReset();
+    deleteExpensesMock.mockReset();
   });
 
-  it("returns succeeded when txnIds are valid", async () => {
-    deleteTransactionsMock.mockResolvedValue(2);
+  it("returns succeeded when expenseIds are valid", async () => {
+    deleteExpensesMock.mockResolvedValue(2);
 
-    const result = await deleteTransactionsAction(["id-1", "id-2"]);
+    const result = await deleteExpensesAction(["id-1", "id-2"]);
 
     expect(result).toEqual({ status: "success", deletedCount: 2 });
-    expect(deleteTransactionsMock).toHaveBeenCalledWith(["id-1", "id-2"]);
-    expect(updateTagMock).toHaveBeenCalledWith("transactions");
+    expect(deleteExpensesMock).toHaveBeenCalledWith(["id-1", "id-2"]);
+    expect(updateTagMock).toHaveBeenCalledWith("expenses");
   });
 
-  it("returns error when txnIds is empty", async () => {
-    const result = await deleteTransactionsAction([]);
+  it("returns error when expenseIds is empty", async () => {
+    const result = await deleteExpensesAction([]);
 
     expect(result).toEqual({
       status: "error",
       error: "No expenses selected.",
     });
-    expect(deleteTransactionsMock).not.toHaveBeenCalled();
+    expect(deleteExpensesMock).not.toHaveBeenCalled();
   });
 });

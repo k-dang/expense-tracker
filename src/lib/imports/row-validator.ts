@@ -3,7 +3,7 @@ import { parseStrictDate } from "@/lib/date/utils";
 import { categorize } from "@/lib/imports/auto-categorize";
 import type { ImportError } from "@/lib/types/api";
 
-export type ValidatedTransactionInput = {
+export type ValidatedExpenseInput = {
   txnDate: string;
   description: string;
   amountCents: number;
@@ -75,7 +75,7 @@ export function validateRow(row: {
   description: string;
   amount: string;
   category: string;
-}): { value: ValidatedTransactionInput } | { error: ImportError } {
+}): { value: ValidatedExpenseInput } | { error: ImportError } {
   const dateValue = row.date.trim();
   const parsedDate = parseImportDate(dateValue);
   if (!parsedDate) {

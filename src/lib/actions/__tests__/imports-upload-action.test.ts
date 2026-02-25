@@ -79,7 +79,7 @@ describe("uploadImportAction", () => {
     expect(result.insertedRows).toBe(3);
     expect(result.duplicateRows).toBe(2);
     expect(updateTagMock).toHaveBeenCalledTimes(2);
-    expect(updateTagMock).toHaveBeenNthCalledWith(1, "transactions");
+    expect(updateTagMock).toHaveBeenNthCalledWith(1, "expenses");
     expect(updateTagMock).toHaveBeenNthCalledWith(2, "imports");
   });
 
@@ -211,7 +211,7 @@ describe("deleteImportAction", () => {
     deleteImportByIdMock.mockResolvedValue({
       status: "succeeded",
       importId: "imp-1",
-      deletedTransactionCount: 5,
+      deletedExpenseCount: 5,
     });
 
     const formData = new FormData();
@@ -222,7 +222,7 @@ describe("deleteImportAction", () => {
     expect(result).toEqual({
       status: "succeeded",
       importId: "imp-1",
-      deletedTransactionCount: 5,
+      deletedExpenseCount: 5,
     });
     expect(deleteImportByIdMock).toHaveBeenCalledWith({ importId: "imp-1" });
     expect(updateTagMock).toHaveBeenCalledTimes(2);

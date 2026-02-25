@@ -5,7 +5,7 @@ import {
   validateCsvFileInput,
 } from "@/lib/imports/csv-utils";
 import {
-  type ValidatedTransactionInput,
+  type ValidatedExpenseInput,
   validateRow,
 } from "@/lib/imports/row-validator";
 import type { ImportError } from "@/lib/types/api";
@@ -18,7 +18,7 @@ export type ProcessImportFileInput = {
 
 export type ProcessImportFileSuccess = {
   status: "succeeded";
-  rows: ValidatedTransactionInput[];
+  rows: ValidatedExpenseInput[];
   totalRows: number;
 };
 

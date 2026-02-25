@@ -70,7 +70,7 @@ export async function KpiCards({ range }: Props) {
     },
     {
       label: "Expenses",
-      value: String(totals.transactionCount),
+      value: String(totals.expenseCount),
       icon: Receipt,
       accent: "text-chart-2",
       borderAccent: "border-chart-2",

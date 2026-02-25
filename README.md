@@ -2,7 +2,7 @@
 
 Single-user CAD expense tracker built with Next.js 16, TypeScript, SQLite, and Drizzle ORM.
 
-The app imports CSV files, deduplicates transactions across uploads, and renders dashboard analytics.
+The app imports CSV files, deduplicates expenses across uploads, and renders dashboard analytics.
 
 ## Requirements
 
@@ -44,7 +44,7 @@ DB_AUTH_TOKEN=<your-auth-token>
 
 ## Routes
 
-- `/` - expense dashboard (KPIs, monthly trend, category breakdown, top vendors, recent transactions)
+- `/` - expense dashboard (KPIs, monthly trend, category breakdown, top vendors, recent expenses)
 - `/imports` - CSV upload and import history
 
 ## CSV Import Contract

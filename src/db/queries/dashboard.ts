@@ -1,40 +1,38 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
-import { incomesTable, transactionsTable } from "@/db/schema";
+import { expensesTable, incomesTable } from "@/db/schema";
 import type { DateRange } from "@/lib/dashboard/date-range";
 
 function getRangeFilter(range: DateRange) {
   return and(
-    gte(transactionsTable.txnDate, range.from),
-    lte(transactionsTable.txnDate, range.to),
+    gte(expensesTable.txnDate, range.from),
+    lte(expensesTable.txnDate, range.to),
   );
 }
 
 export async function getDashboardTotals(range: DateRange) {
   "use cache";
   cacheLife("max");
-  cacheTag("transactions");
+  cacheTag("expenses");
   const rangeFilter = getRangeFilter(range);
 
   const totalsRow = await db
     .select({
-      totalSpendCents: sum(transactionsTable.amountCents),
-      transactionCount: count(transactionsTable.id),
+      totalSpendCents: sum(expensesTable.amountCents),
+      expenseCount: count(expensesTable.id),
     })
-    .from(transactionsTable)
+    .from(expensesTable)
     .where(rangeFilter);
 
   const totalSpendCents = Number(totalsRow[0]?.totalSpendCents ?? 0);
-  const transactionCount = Number(totalsRow[0]?.transactionCount ?? 0);
+  const expenseCount = Number(totalsRow[0]?.expenseCount ?? 0);
 
   return {
     totalSpendCents,
-    transactionCount,
+    expenseCount,
     averageSpendCents:
-      transactionCount === 0
-        ? 0
-        : Math.round(totalSpendCents / transactionCount),
+      expenseCount === 0 ? 0 : Math.round(totalSpendCents / expenseCount),
   };
 }
 
@@ -46,21 +44,21 @@ export async function getDashboardMonthlyTrend(
 ) {
   "use cache";
   cacheLife("max");
-  cacheTag("transactions");
+  cacheTag("expenses");
   const rangeFilter = getRangeFilter(range);
   const whereClause = category
-    ? and(rangeFilter, eq(transactionsTable.category, category))
+    ? and(rangeFilter, eq(expensesTable.category, category))
     : rangeFilter;
 
   const monthlyRows = await db
     .select({
-      month: sql<string>`substr(${transactionsTable.txnDate}, 1, 7)`,
-      totalCents: sum(transactionsTable.amountCents),
+      month: sql<string>`substr(${expensesTable.txnDate}, 1, 7)`,
+      totalCents: sum(expensesTable.amountCents),
     })
-    .from(transactionsTable)
+    .from(expensesTable)
     .where(whereClause)
-    .groupBy(sql`substr(${transactionsTable.txnDate}, 1, 7)`)
-    .orderBy(sql`substr(${transactionsTable.txnDate}, 1, 7)`);
+    .groupBy(sql`substr(${expensesTable.txnDate}, 1, 7)`)
+    .orderBy(sql`substr(${expensesTable.txnDate}, 1, 7)`);
 
   return monthlyRows.map((row) => ({
     month: row.month,
@@ -75,18 +73,18 @@ export type DashboardMonthlyTrendItem = Awaited<
 export async function getDashboardCategoryBreakdown(range: DateRange) {
   "use cache";
   cacheLife("max");
-  cacheTag("transactions");
+  cacheTag("expenses");
   const rangeFilter = getRangeFilter(range);
 
   const categoryRows = await db
     .select({
-      category: transactionsTable.category,
-      totalCents: sum(transactionsTable.amountCents),
+      category: expensesTable.category,
+      totalCents: sum(expensesTable.amountCents),
     })
-    .from(transactionsTable)
+    .from(expensesTable)
     .where(rangeFilter)
-    .groupBy(transactionsTable.category)
-    .orderBy(desc(sum(transactionsTable.amountCents)));
+    .groupBy(expensesTable.category)
+    .orderBy(desc(sum(expensesTable.amountCents)));
 
   const totalSpendCents = categoryRows.reduce(
     (total, row) => total + Number(row.totalCents ?? 0),
@@ -111,19 +109,19 @@ export type DashboardCategoryBreakdownItem = Awaited<
 export async function getDashboardTopDescriptions(range: DateRange) {
   "use cache";
   cacheLife("max");
-  cacheTag("transactions");
+  cacheTag("expenses");
   const rangeFilter = getRangeFilter(range);
 
   const descriptionRows = await db
     .select({
-      description: transactionsTable.description,
-      totalCents: sum(transactionsTable.amountCents),
-      count: count(transactionsTable.id),
+      description: expensesTable.description,
+      totalCents: sum(expensesTable.amountCents),
+      count: count(expensesTable.id),
     })
-    .from(transactionsTable)
+    .from(expensesTable)
     .where(rangeFilter)
-    .groupBy(transactionsTable.description)
-    .orderBy(desc(sum(transactionsTable.amountCents)))
+    .groupBy(expensesTable.description)
+    .orderBy(desc(sum(expensesTable.amountCents)))
     .limit(8);
 
   return descriptionRows.map((row) => ({
@@ -137,23 +135,23 @@ export type DashboardTopDescriptionItem = Awaited<
   ReturnType<typeof getDashboardTopDescriptions>
 >[number];
 
-export async function getDashboardRecentTransactions(range: DateRange) {
+export async function getDashboardRecentExpenses(range: DateRange) {
   "use cache";
   cacheLife("max");
-  cacheTag("transactions");
+  cacheTag("expenses");
   const rangeFilter = getRangeFilter(range);
 
   const recentRows = await db
     .select({
-      id: transactionsTable.id,
-      txnDate: transactionsTable.txnDate,
-      description: transactionsTable.description,
-      category: transactionsTable.category,
-      amountCents: transactionsTable.amountCents,
+      id: expensesTable.id,
+      txnDate: expensesTable.txnDate,
+      description: expensesTable.description,
+      category: expensesTable.category,
+      amountCents: expensesTable.amountCents,
     })
-    .from(transactionsTable)
+    .from(expensesTable)
     .where(rangeFilter)
-    .orderBy(desc(transactionsTable.txnDate), desc(transactionsTable.createdAt))
+    .orderBy(desc(expensesTable.txnDate), desc(expensesTable.createdAt))
     .limit(10);
 
   return recentRows.map((row) => ({
@@ -165,8 +163,8 @@ export async function getDashboardRecentTransactions(range: DateRange) {
   }));
 }
 
-export type DashboardRecentTransactionItem = Awaited<
-  ReturnType<typeof getDashboardRecentTransactions>
+export type DashboardRecentExpenseItem = Awaited<
+  ReturnType<typeof getDashboardRecentExpenses>
 >[number];
 
 function getIncomeRangeFilter(range: DateRange) {

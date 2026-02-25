@@ -1,23 +1,20 @@
-import { TransactionFilters } from "@/components/transactions/transaction-filters";
-import { TransactionTable } from "@/components/transactions/transaction-table";
-import {
-  getDistinctCategories,
-  listTransactions,
-} from "@/db/queries/transactions";
+import { ExpenseFilters } from "@/components/expenses/expense-filters";
+import { ExpenseTable } from "@/components/expenses/expense-table";
+import { getDistinctCategories, listExpenses } from "@/db/queries/expenses";
 import type { SearchParams } from "../_lib/search-params";
 import { parsePage, parseSortBy, parseSortOrder } from "../_lib/search-params";
 
-type TransactionPageContentProps = {
+type ExpensePageContentProps = {
   searchParams: Promise<SearchParams>;
 };
 
-export async function TransactionPageContent({
+export async function ExpensePageContent({
   searchParams,
-}: TransactionPageContentProps) {
+}: ExpensePageContentProps) {
   const params = await searchParams;
   const [categories, data] = await Promise.all([
     getDistinctCategories(),
-    listTransactions({
+    listExpenses({
       search: params.search,
       category: params.category,
       sortBy: parseSortBy(params.sortBy),
@@ -28,7 +25,7 @@ export async function TransactionPageContent({
 
   return (
     <>
-      <TransactionFilters
+      <ExpenseFilters
         categories={categories}
         currentSearch={params.search ?? ""}
         currentCategory={params.category ?? ""}
@@ -36,8 +33,8 @@ export async function TransactionPageContent({
         currentSortOrder={params.sortOrder ?? "desc"}
       />
 
-      <TransactionTable
-        transactions={data.transactions}
+      <ExpenseTable
+        expenses={data.expenses}
         totalCount={data.totalCount}
         page={data.page}
         pageSize={data.pageSize}

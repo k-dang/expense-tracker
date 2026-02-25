@@ -25,18 +25,18 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { CategoryFieldPicker } from "@/components/transactions/category-field-picker";
+import { CategoryFieldPicker } from "@/components/expenses/category-field-picker";
 import { formatIsoDate, formatDateLabel } from "@/lib/date/utils";
 import {
-  createTransactionAction,
-  type CreateTransactionState,
-} from "@/lib/actions/transactions";
+  createExpenseAction,
+  type CreateExpenseState,
+} from "@/lib/actions/expenses";
 
 type Props = {
   categories: string[];
 };
 
-export function AddTransactionDialog({ categories }: Props) {
+export function AddExpenseDialog({ categories }: Props) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
   const [date, setDate] = useState<Date>(new Date());
@@ -44,9 +44,9 @@ export function AddTransactionDialog({ categories }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
 
   const [state, formAction, pending] = useActionState<
-    CreateTransactionState,
+    CreateExpenseState,
     FormData
-  >(createTransactionAction, null);
+  >(createExpenseAction, null);
 
   useEffect(() => {
     if (state?.status === "success") {

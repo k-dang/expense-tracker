@@ -1,20 +1,20 @@
 "use client";
 
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
-import { deleteTransactionsAction } from "@/lib/actions/transactions";
+import { deleteExpensesAction } from "@/lib/actions/expenses";
 
 type Props = {
-  txnIds: string[];
+  expenseIds: string[];
   onClose: () => void;
   onDeleted: () => void;
 };
 
-export function DeleteTransactionDialog({ txnIds, onClose, onDeleted }: Props) {
+export function DeleteExpenseDialog({ expenseIds, onClose, onDeleted }: Props) {
   return (
     <DeleteConfirmDialog
-      ids={txnIds}
+      ids={expenseIds}
       entityLabel={{ singular: "expense", plural: "expenses" }}
-      deleteAction={deleteTransactionsAction}
+      deleteAction={deleteExpensesAction}
       onClose={onClose}
       onDeleted={onDeleted}
     />

@@ -4,22 +4,22 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { upsertCategoryRule } from "@/db/queries/category-rules";
 import {
-  updateTransactionCategory,
-  bulkUpdateTransactionCategories,
-  applyRuleToMatchingTransactions,
-  countTransactionsByDescription,
-  createTransaction,
-  deleteTransactions,
-} from "@/db/queries/transactions";
+  updateExpenseCategory,
+  bulkUpdateExpenseCategories,
+  applyRuleToMatchingExpenses,
+  countExpensesByDescription,
+  createExpense,
+  deleteExpenses,
+} from "@/db/queries/expenses";
 import { parseStrictDate } from "@/lib/date/utils";
 
 const updateCategorySchema = z.object({
-  txnId: z.string().trim().min(1, "Expense ID is required."),
+  expenseId: z.string().trim().min(1, "Expense ID is required."),
   newCategory: z.string().trim().min(1, "Category is required."),
 });
 
 const bulkUpdateCategorySchema = z.object({
-  txnIds: z
+  expenseIds: z
     .array(z.string().trim())
     .min(1, "At least one expense is required."),
   newCategory: z.string().trim().min(1, "Category is required."),
@@ -46,7 +46,7 @@ const countMatchingSchema = z.object({
   description: z.string().trim(),
 });
 
-const createTransactionSchema = z
+const createExpenseSchema = z
   .object({
     date: z.string().trim().min(1, "Valid date is required."),
     description: z
@@ -75,28 +75,34 @@ const createTransactionSchema = z
     category: data.category,
   }));
 
-const deleteTransactionsSchema = z
-  .object({ txnIds: z.array(z.string().trim()) })
-  .refine((data) => data.txnIds.length > 0, "No expenses selected.");
+const deleteExpensesSchema = z
+  .object({ expenseIds: z.array(z.string().trim()) })
+  .refine((data) => data.expenseIds.length > 0, "No expenses selected.");
 
-export async function updateCategoryAction(txnId: string, newCategory: string) {
-  const parsed = updateCategorySchema.safeParse({ txnId, newCategory });
+export async function updateCategoryAction(
+  expenseId: string,
+  newCategory: string,
+) {
+  const parsed = updateCategorySchema.safeParse({ expenseId, newCategory });
   if (!parsed.success) return;
-  await updateTransactionCategory(parsed.data.txnId, parsed.data.newCategory);
-  updateTag("transactions");
+  await updateExpenseCategory(parsed.data.expenseId, parsed.data.newCategory);
+  updateTag("expenses");
 }
 
 export async function bulkUpdateCategoryAction(
-  txnIds: string[],
+  expenseIds: string[],
   newCategory: string,
 ) {
-  const parsed = bulkUpdateCategorySchema.safeParse({ txnIds, newCategory });
+  const parsed = bulkUpdateCategorySchema.safeParse({
+    expenseIds,
+    newCategory,
+  });
   if (!parsed.success) return;
-  await bulkUpdateTransactionCategories(
-    parsed.data.txnIds,
+  await bulkUpdateExpenseCategories(
+    parsed.data.expenseIds,
     parsed.data.newCategory,
   );
-  updateTag("transactions");
+  updateTag("expenses");
 }
 
 export async function applyCategoryRuleAction(
@@ -119,8 +125,8 @@ export async function applyCategoryRuleAction(
   updateTag("category-rules");
 
   if (apply) {
-    await applyRuleToMatchingTransactions(pattern, cat);
-    updateTag("transactions");
+    await applyRuleToMatchingExpenses(pattern, cat);
+    updateTag("expenses");
   }
 }
 
@@ -147,30 +153,30 @@ export async function bulkApplyCategoryRulesAction(
 
   if (apply) {
     for (const pattern of patterns) {
-      await applyRuleToMatchingTransactions(pattern, cat);
+      await applyRuleToMatchingExpenses(pattern, cat);
     }
-    updateTag("transactions");
+    updateTag("expenses");
   }
 }
 
-export async function countMatchingTransactionsAction(
+export async function countMatchingExpensesAction(
   description: string,
 ): Promise<number> {
   const parsed = countMatchingSchema.safeParse({ description });
   const desc = parsed.success ? parsed.data.description : "";
-  return countTransactionsByDescription(desc);
+  return countExpensesByDescription(desc);
 }
 
-export type CreateTransactionState = {
+export type CreateExpenseState = {
   status: "idle" | "success" | "error";
   errors?: Record<string, string>;
-  txnId?: string;
+  expenseId?: string;
 } | null;
 
-export async function createTransactionAction(
-  _prevState: CreateTransactionState,
+export async function createExpenseAction(
+  _prevState: CreateExpenseState,
   formData: FormData,
-): Promise<CreateTransactionState> {
+): Promise<CreateExpenseState> {
   const raw = {
     date: formData.get("date"),
     description: formData.get("description"),
@@ -184,7 +190,7 @@ export async function createTransactionAction(
     category: typeof raw.category === "string" ? raw.category : "",
   };
 
-  const result = createTransactionSchema.safeParse(input);
+  const result = createExpenseSchema.safeParse(input);
   if (!result.success) {
     const errors: Record<string, string> = {};
     for (const issue of result.error.issues) {
@@ -195,19 +201,19 @@ export async function createTransactionAction(
   }
 
   const { date, description, amountCents, category } = result.data;
-  const txnId = await createTransaction({
+  const expenseId = await createExpense({
     txnDate: date,
     description,
     amountCents,
     category,
   });
 
-  updateTag("transactions");
-  return { status: "success", txnId };
+  updateTag("expenses");
+  return { status: "success", expenseId };
 }
 
-export async function deleteTransactionsAction(txnIds: string[]) {
-  const parsed = deleteTransactionsSchema.safeParse({ txnIds });
+export async function deleteExpensesAction(expenseIds: string[]) {
+  const parsed = deleteExpensesSchema.safeParse({ expenseIds });
   if (!parsed.success) {
     return {
       status: "error" as const,
@@ -216,8 +222,8 @@ export async function deleteTransactionsAction(txnIds: string[]) {
   }
 
   try {
-    const deletedCount = await deleteTransactions(parsed.data.txnIds);
-    updateTag("transactions");
+    const deletedCount = await deleteExpenses(parsed.data.expenseIds);
+    updateTag("expenses");
     return { status: "success" as const, deletedCount };
   } catch {
     return {

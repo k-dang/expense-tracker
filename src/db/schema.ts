@@ -11,12 +11,12 @@ export const importsTable = sqliteTable("imports", {
   rowCountDuplicates: integer("row_count_duplicates").notNull(),
   status: text("status", { enum: ["succeeded", "failed"] }).notNull(),
   errorMessage: text("error_message"),
-  type: text("type", { enum: ["transaction", "income"] })
+  type: text("type", { enum: ["expense", "income"] })
     .notNull()
-    .default("transaction"),
+    .default("expense"),
 });
 
-export const transactionsTable = sqliteTable("transactions", {
+export const expensesTable = sqliteTable("expenses", {
   id: text("id").primaryKey(),
   txnDate: text("txn_date").notNull(),
   description: text("description").notNull(),
@@ -45,13 +45,13 @@ export const importDuplicatesTable = sqliteTable("import_duplicates", {
   currency: text("currency").notNull().default("CAD"),
   fingerprint: text("fingerprint").notNull(),
   reason: text("reason", { enum: ["cross_import", "within_file"] }).notNull(),
-  type: text("type", { enum: ["transaction", "income"] })
+  type: text("type", { enum: ["expense", "income"] })
     .notNull()
-    .default("transaction"),
+    .default("expense"),
 });
 
-export type TransactionRow = typeof transactionsTable.$inferSelect;
-export type NewTransactionRow = typeof transactionsTable.$inferInsert;
+export type ExpenseRow = typeof expensesTable.$inferSelect;
+export type NewExpenseRow = typeof expensesTable.$inferInsert;
 
 export type ImportDuplicateRow = typeof importDuplicatesTable.$inferSelect;
 export type NewImportDuplicateRow = typeof importDuplicatesTable.$inferInsert;

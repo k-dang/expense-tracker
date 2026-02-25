@@ -30,7 +30,7 @@ type Props = {
   currentSortOrder: string;
 };
 
-export function TransactionFilters({
+export function ExpenseFilters({
   categories,
   currentSearch,
   currentCategory,

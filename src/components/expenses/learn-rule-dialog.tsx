@@ -16,13 +16,13 @@ import { Label } from "@/components/ui/label";
 import { CategoryBadge } from "@/components/category-badge";
 import {
   applyCategoryRuleAction,
-  countMatchingTransactionsAction,
+  countMatchingExpensesAction,
   updateCategoryAction,
-} from "@/lib/actions/transactions";
+} from "@/lib/actions/expenses";
 import { ArrowRight, Brain, Layers } from "lucide-react";
 
 type Props = {
-  txnId: string;
+  expenseId: string;
   description: string;
   oldCategory: string;
   newCategory: string;
@@ -31,7 +31,7 @@ type Props = {
 };
 
 export function LearnRuleDialog({
-  txnId,
+  expenseId,
   description,
   oldCategory,
   newCategory,
@@ -44,13 +44,13 @@ export function LearnRuleDialog({
   const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
-    countMatchingTransactionsAction(description).then(setMatchCount);
+    countMatchingExpensesAction(description).then(setMatchCount);
   }, [description]);
 
   const handleApply = useCallback(async () => {
     setIsApplying(true);
     try {
-      await updateCategoryAction(txnId, newCategory);
+      await updateCategoryAction(expenseId, newCategory);
       if (rememberRule) {
         await applyCategoryRuleAction(
           description,
@@ -62,7 +62,14 @@ export function LearnRuleDialog({
     } finally {
       setIsApplying(false);
     }
-  }, [txnId, description, newCategory, applyToExisting, rememberRule, onClose]);
+  }, [
+    expenseId,
+    description,
+    newCategory,
+    applyToExisting,
+    rememberRule,
+    onClose,
+  ]);
 
   const otherCount = matchCount !== null ? matchCount - 1 : null;
 

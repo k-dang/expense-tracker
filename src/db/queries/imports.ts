@@ -3,9 +3,9 @@ import { cacheLife, cacheTag } from "next/cache";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  expensesTable,
   importDuplicatesTable,
   importsTable,
-  transactionsTable,
 } from "@/db/schema";
 import { findCategoryRule } from "@/db/queries/category-rules";
 import { categorize } from "@/lib/imports/auto-categorize";
@@ -78,9 +78,9 @@ export async function processImportFile(options: {
   for (let i = 0; i < allFingerprints.length; i += BATCH_SIZE) {
     const batch = allFingerprints.slice(i, i + BATCH_SIZE);
     const rows = await db
-      .select({ fingerprint: transactionsTable.fingerprint })
-      .from(transactionsTable)
-      .where(inArray(transactionsTable.fingerprint, batch));
+      .select({ fingerprint: expensesTable.fingerprint })
+      .from(expensesTable)
+      .where(inArray(expensesTable.fingerprint, batch));
     for (const r of rows) existingFingerprints.add(r.fingerprint);
   }
 
@@ -110,10 +110,11 @@ export async function processImportFile(options: {
       rowCountDuplicates: duplicateRows.length,
       status: "succeeded",
       errorMessage: null,
+      type: "expense",
     });
 
     if (rowsToInsert.length > 0) {
-      await tx.insert(transactionsTable).values(
+      await tx.insert(expensesTable).values(
         rowsToInsert.map((txn) => ({
           id: randomUUID(),
           txnDate: txn.txnDate,
@@ -139,6 +140,7 @@ export async function processImportFile(options: {
           currency: "CAD",
           fingerprint: dup.fingerprint,
           reason: dup.reason,
+          type: "expense" as const,
         })),
       );
     }
@@ -167,11 +169,11 @@ export async function deleteImportById(options: {
     return { status: "failed", error: "Import not found." };
   }
 
-  const deletedTransactionCount = await db.transaction(async (tx) => {
-    const existingTransactionCount = await tx
-      .select({ count: count(transactionsTable.id) })
-      .from(transactionsTable)
-      .where(eq(transactionsTable.importId, options.importId))
+  const deletedExpenseCount = await db.transaction(async (tx) => {
+    const existingExpenseCount = await tx
+      .select({ count: count(expensesTable.id) })
+      .from(expensesTable)
+      .where(eq(expensesTable.importId, options.importId))
       .limit(1);
 
     await tx
@@ -179,18 +181,18 @@ export async function deleteImportById(options: {
       .where(eq(importDuplicatesTable.importId, options.importId));
 
     await tx
-      .delete(transactionsTable)
-      .where(eq(transactionsTable.importId, options.importId));
+      .delete(expensesTable)
+      .where(eq(expensesTable.importId, options.importId));
 
     await tx.delete(importsTable).where(eq(importsTable.id, options.importId));
 
-    return Number(existingTransactionCount[0]?.count ?? 0);
+    return Number(existingExpenseCount[0]?.count ?? 0);
   });
 
   return {
     status: "succeeded",
     importId: options.importId,
-    deletedTransactionCount,
+    deletedExpenseCount,
   };
 }
 
@@ -231,7 +233,7 @@ export async function importSelectedDuplicates(options: {
 
     if (rows.length === 0) return 0;
 
-    await tx.insert(transactionsTable).values(
+    await tx.insert(expensesTable).values(
       rows.map((row) => ({
         id: randomUUID(),
         txnDate: row.txnDate,

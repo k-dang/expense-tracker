@@ -1,4 +1,4 @@
-import type { TransactionFilters as FiltersType } from "@/db/queries/transactions";
+import type { ExpenseFilters as FiltersType } from "@/db/queries/expenses";
 
 export { parsePage } from "@/lib/search-params";
 

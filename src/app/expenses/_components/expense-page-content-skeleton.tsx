@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export function TransactionPageContentSkeleton() {
+export function ExpensePageContentSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       {/* Filters skeleton */}

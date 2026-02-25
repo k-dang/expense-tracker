@@ -141,7 +141,7 @@ export async function uploadImportAction(
         : "failed";
 
   if (succeededFiles.length > 0) {
-    updateTag("transactions");
+    updateTag("expenses");
     updateTag("imports");
   }
 
@@ -181,7 +181,7 @@ export async function importDuplicatesAction(
       importId: parsed.data.importId,
       duplicateIds: parsed.data.duplicateIds,
     });
-    updateTag("transactions");
+    updateTag("expenses");
     updateTag("imports");
     return { status: "succeeded", importedCount };
   } catch {
@@ -206,7 +206,7 @@ export async function deleteImportAction(
   try {
     const result = await deleteImportById({ importId: parsed.data.importId });
     if (result.status === "succeeded") {
-      updateTag("transactions");
+      updateTag("expenses");
       updateTag("imports");
     }
     return result;
