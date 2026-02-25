@@ -148,10 +148,9 @@ export function TransactionTable({
   if (transactions.length === 0) {
     return (
       <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-sm">
-        <p>No transactions found.</p>
+        <p>No expenses found.</p>
         <p className="text-xs">
-          Try adjusting your filters, import a CSV, or add a transaction
-          manually.
+          Try adjusting your filters, import a CSV, or add an expense manually.
         </p>
       </div>
     );
@@ -258,7 +257,7 @@ export function TransactionTable({
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">
-          {totalCount.toLocaleString()} transaction{totalCount !== 1 ? "s" : ""}
+          {totalCount.toLocaleString()} expense{totalCount !== 1 ? "s" : ""}
         </span>
         <div className="flex items-center gap-2">
           <Button

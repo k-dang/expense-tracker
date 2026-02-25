@@ -97,7 +97,7 @@ export function LearnRuleDialog({
               {otherCount !== null && otherCount > 0
                 ? `all ${otherCount} other`
                 : "all matching"}{" "}
-              transactions
+              expenses
             </span>
           </Label>
           <Label className="flex cursor-pointer items-start gap-2.5 text-sm font-normal">

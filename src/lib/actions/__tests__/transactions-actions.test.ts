@@ -136,7 +136,7 @@ describe("deleteTransactionsAction", () => {
 
     expect(result).toEqual({
       status: "error",
-      error: "No transactions selected.",
+      error: "No expenses selected.",
     });
     expect(deleteTransactionsMock).not.toHaveBeenCalled();
   });

@@ -14,14 +14,14 @@ import {
 import { parseStrictDate } from "@/lib/date/utils";
 
 const updateCategorySchema = z.object({
-  txnId: z.string().trim().min(1, "Transaction ID is required."),
+  txnId: z.string().trim().min(1, "Expense ID is required."),
   newCategory: z.string().trim().min(1, "Category is required."),
 });
 
 const bulkUpdateCategorySchema = z.object({
   txnIds: z
     .array(z.string().trim())
-    .min(1, "At least one transaction is required."),
+    .min(1, "At least one expense is required."),
   newCategory: z.string().trim().min(1, "Category is required."),
 });
 
@@ -77,7 +77,7 @@ const createTransactionSchema = z
 
 const deleteTransactionsSchema = z
   .object({ txnIds: z.array(z.string().trim()) })
-  .refine((data) => data.txnIds.length > 0, "No transactions selected.");
+  .refine((data) => data.txnIds.length > 0, "No expenses selected.");
 
 export async function updateCategoryAction(txnId: string, newCategory: string) {
   const parsed = updateCategorySchema.safeParse({ txnId, newCategory });
@@ -211,7 +211,7 @@ export async function deleteTransactionsAction(txnIds: string[]) {
   if (!parsed.success) {
     return {
       status: "error" as const,
-      error: parsed.error.issues[0]?.message ?? "No transactions selected.",
+      error: parsed.error.issues[0]?.message ?? "No expenses selected.",
     };
   }
 
@@ -222,7 +222,7 @@ export async function deleteTransactionsAction(txnIds: string[]) {
   } catch {
     return {
       status: "error" as const,
-      error: "Failed to delete transactions.",
+      error: "Failed to delete expenses.",
     };
   }
 }

@@ -21,7 +21,7 @@ export async function RecentTransactionsContent({ range }: Props) {
   if (data.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        No transactions for selected range.
+        No expenses for selected range.
       </p>
     );
   }

@@ -15,7 +15,7 @@ export function RecentTransactionsCard({ range }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent transactions</CardTitle>
+        <CardTitle>Recent expenses</CardTitle>
       </CardHeader>
       <CardContent>
         <Suspense fallback={<RecentTransactionsFallback />}>

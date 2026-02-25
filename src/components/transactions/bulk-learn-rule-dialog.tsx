@@ -78,7 +78,7 @@ export function BulkLearnRuleDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Learn these categorizations?</AlertDialogTitle>
           <AlertDialogDescription className="flex items-center gap-2">
-            <span>Assign matching transactions to</span>
+            <span>Assign matching expenses to</span>
             <CategoryBadge category={newCategory} />
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -123,7 +123,7 @@ export function BulkLearnRuleDialog({
             />
             <span className="flex items-center gap-1.5">
               <Layers className="text-muted-foreground size-3.5 shrink-0" />
-              Apply to all other matching transactions
+              Apply to all other matching expenses
             </span>
           </Label>
           <Label className="flex cursor-pointer items-start gap-2.5 text-sm font-normal">

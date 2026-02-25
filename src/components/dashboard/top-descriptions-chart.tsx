@@ -89,7 +89,7 @@ export function TopDescriptionsChart({ data }: Props) {
                     </div>
                     {txnCount != null && (
                       <span className="text-muted-foreground text-xs">
-                        {txnCount} transaction{txnCount === 1 ? "" : "s"}
+                        {txnCount} expense{txnCount === 1 ? "" : "s"}
                       </span>
                     )}
                   </div>

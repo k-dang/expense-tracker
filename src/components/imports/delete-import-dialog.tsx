@@ -49,7 +49,7 @@ export function DeleteImportDialog({ importId }: Props) {
           <AlertDialogTitle>Delete import?</AlertDialogTitle>
           <AlertDialogDescription>
             This removes the import history row. If this import succeeded, it
-            also removes all transactions created by this import.
+            also removes all expenses created by this import.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

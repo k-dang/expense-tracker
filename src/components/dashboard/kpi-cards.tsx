@@ -69,14 +69,14 @@ export async function KpiCards({ range }: Props) {
         netSavingsCents >= 0 ? "border-green-600" : "border-destructive",
     },
     {
-      label: "Transactions",
+      label: "Expenses",
       value: String(totals.transactionCount),
       icon: Receipt,
       accent: "text-chart-2",
       borderAccent: "border-chart-2",
     },
     {
-      label: "Avg per transaction",
+      label: "Avg per expense",
       value: formatCurrencyFromCents(totals.averageSpendCents),
       icon: TrendingUp,
       accent: "text-chart-4",

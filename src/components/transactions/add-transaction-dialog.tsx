@@ -80,7 +80,7 @@ export function AddTransactionDialog({ categories }: Props) {
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add transaction</DialogTitle>
+          <DialogTitle>Add expense</DialogTitle>
         </DialogHeader>
 
         <form ref={formRef} action={formAction} className="grid gap-4">
@@ -171,7 +171,7 @@ export function AddTransactionDialog({ categories }: Props) {
               Cancel
             </DialogClose>
             <Button type="submit" disabled={pending}>
-              {pending ? "Adding..." : "Add Transaction"}
+              {pending ? "Adding..." : "Add Expense"}
             </Button>
           </DialogFooter>
         </form>

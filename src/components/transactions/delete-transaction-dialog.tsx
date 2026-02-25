@@ -13,7 +13,7 @@ export function DeleteTransactionDialog({ txnIds, onClose, onDeleted }: Props) {
   return (
     <DeleteConfirmDialog
       ids={txnIds}
-      entityLabel={{ singular: "transaction", plural: "transactions" }}
+      entityLabel={{ singular: "expense", plural: "expenses" }}
       deleteAction={deleteTransactionsAction}
       onClose={onClose}
       onDeleted={onDeleted}

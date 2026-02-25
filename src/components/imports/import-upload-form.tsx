@@ -108,13 +108,19 @@ export function ImportUploadForm() {
         <CardHeader>
           <CardTitle>Import CSV</CardTitle>
           <CardDescription>
-            {selectedProcessor?.metadata.description ?? "Upload up to 10 files at once."}
+            {selectedProcessor?.metadata.description ??
+              "Upload up to 10 files at once."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="flex flex-col gap-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Select value={processorId} onValueChange={setProcessorId}>
+              <Select
+                value={processorId}
+                onValueChange={(value) =>
+                  setProcessorId(value ?? DEFAULT_PROCESSOR_ID)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -130,7 +136,11 @@ export function ImportUploadForm() {
                 ref={inputRef}
                 type="file"
                 name="file"
-                accept={selectedProcessor ? getAcceptString(selectedProcessor.metadata) : ".csv,text/csv"}
+                accept={
+                  selectedProcessor
+                    ? getAcceptString(selectedProcessor.metadata)
+                    : ".csv,text/csv"
+                }
                 multiple
                 required
               />
