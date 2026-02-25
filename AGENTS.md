@@ -8,7 +8,7 @@
 - Root config: `next.config.ts`, `tsconfig.json`, `biome.json`, `components.json`.
 
 ## Build, Test, and Development Commands
-- `pnpm run dev` (or `npm run dev`): Start local dev server at `http://localhost:3000`.
+- `pnpm run dev`: Start local dev server at `http://localhost:3000`.
 - `pnpm run build`: Create a production build with Next.js.
 - `pnpm run start`: Serve the production build locally.
 - `pnpm run lint`: Run Biome checks (lint + static checks).

@@ -64,3 +64,14 @@ export function formatUtcTimestamp(timestamp: number): string {
     timeZone: "UTC",
   }).format(new Date(timestamp));
 }
+
+/** Compact format for tables: "Feb 25, 3:28 AM" */
+export function formatUtcTimestampShort(timestamp: number): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).format(new Date(timestamp));
+}
