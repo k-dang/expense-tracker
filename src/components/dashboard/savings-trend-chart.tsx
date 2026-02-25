@@ -196,6 +196,17 @@ export function SavingsTrendChart({ data, incomeData }: Props) {
             }
           />
           <ReferenceLine y={0} stroke="var(--border)" />
+          <ReferenceLine
+            y={6000}
+            stroke="var(--chart-2)"
+            strokeDasharray="6 4"
+            label={{
+              value: formatCurrency(6000),
+              position: "middle",
+              fill: "var(--muted-foreground)",
+              fontSize: 12,
+            }}
+          />
           <Bar dataKey="savingsDollars" radius={[4, 4, 0, 0]}>
             {chartData.map((entry) => {
               const savings =

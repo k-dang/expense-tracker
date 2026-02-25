@@ -297,7 +297,7 @@ export function MonthlyTrendChart({
               strokeDasharray="6 4"
               label={{
                 value: formatCurrency(targetDollars),
-                position: "right",
+                position: "middle",
                 fill: "var(--muted-foreground)",
               }}
             />
