@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -11,6 +11,11 @@ import {
   Copy,
 } from "lucide-react";
 import { uploadImportAction } from "@/lib/actions/imports";
+import { getAcceptString } from "@/lib/imports/file-processor";
+import {
+  listProcessors,
+  DEFAULT_PROCESSOR_ID,
+} from "@/lib/imports/processors/registry";
 import type { ImportPostResult, ImportPostStatus } from "@/lib/types/api";
 import {
   Card,
@@ -19,6 +24,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -70,6 +82,13 @@ export function ImportUploadForm() {
     null,
   );
   const inputRef = useRef<HTMLInputElement>(null);
+  const [processorId, setProcessorId] = useState(DEFAULT_PROCESSOR_ID);
+
+  const processors = listProcessors();
+  const selectedProcessor = useMemo(
+    () => processors.find((p) => p.metadata.id === processorId),
+    [processors, processorId],
+  );
 
   useEffect(() => {
     if (
@@ -89,26 +108,37 @@ export function ImportUploadForm() {
         <CardHeader>
           <CardTitle>Import CSV</CardTitle>
           <CardDescription>
-            Upload up to 10 CSV files with exact headers:
-            `date,description,amount,category` with date in MM-DD-YYYY
+            {selectedProcessor?.metadata.description ?? "Upload up to 10 files at once."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            action={formAction}
-            className="flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <Input
-              ref={inputRef}
-              type="file"
-              name="file"
-              accept=".csv,text/csv"
-              multiple
-              required
-            />
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Uploading..." : "Upload"}
-            </Button>
+          <form action={formAction} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Select value={processorId} onValueChange={setProcessorId}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {processors.map((p) => (
+                    <SelectItem key={p.metadata.id} value={p.metadata.id}>
+                      {p.metadata.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                ref={inputRef}
+                type="file"
+                name="file"
+                accept={selectedProcessor ? getAcceptString(selectedProcessor.metadata) : ".csv,text/csv"}
+                multiple
+                required
+              />
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Uploading..." : "Upload"}
+              </Button>
+            </div>
+            <input type="hidden" name="processorId" value={processorId} />
           </form>
         </CardContent>
       </Card>

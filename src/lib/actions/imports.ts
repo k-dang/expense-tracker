@@ -9,6 +9,10 @@ import {
   processImportFile,
 } from "@/db/queries/imports";
 import type { ImportDuplicateItem } from "@/db/queries/imports";
+import {
+  DEFAULT_PROCESSOR_ID,
+  getProcessor,
+} from "@/lib/imports/processors/registry";
 import type {
   ImportDeleteResult,
   ImportDuplicatesResult,
@@ -44,6 +48,33 @@ export async function uploadImportAction(
   _previousState: ImportPostResult | null,
   formData: FormData,
 ): Promise<ImportPostResult> {
+  const rawProcessorId = formData.get("processorId");
+  const processorId =
+    typeof rawProcessorId === "string" && rawProcessorId.length > 0
+      ? rawProcessorId
+      : DEFAULT_PROCESSOR_ID;
+
+  const processor = getProcessor(processorId);
+  if (!processor) {
+    return {
+      status: "failed",
+      totalFiles: 0,
+      succeededFiles: 0,
+      failedFiles: 0,
+      totalRows: 0,
+      insertedRows: 0,
+      duplicateRows: 0,
+      files: [],
+      errors: [
+        {
+          row: 0,
+          field: "file",
+          message: `Unknown file processor: "${processorId}".`,
+        },
+      ],
+    };
+  }
+
   const uploadedFiles = formData
     .getAll("file")
     .filter((entry): entry is File => entry instanceof File);
@@ -72,6 +103,7 @@ export async function uploadImportAction(
         filename: file.name,
         contentType: file.type,
         bytes,
+        processor,
       });
       fileResults.push(result);
     } catch {

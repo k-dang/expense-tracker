@@ -9,7 +9,7 @@ import {
 } from "@/db/schema";
 import { findCategoryRule } from "@/db/queries/category-rules";
 import { categorize } from "@/lib/imports/auto-categorize";
-import { processImportFileInput } from "@/lib/imports/process-import-file";
+import type { FileProcessor } from "@/lib/imports/file-processor";
 import type { ImportDeleteResult, ImportFileResult } from "@/lib/types/api";
 
 export async function listImports() {
@@ -37,8 +37,9 @@ export async function processImportFile(options: {
   filename: string;
   contentType: string;
   bytes: Uint8Array;
+  processor: FileProcessor;
 }): Promise<ImportFileResult> {
-  const processed = processImportFileInput({
+  const processed = options.processor.process({
     filename: options.filename,
     contentType: options.contentType,
     bytes: options.bytes,
