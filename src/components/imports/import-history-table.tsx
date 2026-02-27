@@ -46,8 +46,12 @@ export async function ImportHistoryTable() {
           <TableHead className="w-28">Date</TableHead>
           <TableHead className="w-40">File</TableHead>
           <TableHead className="w-36">Result</TableHead>
-          <TableHead className="hidden w-14 text-right md:table-cell">Total</TableHead>
-          <TableHead className="hidden w-14 text-right md:table-cell">New</TableHead>
+          <TableHead className="hidden w-14 text-right md:table-cell">
+            Total
+          </TableHead>
+          <TableHead className="hidden w-14 text-right md:table-cell">
+            New
+          </TableHead>
           <TableHead className="w-14">Dup</TableHead>
           <TableHead className="w-20 text-right">Actions</TableHead>
         </TableRow>
@@ -56,7 +60,10 @@ export async function ImportHistoryTable() {
         {imports.map((item) => (
           <TableRow key={item.id}>
             <TableCell className="w-28 overflow-hidden">
-              <span className="block truncate" title={formatUtcTimestampShort(item.uploadedAt)}>
+              <span
+                className="block truncate"
+                title={formatUtcTimestampShort(item.uploadedAt)}
+              >
                 {formatUtcTimestampShort(item.uploadedAt)}
               </span>
             </TableCell>
@@ -66,7 +73,9 @@ export async function ImportHistoryTable() {
             <TableCell className="w-36">
               <div className="flex flex-col gap-0.5">
                 <Badge
-                  variant={item.status === "succeeded" ? "default" : "destructive"}
+                  variant={
+                    item.status === "succeeded" ? "default" : "destructive"
+                  }
                   className="w-fit"
                 >
                   {item.status}
@@ -110,8 +119,12 @@ export function ImportHistoryTableSkeleton() {
           <TableHead className="w-28">Date</TableHead>
           <TableHead className="w-40">File</TableHead>
           <TableHead className="w-36">Result</TableHead>
-          <TableHead className="hidden w-14 text-right md:table-cell">Total</TableHead>
-          <TableHead className="hidden w-14 text-right md:table-cell">New</TableHead>
+          <TableHead className="hidden w-14 text-right md:table-cell">
+            Total
+          </TableHead>
+          <TableHead className="hidden w-14 text-right md:table-cell">
+            New
+          </TableHead>
           <TableHead className="w-14">Dup</TableHead>
           <TableHead className="w-20 text-right">Actions</TableHead>
         </TableRow>

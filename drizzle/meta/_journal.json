@@ -57,6 +57,13 @@
       "when": 1771993206390,
       "tag": "0007_rename_transactions_to_expenses",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1772159826081,
+      "tag": "0008_modern_otto_octavius",
+      "breakpoints": true
     }
   ]
 }

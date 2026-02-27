@@ -25,9 +25,7 @@ import { formatCurrency, formatCurrencyWhole } from "@/lib/format";
 
 /* ── colour tokens ─────────────────────────────────────── */
 const INCOME_COLOR = "var(--color-emerald-500, #10b981)";
-const INCOME_COLOR_MUTED = "var(--color-emerald-400, #34d399)";
 const EXPENSE_COLOR = "var(--color-red-500, #ef4444)";
-const EXPENSE_COLOR_MUTED = "var(--color-red-400, #f87171)";
 const SAVINGS_POS_COLOR = "var(--color-blue-500, #3b82f6)";
 const SAVINGS_NEG_COLOR = "var(--color-red-500, #ef4444)";
 const AVG_LINE_COLOR = "var(--color-zinc-500, #71717a)";
@@ -105,7 +103,10 @@ function ChartStats({
         className={`h-px w-full opacity-20 ${accentClass}`}
         style={{ background: "currentColor" }}
       />
-      <StatRow label={monthlyAvgLabel} value={formatCurrencyWhole(monthlyAvg)} />
+      <StatRow
+        label={monthlyAvgLabel}
+        value={formatCurrencyWhole(monthlyAvg)}
+      />
       <StatRow
         label="Monthly budget target"
         value={budgetTarget != null ? formatCurrencyWhole(budgetTarget) : "--"}
@@ -152,7 +153,10 @@ function MetricBarChart({
         className="h-52 w-full min-w-0 aspect-auto"
         config={config}
       >
-        <BarChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 8, right: 4, bottom: 0, left: 0 }}
+        >
           <CartesianGrid vertical={false} strokeOpacity={0.4} />
           <XAxis
             dataKey="month"
@@ -358,10 +362,8 @@ function AggregateBreakdown({
   );
   const totalSavings = totalIncome - totalExpenses;
 
-  const expensesPct =
-    totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
-  const savingsPct =
-    totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
+  const expensesPct = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
+  const savingsPct = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
   const months = chartData.length;
 
   const columns = [

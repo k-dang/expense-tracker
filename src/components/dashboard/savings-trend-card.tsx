@@ -23,7 +23,10 @@ function SavingsTrendFallback() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="bg-muted h-72 w-full min-w-0 animate-pulse rounded" />
+        <div
+          key={i}
+          className="bg-muted h-72 w-full min-w-0 animate-pulse rounded"
+        />
       ))}
     </div>
   );

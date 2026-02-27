@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/" },
   { label: "Expenses", href: "/expenses" },
   { label: "Income", href: "/income" },
+  { label: "Portfolio", href: "/portfolio" },
   { label: "Imports", href: "/imports" },
 ] as const;
 
