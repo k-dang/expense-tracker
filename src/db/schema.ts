@@ -172,6 +172,37 @@ export const portfolioSnapshotPositionsTable = sqliteTable(
   }),
 );
 
+export const portfolioImportFilesTable = sqliteTable(
+  "portfolio_import_files",
+  {
+    id: text("id").primaryKey(),
+    portfolioId: text("portfolio_id")
+      .notNull()
+      .references(() => portfoliosTable.id),
+    asOfDate: text("as_of_date").notNull(),
+    filename: text("filename").notNull(),
+    rowCount: integer("row_count").notNull().default(0),
+    status: text("status", {
+      enum: ["processing", "succeeded", "failed"],
+    })
+      .notNull()
+      .default("processing"),
+    errorMessage: text("error_message"),
+    uploadedAt: integer("uploaded_at")
+      .notNull()
+      .$defaultFn(() => Date.now()),
+  },
+  (table) => ({
+    portfolioDateFilenameUnique: uniqueIndex(
+      "portfolio_import_files_portfolio_date_filename_unique",
+    ).on(table.portfolioId, table.asOfDate, table.filename),
+    portfolioDateIdx: index("portfolio_import_files_portfolio_date_idx").on(
+      table.portfolioId,
+      table.asOfDate,
+    ),
+  }),
+);
+
 export type PortfolioRow = typeof portfoliosTable.$inferSelect;
 export type NewPortfolioRow = typeof portfoliosTable.$inferInsert;
 
@@ -186,3 +217,8 @@ export type PortfolioSnapshotPositionRow =
   typeof portfolioSnapshotPositionsTable.$inferSelect;
 export type NewPortfolioSnapshotPositionRow =
   typeof portfolioSnapshotPositionsTable.$inferInsert;
+
+export type PortfolioImportFileRow =
+  typeof portfolioImportFilesTable.$inferSelect;
+export type NewPortfolioImportFileRow =
+  typeof portfolioImportFilesTable.$inferInsert;

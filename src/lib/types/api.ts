@@ -2,9 +2,14 @@ import type { ImportStatus } from "@/db/schema";
 
 export type ImportErrorField =
   | "date"
+  | "asOfDate"
   | "description"
   | "amount"
   | "category"
+  | "symbol"
+  | "companyName"
+  | "shares"
+  | "marketValue"
   | "source"
   | "file"
   | "header";

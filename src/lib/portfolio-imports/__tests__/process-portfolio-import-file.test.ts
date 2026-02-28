@@ -1,0 +1,82 @@
+import { describe, expect, it } from "vitest";
+import { processPortfolioImportFileInput } from "@/lib/portfolio-imports/process-portfolio-import-file";
+
+function toBytes(value: string) {
+  return new TextEncoder().encode(value);
+}
+
+describe("processPortfolioImportFileInput", () => {
+  it("parses and aggregates duplicate symbols", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        [
+          "symbol,companyName,shares,marketValue,currency",
+          "AAPL,Apple Inc,1.25,250.25,usd",
+          "aapl,Apple Inc,0.75,149.75,USD",
+          "MSFT,Microsoft Corp,2,600,USD",
+        ].join("\n"),
+      ),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.totalRows).toBe(3);
+      expect(result.uniqueSymbols).toBe(2);
+      expect(result.rows).toEqual([
+        {
+          symbol: "AAPL",
+          companyName: "Apple Inc",
+          currency: "USD",
+          sharesMicros: 2_000_000,
+          marketValueCents: 40_000,
+        },
+        {
+          symbol: "MSFT",
+          companyName: "Microsoft Corp",
+          currency: "USD",
+          sharesMicros: 2_000_000,
+          marketValueCents: 60_000,
+        },
+      ]);
+    }
+  });
+
+  it("returns header validation failures", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes("symbol,shares\nAAPL,1"),
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.errors[0]?.field).toBe("header");
+      expect(result.errors[0]?.message).toContain("Missing required headers");
+    }
+  });
+
+  it("returns row validation errors", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        [
+          "symbol,companyName,shares,marketValue",
+          "AAPL,Apple Inc,1.1234567,100",
+        ].join("\n"),
+      ),
+    });
+
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.errors[0]).toEqual({
+        row: 2,
+        field: "shares",
+        message:
+          "Shares must be a positive number with up to 6 decimal places.",
+      });
+    }
+  });
+});

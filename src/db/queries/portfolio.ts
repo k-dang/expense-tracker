@@ -4,11 +4,15 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
+  portfolioImportFilesTable,
   portfolioSnapshotPositionsTable,
   portfolioSnapshotsTable,
   portfoliosTable,
   securitiesTable,
 } from "@/db/schema";
+import { parseStrictDate } from "@/lib/date/utils";
+import { mergePortfolioPositions } from "@/lib/portfolio-imports/merge-portfolio-positions";
+import type { PortfolioImportPositionInput } from "@/lib/portfolio-imports/process-portfolio-import-file";
 
 const DEFAULT_PORTFOLIO_NAME = "My Portfolio";
 
@@ -37,6 +41,32 @@ const snapshotPositionInputSchema = z.object({
 });
 
 type SnapshotPositionInput = z.infer<typeof snapshotPositionInputSchema>;
+
+const mergeImportInputSchema = z.object({
+  filename: z.string().trim().min(1, "Filename is required."),
+  asOfDate: z.string().trim().min(1, "asOfDate is required."),
+  positions: z.array(
+    z.object({
+      symbol: z.string().trim().min(1),
+      companyName: z.string().trim().min(1),
+      exchange: z.string().optional(),
+      currency: z.string().optional(),
+      logoUrl: z.string().optional(),
+      sharesMicros: z.number().int().positive(),
+      marketValueCents: z.number().int().positive(),
+    }),
+  ),
+  rowCount: z.number().int().positive(),
+});
+
+export class DuplicatePortfolioImportError extends Error {
+  constructor(
+    message = "This file was already imported for this portfolio/date.",
+  ) {
+    super(message);
+    this.name = "DuplicatePortfolioImportError";
+  }
+}
 
 const upsertSnapshotInputSchema = z
   .object({
@@ -338,6 +368,150 @@ export async function upsertSnapshotWithPositions(input: {
       positionCount: validatedInput.positions.length,
     };
   });
+}
+
+export async function mergeSnapshotPositionsFromImport(input: {
+  filename: string;
+  asOfDate: string;
+  positions: PortfolioImportPositionInput[];
+  rowCount: number;
+}) {
+  const parsedInput = mergeImportInputSchema.safeParse(input);
+  if (!parsedInput.success) {
+    throw new Error(getValidationIssueMessage(parsedInput.error));
+  }
+
+  const validatedInput = parsedInput.data;
+  if (!parseStrictDate(validatedInput.asOfDate)) {
+    throw new Error("asOfDate must be a valid ISO date (YYYY-MM-DD).");
+  }
+
+  const portfolio = await getOrCreateDefaultPortfolio();
+
+  const existingImportFile = await db
+    .select({ id: portfolioImportFilesTable.id })
+    .from(portfolioImportFilesTable)
+    .where(
+      and(
+        eq(portfolioImportFilesTable.portfolioId, portfolio.id),
+        eq(portfolioImportFilesTable.asOfDate, validatedInput.asOfDate),
+        eq(portfolioImportFilesTable.filename, validatedInput.filename),
+      ),
+    )
+    .limit(1);
+
+  if (existingImportFile[0]) {
+    throw new DuplicatePortfolioImportError();
+  }
+
+  const importFileId = randomUUID();
+  try {
+    await db.insert(portfolioImportFilesTable).values({
+      id: importFileId,
+      portfolioId: portfolio.id,
+      asOfDate: validatedInput.asOfDate,
+      filename: validatedInput.filename,
+      rowCount: validatedInput.rowCount,
+      status: "processing",
+      errorMessage: null,
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("UNIQUE constraint failed")
+    ) {
+      throw new DuplicatePortfolioImportError();
+    }
+
+    throw error;
+  }
+
+  try {
+    const existingSnapshot = await db
+      .select({ id: portfolioSnapshotsTable.id })
+      .from(portfolioSnapshotsTable)
+      .where(
+        and(
+          eq(portfolioSnapshotsTable.portfolioId, portfolio.id),
+          eq(portfolioSnapshotsTable.asOfDate, validatedInput.asOfDate),
+        ),
+      )
+      .limit(1);
+
+    const existingPositions = !existingSnapshot[0]
+      ? []
+      : await db
+          .select({
+            symbol: securitiesTable.symbol,
+            companyName: securitiesTable.companyName,
+            exchange: securitiesTable.exchange,
+            currency: securitiesTable.currency,
+            logoUrl: securitiesTable.logoUrl,
+            sharesMicros: portfolioSnapshotPositionsTable.sharesMicros,
+            marketValueCents: portfolioSnapshotPositionsTable.marketValueCents,
+          })
+          .from(portfolioSnapshotPositionsTable)
+          .innerJoin(
+            securitiesTable,
+            eq(portfolioSnapshotPositionsTable.securityId, securitiesTable.id),
+          )
+          .where(
+            eq(
+              portfolioSnapshotPositionsTable.snapshotId,
+              existingSnapshot[0].id,
+            ),
+          );
+
+    const mergedPositions = mergePortfolioPositions({
+      existingPositions,
+      importedPositions: validatedInput.positions,
+    });
+
+    const result = await upsertSnapshotWithPositions({
+      asOfDate: validatedInput.asOfDate,
+      source: "import",
+      positions: mergedPositions.map((position) => ({
+        symbol: position.symbol,
+        companyName: position.companyName,
+        exchange: position.exchange ?? undefined,
+        currency: position.currency ?? undefined,
+        logoUrl: position.logoUrl ?? undefined,
+        sharesMicros: position.sharesMicros,
+        marketValueCents: position.marketValueCents,
+        weightBps: position.weightBps,
+        sortOrder: position.sortOrder,
+      })),
+    });
+
+    await db
+      .update(portfolioImportFilesTable)
+      .set({
+        status: "succeeded",
+        errorMessage: null,
+      })
+      .where(eq(portfolioImportFilesTable.id, importFileId));
+
+    return {
+      ...result,
+      importedRows: validatedInput.rowCount,
+      mergedSymbols: mergedPositions.length,
+    };
+  } catch (error) {
+    await db
+      .update(portfolioImportFilesTable)
+      .set({
+        status: "failed",
+        errorMessage:
+          error instanceof Error ? error.message : "Portfolio import failed.",
+      })
+      .where(eq(portfolioImportFilesTable.id, importFileId));
+
+    if (error instanceof DuplicatePortfolioImportError) {
+      throw error;
+    }
+
+    throw error;
+  }
 }
 
 export type LatestPortfolioBreakdown = Awaited<
