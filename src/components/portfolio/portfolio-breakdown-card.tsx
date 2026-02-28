@@ -35,6 +35,14 @@ function formatWeight(weightBps: number): string {
   return `${(weightBps / 100).toFixed(2)}%`;
 }
 
+function getLogoUrl(symbol: string, storedUrl: string | null): string | null {
+  const token = process.env.LOGO_DEV_TOKEN;
+  if (token) {
+    return `https://img.logo.dev/ticker/${symbol.toLowerCase()}?token=${token}&size=64`;
+  }
+  return storedUrl;
+}
+
 function SecurityAvatar({
   symbol,
   companyName,
@@ -44,11 +52,13 @@ function SecurityAvatar({
   companyName: string;
   logoUrl: string | null;
 }) {
-  if (logoUrl) {
+  const resolvedLogoUrl = getLogoUrl(symbol, logoUrl);
+
+  if (resolvedLogoUrl) {
     return (
       <div className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border">
         <Image
-          src={logoUrl}
+          src={resolvedLogoUrl}
           alt={`${companyName} logo`}
           width={32}
           height={32}
