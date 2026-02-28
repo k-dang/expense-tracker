@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCentsWithCode } from "@/lib/format";
 import type { PortfolioRow } from "@/db/schema";
@@ -61,6 +62,55 @@ function convertPositions(
   });
 }
 
+type StatTileProps = {
+  label: string;
+  value: string;
+  sub: string;
+  accentClass: string;
+  progressValue?: number;
+  layoutClass: string;
+};
+
+function StatTile({
+  label,
+  value,
+  sub,
+  accentClass,
+  progressValue,
+  layoutClass,
+}: StatTileProps) {
+  return (
+    <div
+      className={cn(
+        "group cursor-default px-5 py-4 transition-colors duration-150 hover:bg-muted/40",
+        layoutClass,
+      )}
+    >
+      <div className={cn("mb-3 h-[3px] w-6 rounded-full", accentClass)} />
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 font-mono text-2xl font-bold leading-none tabular-nums">
+        {value}
+      </p>
+      {progressValue !== undefined && (
+        <div className="mt-2.5 h-[3px] w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-700",
+              accentClass,
+            )}
+            style={{
+              width: `${Math.min(100, Math.max(0, progressValue))}%`,
+            }}
+          />
+        </div>
+      )}
+      <p className="mt-1.5 text-[11px] text-muted-foreground">{sub}</p>
+    </div>
+  );
+}
+
 function SecurityAvatar({
   symbol,
   companyName,
@@ -111,17 +161,63 @@ export function PortfolioBreakdownCard({
     0,
   );
 
-  const positionsWithWeights = convertedPositions.map((p) => ({
-    ...p,
-    weightBps:
-      totalMarketValueCents === 0
-        ? 0
-        : Math.round((p.marketValueCents / totalMarketValueCents) * 10000),
-    weightPercent:
-      totalMarketValueCents === 0
-        ? 0
-        : (p.marketValueCents / totalMarketValueCents) * 100,
-  }));
+  const positionsWithWeights = convertedPositions
+    .map((p) => ({
+      ...p,
+      weightBps:
+        totalMarketValueCents === 0
+          ? 0
+          : Math.round((p.marketValueCents / totalMarketValueCents) * 10000),
+      weightPercent:
+        totalMarketValueCents === 0
+          ? 0
+          : (p.marketValueCents / totalMarketValueCents) * 100,
+    }))
+    .sort((a, b) => b.weightBps - a.weightBps);
+
+  const n = positionsWithWeights.length;
+  const topHolding = positionsWithWeights[0];
+  const top5Count = Math.min(5, n);
+  const top5WeightBps = positionsWithWeights
+    .slice(0, top5Count)
+    .reduce((sum, p) => sum + p.weightBps, 0);
+  const cadWeightBps = positionsWithWeights
+    .filter((p) => p.currency === "CAD")
+    .reduce((sum, p) => sum + p.weightBps, 0);
+
+  const statItems: StatTileProps[] = [
+    {
+      label: "Securities",
+      value: String(n),
+      sub: n === 1 ? "total holding" : "total holdings",
+      accentClass: "bg-chart-1",
+      layoutClass: "border-l-0",
+    },
+    {
+      label: "Top Position",
+      value: topHolding ? formatWeight(topHolding.weightBps) : "—",
+      sub: topHolding?.symbol ?? "—",
+      accentClass: "bg-chart-2",
+      progressValue: topHolding ? topHolding.weightBps / 100 : undefined,
+      layoutClass: "border-l",
+    },
+    {
+      label: "Top 5 Weight",
+      value: n > 0 ? `${(top5WeightBps / 100).toFixed(1)}%` : "—",
+      sub: `of ${top5Count} position${top5Count !== 1 ? "s" : ""}`,
+      accentClass: "bg-chart-3",
+      progressValue: n > 0 ? top5WeightBps / 100 : undefined,
+      layoutClass: "border-l-0 border-t sm:border-l sm:border-t-0",
+    },
+    {
+      label: "CAD Exposure",
+      value: n > 0 ? `${(cadWeightBps / 100).toFixed(1)}%` : "—",
+      sub: "native currency",
+      accentClass: "bg-chart-4",
+      progressValue: n > 0 ? cadWeightBps / 100 : undefined,
+      layoutClass: "border-l border-t sm:border-t-0",
+    },
+  ];
 
   const fmt = (cents: number) =>
     formatCurrencyFromCentsWithCode(cents, displayCurrency);
@@ -141,6 +237,14 @@ export function PortfolioBreakdownCard({
           Total {fmt(totalMarketValueCents)}
         </p>
       </CardHeader>
+
+      {/* Quick Stats Strip */}
+      <div className="grid grid-cols-2 border-b bg-muted/20 sm:grid-cols-4">
+        {statItems.map((stat) => (
+          <StatTile key={stat.label} {...stat} />
+        ))}
+      </div>
+
       <CardContent className="p-0">
         <div className="grid gap-0 md:grid-cols-[280px_1fr]">
           <div className="border-b px-4 py-4 md:border-r md:border-b-0">
