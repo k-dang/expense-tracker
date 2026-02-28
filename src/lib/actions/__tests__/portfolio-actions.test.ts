@@ -52,7 +52,7 @@ describe("uploadPortfolioCsvAction", () => {
     formData.set(
       "file",
       makeFile(
-        "symbol,companyName,shares,marketValue\nAAPL,Apple Inc,1.25,250\nMSFT,Microsoft Corp,2,500",
+        "symbol,companyName,marketValue\nAAPL,Apple Inc,250\nMSFT,Microsoft Corp,500",
       ),
     );
 
@@ -88,5 +88,43 @@ describe("uploadPortfolioCsvAction", () => {
       expect(result.errors[0]?.message).toContain("already imported");
     }
     expect(updateTagMock).not.toHaveBeenCalled();
+  });
+
+  it("returns generic error and logs context for unexpected failures", async () => {
+    const unexpectedError = new Error("Database connection lost");
+    mergeSnapshotPositionsFromImportMock.mockRejectedValue(unexpectedError);
+
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const formData = new FormData();
+    formData.set("asOfDate", "2026-02-27");
+    formData.set(
+      "file",
+      makeFile(
+        "symbol,companyName,marketValue\nAAPL,Apple Inc,250\nMSFT,Microsoft Corp,500",
+      ),
+    );
+
+    const result = await uploadPortfolioCsvAction(null, formData);
+
+    expect(result?.status).toBe("failed");
+    if (result?.status === "failed") {
+      expect(result.errors[0]?.message).toBe("Portfolio import failed. Try again.");
+    }
+    expect(updateTagMock).not.toHaveBeenCalled();
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "[portfolio-import] Unexpected failure:",
+      expect.objectContaining({
+        filename: "holdings.csv",
+        asOfDate: "2026-02-27",
+        totalRows: 2,
+        uniqueSymbols: 2,
+        name: "Error",
+        message: "Database connection lost",
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 });

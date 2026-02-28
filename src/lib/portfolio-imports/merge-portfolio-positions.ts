@@ -6,7 +6,6 @@ export type PortfolioPositionForMerge = {
   exchange?: string | null;
   currency?: string | null;
   logoUrl?: string | null;
-  sharesMicros: number;
   marketValueCents: number;
 };
 
@@ -55,7 +54,6 @@ export function mergePortfolioPositions(options: {
       exchange: existing.exchange ?? undefined,
       currency: existing.currency ?? undefined,
       logoUrl: existing.logoUrl ?? undefined,
-      sharesMicros: existing.sharesMicros,
       marketValueCents: existing.marketValueCents,
     });
   }
@@ -71,13 +69,11 @@ export function mergePortfolioPositions(options: {
         exchange: incoming.exchange,
         currency: incoming.currency,
         logoUrl: incoming.logoUrl,
-        sharesMicros: incoming.sharesMicros,
         marketValueCents: incoming.marketValueCents,
       });
       continue;
     }
 
-    existing.sharesMicros += incoming.sharesMicros;
     existing.marketValueCents += incoming.marketValueCents;
     existing.companyName = incoming.companyName;
     existing.exchange = incoming.exchange ?? existing.exchange;

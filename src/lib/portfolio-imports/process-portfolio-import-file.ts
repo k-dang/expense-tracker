@@ -2,23 +2,7 @@ import Papa from "papaparse";
 import { decodeCsvBytes, validateCsvFileInput } from "@/lib/imports/csv-utils";
 import type { ImportError } from "@/lib/types/api";
 
-type PortfolioHeader =
-  | "symbol"
-  | "companyname"
-  | "shares"
-  | "marketvalue"
-  | "exchange"
-  | "currency"
-  | "logourl";
-
-const REQUIRED_HEADERS: PortfolioHeader[] = [
-  "symbol",
-  "companyname",
-  "shares",
-  "marketvalue",
-];
-
-const OPTIONAL_HEADERS: PortfolioHeader[] = ["exchange", "currency", "logourl"];
+const REQUIRED_HEADERS = ["symbol", "companyname", "marketvalue"] as const;
 
 const MAX_TEXT_LENGTH = 150;
 const MULTI_SPACE_PATTERN = /\s+/g;
@@ -30,7 +14,6 @@ export type PortfolioImportPositionInput = {
   exchange?: string;
   currency?: string;
   logoUrl?: string;
-  sharesMicros: number;
   marketValueCents: number;
 };
 
@@ -180,23 +163,6 @@ function parseRows(csvText: string):
     };
   }
 
-  const allHeaders = [...REQUIRED_HEADERS, ...OPTIONAL_HEADERS];
-  const extraHeaders = headers.filter(
-    (header) => !allHeaders.includes(header as PortfolioHeader),
-  );
-  if (extraHeaders.length > 0) {
-    return {
-      ok: false,
-      errors: [
-        {
-          row: 1,
-          field: "header",
-          message: `Unexpected headers: ${extraHeaders.join(", ")}.`,
-        },
-      ],
-    };
-  }
-
   const errors: ImportError[] = [];
   const rowsBySymbol = new Map<string, PortfolioImportPositionInput>();
 
@@ -231,21 +197,6 @@ function parseRows(csvText: string):
       return;
     }
 
-    const sharesMicros = parseScaledNumber({
-      value: normalizeDisplayValue(row.shares),
-      maxDecimals: 6,
-      scale: 1_000_000,
-    });
-    if (!sharesMicros) {
-      errors.push({
-        row: rowNumber,
-        field: "shares",
-        message:
-          "Shares must be a positive number with up to 6 decimal places.",
-      });
-      return;
-    }
-
     const marketValueCents = parseScaledNumber({
       value: normalizeDisplayValue(row.marketvalue),
       maxDecimals: 2,
@@ -267,7 +218,6 @@ function parseRows(csvText: string):
     const existing = rowsBySymbol.get(symbol);
 
     if (existing) {
-      existing.sharesMicros += sharesMicros;
       existing.marketValueCents += marketValueCents;
       existing.companyName = companyName;
       existing.exchange = exchangeValue || existing.exchange;
@@ -282,7 +232,6 @@ function parseRows(csvText: string):
       exchange: exchangeValue || undefined,
       currency: currencyValue || undefined,
       logoUrl: logoUrlValue || undefined,
-      sharesMicros,
       marketValueCents,
     });
   });

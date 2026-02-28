@@ -154,7 +154,6 @@ export const portfolioSnapshotPositionsTable = sqliteTable(
     securityId: text("security_id")
       .notNull()
       .references(() => securitiesTable.id),
-    sharesMicros: integer("shares_micros").notNull(),
     marketValueCents: integer("market_value_cents").notNull(),
     weightBps: integer("weight_bps").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
@@ -163,12 +162,14 @@ export const portfolioSnapshotPositionsTable = sqliteTable(
       .$defaultFn(() => Date.now()),
   },
   (table) => [
-    uniqueIndex(
-      "portfolio_snapshot_positions_snapshot_security_unique",
-    ).on(table.snapshotId, table.securityId),
-    index(
-      "portfolio_snapshot_positions_snapshot_weight_idx",
-    ).on(table.snapshotId, table.weightBps),
+    uniqueIndex("portfolio_snapshot_positions_snapshot_security_unique").on(
+      table.snapshotId,
+      table.securityId,
+    ),
+    index("portfolio_snapshot_positions_snapshot_weight_idx").on(
+      table.snapshotId,
+      table.weightBps,
+    ),
   ],
 );
 
@@ -193,9 +194,11 @@ export const portfolioImportFilesTable = sqliteTable(
       .$defaultFn(() => Date.now()),
   },
   (table) => [
-    uniqueIndex(
-      "portfolio_import_files_portfolio_date_filename_unique",
-    ).on(table.portfolioId, table.asOfDate, table.filename),
+    uniqueIndex("portfolio_import_files_portfolio_date_filename_unique").on(
+      table.portfolioId,
+      table.asOfDate,
+      table.filename,
+    ),
     index("portfolio_import_files_portfolio_date_idx").on(
       table.portfolioId,
       table.asOfDate,

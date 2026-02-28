@@ -33,7 +33,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-const REQUIRED_COLUMNS = ["symbol", "companyName", "shares", "marketValue"];
+const REQUIRED_COLUMNS = ["symbol", "companyName", "marketValue"];
 
 export function PortfolioImportCard() {
   const [state, formAction, isPending] = useActionState(
@@ -58,7 +58,7 @@ export function PortfolioImportCard() {
         <CardTitle>Import holdings CSV</CardTitle>
         <CardDescription>
           Additively merge holdings into a portfolio date snapshot. Required
-          columns:{" "}
+          columns (extra columns are ignored):{" "}
           {REQUIRED_COLUMNS.map((col, i) => (
             <span key={col}>
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground/70">

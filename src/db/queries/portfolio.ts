@@ -24,10 +24,6 @@ const snapshotPositionInputSchema = z.object({
   exchange: z.string().optional(),
   currency: z.string().optional(),
   logoUrl: z.string().optional(),
-  sharesMicros: z
-    .number()
-    .int("sharesMicros must be a non-negative integer.")
-    .min(0, "sharesMicros must be a non-negative integer."),
   marketValueCents: z
     .number()
     .int("marketValueCents must be a non-negative integer.")
@@ -52,7 +48,6 @@ const mergeImportInputSchema = z.object({
       exchange: z.string().optional(),
       currency: z.string().optional(),
       logoUrl: z.string().optional(),
-      sharesMicros: z.number().int().positive(),
       marketValueCents: z.number().int().positive(),
     }),
   ),
@@ -177,7 +172,6 @@ export async function listSnapshotBreakdown(snapshotId: string) {
       logoUrl: securitiesTable.logoUrl,
       exchange: securitiesTable.exchange,
       currency: securitiesTable.currency,
-      sharesMicros: portfolioSnapshotPositionsTable.sharesMicros,
       marketValueCents: portfolioSnapshotPositionsTable.marketValueCents,
       weightBps: portfolioSnapshotPositionsTable.weightBps,
       sortOrder: portfolioSnapshotPositionsTable.sortOrder,
@@ -352,7 +346,6 @@ export async function upsertSnapshotWithPositions(input: {
             id: randomUUID(),
             snapshotId,
             securityId: security.id,
-            sharesMicros: position.sharesMicros,
             marketValueCents: position.marketValueCents,
             weightBps: position.weightBps,
             sortOrder: position.sortOrder ?? index,
@@ -405,6 +398,14 @@ export async function mergeSnapshotPositionsFromImport(input: {
   }
 
   const importFileId = randomUUID();
+  const mergeContext = {
+    importFileId,
+    portfolioId: portfolio.id,
+    asOfDate: validatedInput.asOfDate,
+    filename: validatedInput.filename,
+    rowCount: validatedInput.rowCount,
+  };
+
   try {
     await db.insert(portfolioImportFilesTable).values({
       id: importFileId,
@@ -422,7 +423,11 @@ export async function mergeSnapshotPositionsFromImport(input: {
     ) {
       throw new DuplicatePortfolioImportError();
     }
-
+    logPortfolioImportMergeFailure({
+      ...mergeContext,
+      stage: "import-file-insert",
+      error,
+    });
     throw error;
   }
 
@@ -447,7 +452,6 @@ export async function mergeSnapshotPositionsFromImport(input: {
             exchange: securitiesTable.exchange,
             currency: securitiesTable.currency,
             logoUrl: securitiesTable.logoUrl,
-            sharesMicros: portfolioSnapshotPositionsTable.sharesMicros,
             marketValueCents: portfolioSnapshotPositionsTable.marketValueCents,
           })
           .from(portfolioSnapshotPositionsTable)
@@ -476,7 +480,6 @@ export async function mergeSnapshotPositionsFromImport(input: {
         exchange: position.exchange ?? undefined,
         currency: position.currency ?? undefined,
         logoUrl: position.logoUrl ?? undefined,
-        sharesMicros: position.sharesMicros,
         marketValueCents: position.marketValueCents,
         weightBps: position.weightBps,
         sortOrder: position.sortOrder,
@@ -497,12 +500,20 @@ export async function mergeSnapshotPositionsFromImport(input: {
       mergedSymbols: mergedPositions.length,
     };
   } catch (error) {
+    if (!(error instanceof DuplicatePortfolioImportError)) {
+      logPortfolioImportMergeFailure({
+        ...mergeContext,
+        stage: "merge/upsert",
+        error,
+      });
+    }
+
+    const errorMessage = extractErrorMessage(error);
     await db
       .update(portfolioImportFilesTable)
       .set({
         status: "failed",
-        errorMessage:
-          error instanceof Error ? error.message : "Portfolio import failed.",
+        errorMessage,
       })
       .where(eq(portfolioImportFilesTable.id, importFileId));
 
@@ -512,6 +523,46 @@ export async function mergeSnapshotPositionsFromImport(input: {
 
     throw error;
   }
+}
+
+function extractErrorMessage(error: unknown, maxLength = 1000): string {
+  if (error instanceof Error) {
+    return error.message.slice(0, maxLength);
+  }
+  try {
+    const str = String(error);
+    return (str || "Portfolio import failed.").slice(0, maxLength);
+  } catch {
+    return "Portfolio import failed.";
+  }
+}
+
+function logPortfolioImportMergeFailure(context: {
+  importFileId: string;
+  portfolioId: string;
+  asOfDate: string;
+  filename: string;
+  rowCount: number;
+  stage: string;
+  error: unknown;
+}): void {
+  const errorDetails =
+    context.error instanceof Error
+      ? {
+          name: context.error.name,
+          message: context.error.message,
+          stack: context.error.stack,
+        }
+      : { message: String(context.error) };
+  console.error("[portfolio-import] Merge failure:", {
+    importFileId: context.importFileId,
+    portfolioId: context.portfolioId,
+    asOfDate: context.asOfDate,
+    filename: context.filename,
+    rowCount: context.rowCount,
+    stage: context.stage,
+    ...errorDetails,
+  });
 }
 
 export type LatestPortfolioBreakdown = Awaited<

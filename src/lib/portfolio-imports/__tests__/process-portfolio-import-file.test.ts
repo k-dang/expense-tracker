@@ -29,14 +29,12 @@ describe("processPortfolioImportFileInput", () => {
           symbol: "AAPL",
           companyName: "Apple Inc",
           currency: "USD",
-          sharesMicros: 2_000_000,
           marketValueCents: 40_000,
         },
         {
           symbol: "MSFT",
           companyName: "Microsoft Corp",
           currency: "USD",
-          sharesMicros: 2_000_000,
           marketValueCents: 60_000,
         },
       ]);
@@ -57,7 +55,41 @@ describe("processPortfolioImportFileInput", () => {
     }
   });
 
-  it("returns row validation errors", () => {
+  it("accepts files without a shares column", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        [
+          "symbol,companyName,marketValue,currency",
+          "AAPL,Apple Inc,250.25,usd",
+          "MSFT,Microsoft Corp,600,USD",
+        ].join("\n"),
+      ),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.totalRows).toBe(2);
+      expect(result.uniqueSymbols).toBe(2);
+      expect(result.rows).toEqual([
+        {
+          symbol: "AAPL",
+          companyName: "Apple Inc",
+          currency: "USD",
+          marketValueCents: 25_025,
+        },
+        {
+          symbol: "MSFT",
+          companyName: "Microsoft Corp",
+          currency: "USD",
+          marketValueCents: 60_000,
+        },
+      ]);
+    }
+  });
+
+  it("ignores shares column when present", () => {
     const result = processPortfolioImportFileInput({
       filename: "holdings.csv",
       contentType: "text/csv",
@@ -69,14 +101,45 @@ describe("processPortfolioImportFileInput", () => {
       ),
     });
 
-    expect(result.status).toBe("failed");
-    if (result.status === "failed") {
-      expect(result.errors[0]).toEqual({
-        row: 2,
-        field: "shares",
-        message:
-          "Shares must be a positive number with up to 6 decimal places.",
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.rows[0]).toMatchObject({
+        symbol: "AAPL",
+        companyName: "Apple Inc",
+        marketValueCents: 10_000,
       });
+    }
+  });
+
+  it("accepts files with arbitrary extra columns and ignores them", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        [
+          "symbol,companyName,marketValue,notes,sector,costBasis",
+          "AAPL,Apple Inc,250.50,Tech growth,Technology,200.00",
+          "MSFT,Microsoft Corp,600,Enterprise,Technology,550.00",
+        ].join("\n"),
+      ),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.totalRows).toBe(2);
+      expect(result.uniqueSymbols).toBe(2);
+      expect(result.rows).toEqual([
+        {
+          symbol: "AAPL",
+          companyName: "Apple Inc",
+          marketValueCents: 25_050,
+        },
+        {
+          symbol: "MSFT",
+          companyName: "Microsoft Corp",
+          marketValueCents: 60_000,
+        },
+      ]);
     }
   });
 });
