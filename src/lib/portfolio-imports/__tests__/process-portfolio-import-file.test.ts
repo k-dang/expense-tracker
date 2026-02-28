@@ -111,6 +111,28 @@ describe("processPortfolioImportFileInput", () => {
     }
   });
 
+  it("rounds marketValue to nearest cent when more than 2 decimal places", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        [
+          "symbol,companyName,marketValue",
+          "AAPL,Apple Inc,1234.5678",
+          "MSFT,Microsoft Corp,100.994",
+          "GOOG,Alphabet Inc,1.999",
+        ].join("\n"),
+      ),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.rows[0]?.marketValueCents).toBe(123457);
+      expect(result.rows[1]?.marketValueCents).toBe(10099);
+      expect(result.rows[2]?.marketValueCents).toBe(200);
+    }
+  });
+
   it("accepts files with arbitrary extra columns and ignores them", () => {
     const result = processPortfolioImportFileInput({
       filename: "holdings.csv",

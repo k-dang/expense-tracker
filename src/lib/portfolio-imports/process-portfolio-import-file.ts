@@ -60,21 +60,15 @@ function parseScaledNumber(options: {
   ).replace(/,/g, "");
 
   const [wholePart, decimalPart = ""] = normalized.split(".");
-  if (decimalPart.length > options.maxDecimals) {
-    return null;
-  }
 
   const whole = Number.parseInt(wholePart, 10);
-  const paddedDecimal = decimalPart.padEnd(options.maxDecimals, "0");
-  const decimal =
-    options.maxDecimals === 0 ? 0 : Number.parseInt(paddedDecimal || "0", 10);
-
   const scaledWhole = whole * options.scale;
-  const divisor = 10 ** options.maxDecimals;
-  const scaledDecimal =
-    options.maxDecimals === 0
-      ? 0
-      : Math.round((decimal * options.scale) / divisor);
+  let scaledDecimal = 0;
+  if (options.maxDecimals > 0 && decimalPart.length > 0) {
+    const decimalInt = Number.parseInt(decimalPart, 10);
+    const divisor = 10 ** decimalPart.length;
+    scaledDecimal = Math.round((decimalInt * options.scale) / divisor);
+  }
   const total = scaledWhole + scaledDecimal;
 
   if (!Number.isSafeInteger(total) || total <= 0) {
@@ -207,7 +201,7 @@ function parseRows(csvText: string):
         row: rowNumber,
         field: "marketValue",
         message:
-          "Market value must be a positive number with optional $/commas and up to 2 decimal places.",
+          "Market value must be a positive number with optional $ and commas.",
       });
       return;
     }
