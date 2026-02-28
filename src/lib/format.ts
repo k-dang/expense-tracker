@@ -24,3 +24,16 @@ export function formatCurrencyWhole(amount: number): string {
 export function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
+
+const usdFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
+export function formatCurrencyFromCentsWithCode(
+  amountCents: number,
+  currency: "USD" | "CAD",
+): string {
+  const formatter = currency === "USD" ? usdFormatter : cadFormatter;
+  return formatter.format(amountCents / 100);
+}

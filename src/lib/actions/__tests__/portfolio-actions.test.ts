@@ -94,7 +94,9 @@ describe("uploadPortfolioCsvAction", () => {
     const unexpectedError = new Error("Database connection lost");
     mergeSnapshotPositionsFromImportMock.mockRejectedValue(unexpectedError);
 
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
     const formData = new FormData();
     formData.set("asOfDate", "2026-02-27");
@@ -109,7 +111,9 @@ describe("uploadPortfolioCsvAction", () => {
 
     expect(result?.status).toBe("failed");
     if (result?.status === "failed") {
-      expect(result.errors[0]?.message).toBe("Portfolio import failed. Try again.");
+      expect(result.errors[0]?.message).toBe(
+        "Portfolio import failed. Try again.",
+      );
     }
     expect(updateTagMock).not.toHaveBeenCalled();
 

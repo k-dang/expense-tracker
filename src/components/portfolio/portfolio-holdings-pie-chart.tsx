@@ -8,7 +8,11 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import type { LatestPortfolioBreakdown } from "@/db/queries/portfolio";
-import { formatCurrencyFromCents, formatPercent } from "@/lib/format";
+import {
+  formatCurrencyFromCents,
+  formatCurrencyFromCentsWithCode,
+  formatPercent,
+} from "@/lib/format";
 
 type Position = LatestPortfolioBreakdown["positions"][number];
 
@@ -23,12 +27,17 @@ const CHART_COLORS = [
 type Props = {
   positions: Position[];
   totalMarketValueCents: number;
+  displayCurrency?: "CAD" | "USD";
 };
 
 export function PortfolioHoldingsPieChart({
   positions,
   totalMarketValueCents,
+  displayCurrency,
 }: Props) {
+  const fmt = displayCurrency
+    ? (cents: number) => formatCurrencyFromCentsWithCode(cents, displayCurrency)
+    : formatCurrencyFromCents;
   const chartData = positions.map((position, index) => {
     const colorKey = `holding${index + 1}`;
     return {
@@ -79,7 +88,7 @@ export function PortfolioHoldingsPieChart({
                           {label}
                         </span>
                         <span className="text-foreground font-mono font-medium tabular-nums">
-                          {formatCurrencyFromCents(numericValue)}
+                          {fmt(numericValue)}
                         </span>
                       </div>
                       <div className="text-muted-foreground text-right text-[11px] tabular-nums">
@@ -124,7 +133,7 @@ export function PortfolioHoldingsPieChart({
               dy="1.3em"
               className="text-sm font-semibold tabular-nums"
             >
-              {formatCurrencyFromCents(totalMarketValueCents)}
+              {fmt(totalMarketValueCents)}
             </tspan>
           </text>
         </PieChart>

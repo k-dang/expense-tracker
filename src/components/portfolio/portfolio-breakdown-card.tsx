@@ -1,10 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import { formatIsoDateLabel } from "@/lib/date/utils";
-import { formatCurrencyFromCents } from "@/lib/format";
+import { formatCurrencyFromCentsWithCode } from "@/lib/format";
 import type { PortfolioRow } from "@/db/schema";
 import type { LatestPortfolioBreakdown } from "@/db/queries/portfolio";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PortfolioHoldingsPieChart } from "@/components/portfolio/portfolio-holdings-pie-chart";
+import { PortfolioCurrencyToggle } from "@/components/portfolio/portfolio-currency-toggle";
 
 type Position = LatestPortfolioBreakdown["positions"][number];
 type Snapshot = NonNullable<LatestPortfolioBreakdown["snapshot"]>;
@@ -29,18 +33,32 @@ type Props = {
   portfolio: PortfolioRow;
   snapshot: Snapshot;
   positions: Position[];
+  usdToCadRate: number;
 };
 
 function formatWeight(weightBps: number): string {
   return `${(weightBps / 100).toFixed(2)}%`;
 }
 
-function getLogoUrl(symbol: string, storedUrl: string | null): string | null {
-  const token = process.env.LOGO_DEV_TOKEN;
-  if (token) {
-    return `https://img.logo.dev/ticker/${symbol.toLowerCase()}?token=${token}&size=64`;
-  }
-  return storedUrl;
+function convertPositions(
+  positions: Position[],
+  displayCurrency: "CAD" | "USD",
+  usdToCadRate: number,
+) {
+  return positions.map((position) => {
+    if (position.currency === displayCurrency) {
+      return position;
+    }
+
+    let convertedCents: number;
+    if (position.currency === "USD" && displayCurrency === "CAD") {
+      convertedCents = Math.round(position.marketValueCents * usdToCadRate);
+    } else {
+      convertedCents = Math.round(position.marketValueCents / usdToCadRate);
+    }
+
+    return { ...position, marketValueCents: convertedCents };
+  });
 }
 
 function SecurityAvatar({
@@ -52,13 +70,11 @@ function SecurityAvatar({
   companyName: string;
   logoUrl: string | null;
 }) {
-  const resolvedLogoUrl = getLogoUrl(symbol, logoUrl);
-
-  if (resolvedLogoUrl) {
+  if (logoUrl) {
     return (
       <div className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border">
         <Image
-          src={resolvedLogoUrl}
+          src={logoUrl}
           alt={`${companyName} logo`}
           width={32}
           height={32}
@@ -80,27 +96,63 @@ export function PortfolioBreakdownCard({
   portfolio,
   snapshot,
   positions,
+  usdToCadRate,
 }: Props) {
+  const [displayCurrency, setDisplayCurrency] = useState<"CAD" | "USD">("CAD");
+
+  const convertedPositions = convertPositions(
+    positions,
+    displayCurrency,
+    usdToCadRate,
+  );
+
+  const totalMarketValueCents = convertedPositions.reduce(
+    (sum, p) => sum + p.marketValueCents,
+    0,
+  );
+
+  const positionsWithWeights = convertedPositions.map((p) => ({
+    ...p,
+    weightBps:
+      totalMarketValueCents === 0
+        ? 0
+        : Math.round((p.marketValueCents / totalMarketValueCents) * 10000),
+    weightPercent:
+      totalMarketValueCents === 0
+        ? 0
+        : (p.marketValueCents / totalMarketValueCents) * 100,
+  }));
+
+  const fmt = (cents: number) =>
+    formatCurrencyFromCentsWithCode(cents, displayCurrency);
+
   return (
     <Card className="min-w-0">
       <CardHeader className="border-b">
-        <CardTitle>Holdings breakdown</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Holdings breakdown</CardTitle>
+          <PortfolioCurrencyToggle
+            value={displayCurrency}
+            onChange={setDisplayCurrency}
+          />
+        </div>
         <p className="text-muted-foreground text-xs">
           {portfolio.name} - As of {formatIsoDateLabel(snapshot.asOfDate)} -
-          Total {formatCurrencyFromCents(snapshot.totalMarketValueCents)}
+          Total {fmt(totalMarketValueCents)}
         </p>
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid gap-0 md:grid-cols-[280px_1fr]">
           <div className="border-b px-4 py-4 md:border-r md:border-b-0">
             <PortfolioHoldingsPieChart
-              positions={positions}
-              totalMarketValueCents={snapshot.totalMarketValueCents}
+              positions={positionsWithWeights}
+              totalMarketValueCents={totalMarketValueCents}
+              displayCurrency={displayCurrency}
             />
           </div>
 
           <ul className="divide-y">
-            {positions.map((position, index) => {
+            {positionsWithWeights.map((position, index) => {
               const width = Math.max(
                 0,
                 Math.min(100, Number(position.weightPercent.toFixed(2))),
@@ -147,7 +199,7 @@ export function PortfolioBreakdownCard({
                         {formatWeight(position.weightBps)}
                       </p>
                       <p className="text-muted-foreground text-xs font-mono tabular-nums">
-                        {formatCurrencyFromCents(position.marketValueCents)}
+                        {fmt(position.marketValueCents)}
                       </p>
                     </div>
                   </div>
