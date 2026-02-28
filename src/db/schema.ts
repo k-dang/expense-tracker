@@ -136,12 +136,12 @@ export const portfolioSnapshotsTable = sqliteTable(
       .notNull()
       .$defaultFn(() => Date.now()),
   },
-  (table) => ({
-    portfolioIdAsOfDateIdx: index("portfolio_snapshots_portfolio_as_of_idx").on(
+  (table) => [
+    index("portfolio_snapshots_portfolio_as_of_idx").on(
       table.portfolioId,
       table.asOfDate,
     ),
-  }),
+  ],
 );
 
 export const portfolioSnapshotPositionsTable = sqliteTable(
@@ -162,14 +162,14 @@ export const portfolioSnapshotPositionsTable = sqliteTable(
       .notNull()
       .$defaultFn(() => Date.now()),
   },
-  (table) => ({
-    snapshotSecurityUnique: uniqueIndex(
+  (table) => [
+    uniqueIndex(
       "portfolio_snapshot_positions_snapshot_security_unique",
     ).on(table.snapshotId, table.securityId),
-    snapshotWeightIdx: index(
+    index(
       "portfolio_snapshot_positions_snapshot_weight_idx",
     ).on(table.snapshotId, table.weightBps),
-  }),
+  ],
 );
 
 export const portfolioImportFilesTable = sqliteTable(
@@ -192,15 +192,15 @@ export const portfolioImportFilesTable = sqliteTable(
       .notNull()
       .$defaultFn(() => Date.now()),
   },
-  (table) => ({
-    portfolioDateFilenameUnique: uniqueIndex(
+  (table) => [
+    uniqueIndex(
       "portfolio_import_files_portfolio_date_filename_unique",
     ).on(table.portfolioId, table.asOfDate, table.filename),
-    portfolioDateIdx: index("portfolio_import_files_portfolio_date_idx").on(
+    index("portfolio_import_files_portfolio_date_idx").on(
       table.portfolioId,
       table.asOfDate,
     ),
-  }),
+  ],
 );
 
 export type PortfolioRow = typeof portfoliosTable.$inferSelect;
