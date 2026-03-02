@@ -11,8 +11,8 @@ import type {
 } from "@/lib/imports/process-import-file";
 import type { ImportError } from "@/lib/types/api";
 
-const ROGERS_REQUIRED_HEADERS = ["date", "merchant name", "amount"];
-const ROGERS_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const WS_REQUIRED_HEADERS = ["transaction_date", "details", "amount"];
+const WS_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function normalizeHeader(header: string): string {
   return header.trim().toLowerCase();
@@ -22,24 +22,22 @@ function toText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function convertRogersDateToCanonical(rogersDate: string): string | null {
-  if (!ROGERS_DATE_PATTERN.test(rogersDate)) return null;
-  const [year, month, day] = rogersDate.split("-");
+function convertWsDateToCanonical(wsDate: string): string | null {
+  if (!WS_DATE_PATTERN.test(wsDate)) return null;
+  const [year, month, day] = wsDate.split("-");
   return `${month}-${day}-${year}`;
 }
 
-function isExpenseRow(amountStr: string): boolean {
-  const trimmed = amountStr.trim();
-  if (!trimmed) return false;
-  if (trimmed.startsWith("-")) return false;
-  const normalized = (
-    trimmed.startsWith("$") ? trimmed.slice(1) : trimmed
-  ).replace(/,/g, "");
-  const num = Number.parseFloat(normalized);
+function isExpenseRow(raw: Record<string, unknown>): boolean {
+  const type = toText(raw.type).toLowerCase();
+  if (type === "payment") return false;
+  const amountStr = toText(raw.amount);
+  if (!amountStr || amountStr.startsWith("-")) return false;
+  const num = Number.parseFloat(amountStr);
   return Number.isFinite(num) && num > 0;
 }
 
-function processRogersRows(
+function processWsRows(
   rows: Record<string, unknown>[],
 ): ProcessImportFileResult {
   const errors: ImportError[] = [];
@@ -48,13 +46,12 @@ function processRogersRows(
 
   for (const raw of rows) {
     rowIndex += 1;
-    const amountStr = toText(raw.amount);
-    if (!isExpenseRow(amountStr)) continue;
+    if (!isExpenseRow(raw)) continue;
 
-    const rogersDate = toText(raw.date);
-    const date = convertRogersDateToCanonical(rogersDate);
-    const description = toText(raw["merchant name"]);
-    const category = toText(raw["merchant category description"]);
+    const wsDate = toText(raw.transaction_date);
+    const date = convertWsDateToCanonical(wsDate);
+    const description = toText(raw.details);
+    const amountStr = toText(raw.amount);
 
     if (!date) {
       errors.push({
@@ -70,7 +67,7 @@ function processRogersRows(
       date,
       description,
       amount: amountStr,
-      category,
+      category: "",
     });
 
     if ("error" in result) {
@@ -92,7 +89,7 @@ function processRogersRows(
   };
 }
 
-function processRogersCsv(
+function processWealthsimpleCsv(
   input: ProcessImportFileInput,
 ): ProcessImportFileResult {
   const fileError = validateCsvFileInput(input);
@@ -132,7 +129,7 @@ function processRogersCsv(
 
   const headers = parseResult.meta.fields ?? [];
   const headerSet = new Set(headers);
-  const missing = ROGERS_REQUIRED_HEADERS.filter((h) => !headerSet.has(h));
+  const missing = WS_REQUIRED_HEADERS.filter((h) => !headerSet.has(h));
   if (missing.length > 0) {
     return {
       status: "failed",
@@ -140,23 +137,23 @@ function processRogersCsv(
         {
           row: 1,
           field: "header",
-          message: `Missing required Rogers headers: ${missing.join(", ")}.`,
+          message: `Missing required Wealthsimple headers: ${missing.join(", ")}.`,
         },
       ],
     };
   }
 
-  return processRogersRows(parseResult.data);
+  return processWsRows(parseResult.data);
 }
 
-export const rogersCsvProcessor: FileProcessor = {
+export const wealthsimpleCsvProcessor: FileProcessor = {
   metadata: {
-    id: "rogers-csv",
-    label: "Rogers Bank CSV",
+    id: "wealthsimple-csv",
+    label: "Wealthsimple CSV",
     description:
-      "Rogers Bank credit card CSV export (Date, Merchant Name, Amount). Non-expense rows (e.g. payments) are skipped.",
+      "Wealthsimple credit card CSV export (transaction_date, details, amount). Payment rows are skipped.",
     acceptedExtensions: [".csv"],
     acceptedMimeTypes: ["text/csv", "application/vnd.ms-excel"],
   },
-  process: processRogersCsv,
+  process: processWealthsimpleCsv,
 };
