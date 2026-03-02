@@ -46,7 +46,7 @@ const SAVINGS_CONFIG = {
 
 /* ── budget targets (dollars) ──────────────────────────── */
 const EXPENSE_BUDGET_TARGET = 2000;
-const SAVINGS_BUDGET_TARGET = -1 * EXPENSE_BUDGET_TARGET; // savings target = income - expense target; null = no fixed target
+const SAVINGS_BUDGET_TARGET = 6000;
 
 /* ── types ─────────────────────────────────────────────── */
 type Props = {
@@ -328,12 +328,12 @@ export function SavingsTrendChart({ data, incomeData }: Props) {
             barColor={SAVINGS_POS_COLOR}
             barColorNeg={SAVINGS_NEG_COLOR}
             avgValue={avgSavings}
-            targetValue={null}
+            targetValue={SAVINGS_BUDGET_TARGET}
           />
           <ChartStats
             monthlyAvg={avgSavings}
             monthlyAvgLabel="Monthly avg savings"
-            budgetTarget={null}
+            budgetTarget={SAVINGS_BUDGET_TARGET}
             variance={savingsVariance}
             accentClass="text-blue-500"
           />
