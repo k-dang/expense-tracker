@@ -26,7 +26,7 @@ const uploadFilesSchema = z
   .array(z.instanceof(File))
   .min(1, { message: "Missing file in form-data." })
   .max(MAX_FILES_PER_UPLOAD, {
-    message: `You can upload up to ${MAX_FILES_PER_UPLOAD} CSV files at once.`,
+    message: `You can upload up to ${MAX_FILES_PER_UPLOAD} files at once.`,
   });
 
 const deleteImportSchema = z.object({

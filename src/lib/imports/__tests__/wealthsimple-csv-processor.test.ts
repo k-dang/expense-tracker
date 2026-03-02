@@ -11,12 +11,12 @@ describe("wealthsimple-csv processor", () => {
   const processor = getProcessor("wealthsimple-csv");
   if (!processor) throw new Error("wealthsimple-csv processor not registered");
 
-  it("parses Wealthsimple-formatted expense rows", () => {
+  it("parses Wealthsimple-formatted expense rows", async () => {
     const csv = `${WS_HEADER}
 2025-12-18,2025-12-19,Purchase,TORONTO FLORIST,45.20,CAD
 2025-12-20,2025-12-21,Purchase,PRESTO FARE/QNVR5S77XL,6.60,CAD`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "wealthsimple.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -35,13 +35,13 @@ describe("wealthsimple-csv processor", () => {
     }
   });
 
-  it("skips Payment rows", () => {
+  it("skips Payment rows", async () => {
     const csv = `${WS_HEADER}
 2025-12-15,2025-12-15,Payment,From chequing account,-503.95,CAD
 2025-12-18,2025-12-19,Purchase,TORONTO FLORIST,45.20,CAD
 2025-12-20,2025-12-21,Purchase,BEST BUY #980,361.59,CAD`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "wealthsimple.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -55,11 +55,11 @@ describe("wealthsimple-csv processor", () => {
     }
   });
 
-  it("maps date, description, and amount correctly", () => {
+  it("maps date, description, and amount correctly", async () => {
     const csv = `${WS_HEADER}
 2025-12-19,2025-12-21,Purchase,BEST BUY #980,361.59,CAD`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "wealthsimple.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -74,10 +74,10 @@ describe("wealthsimple-csv processor", () => {
     }
   });
 
-  it("fails when required Wealthsimple headers are missing", () => {
+  it("fails when required Wealthsimple headers are missing", async () => {
     const csv = "transaction_date,amount\n2026-01-16,45.20";
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "wealthsimple.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -90,8 +90,8 @@ describe("wealthsimple-csv processor", () => {
     }
   });
 
-  it("fails on empty file", () => {
-    const result = processor.process({
+  it("fails on empty file", async () => {
+    const result = await processor.process({
       filename: "wealthsimple.csv",
       contentType: "text/csv",
       bytes: toBytes(""),
@@ -103,11 +103,11 @@ describe("wealthsimple-csv processor", () => {
     }
   });
 
-  it("fails on invalid date format", () => {
+  it("fails on invalid date format", async () => {
     const csv = `${WS_HEADER}
 01-16-2026,2026-01-19,Purchase,TORONTO FLORIST,45.20,CAD`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "wealthsimple.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),

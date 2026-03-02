@@ -13,7 +13,9 @@ export type FileProcessorMetadata = {
 
 export type FileProcessor = {
   metadata: FileProcessorMetadata;
-  process(input: ProcessImportFileInput): ProcessImportFileResult;
+  process(
+    input: ProcessImportFileInput,
+  ): ProcessImportFileResult | Promise<ProcessImportFileResult>;
 };
 
 export function getAcceptString(metadata: FileProcessorMetadata): string {

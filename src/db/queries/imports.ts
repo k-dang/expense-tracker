@@ -39,7 +39,7 @@ export async function processImportFile(options: {
   bytes: Uint8Array;
   processor: FileProcessor;
 }): Promise<ImportFileResult> {
-  const processed = options.processor.process({
+  const processed = await options.processor.process({
     filename: options.filename,
     contentType: options.contentType,
     bytes: options.bytes,

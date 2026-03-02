@@ -12,12 +12,12 @@ describe("rogers-csv processor", () => {
   const processor = getProcessor("rogers-csv");
   if (!processor) throw new Error("rogers-csv processor not registered");
 
-  it("parses Rogers-formatted expense rows", () => {
+  it("parses Rogers-formatted expense rows", async () => {
     const csv = `${ROGERS_HEADER}
 2026-01-16,2026-01-19,"ref1",TRANS,APPROVED,************0943,Wholesale Club,COSTCO WHOLESALE W535,TORONTO,ON,CAN,M3K2C8,$7.90,,KEVIN DANG
 2025-12-27,2025-12-29,"ref2",TRANS,APPROVED,************0943,Parking Lots,TORONTO PARKING AUTHOR,TORONTO,ON,CAN,M5C1R5,$20.00,,KEVIN DANG`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "rogers.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -37,13 +37,13 @@ describe("rogers-csv processor", () => {
     }
   });
 
-  it("skips non-expense rows (negative amounts)", () => {
+  it("skips non-expense rows (negative amounts)", async () => {
     const csv = `${ROGERS_HEADER}
 2026-01-16,2026-01-19,"ref1",TRANS,APPROVED,************0943,Wholesale Club,COSTCO WHOLESALE W535,TORONTO,ON,CAN,M3K2C8,$7.90,,KEVIN DANG
 2025-12-20,2025-12-23,"ref2",TRANS,APPROVED,************0943,,PAYMENT THANK YOU,,,,,-$288.83,,KEVIN DANG
 2025-12-24,2025-12-29,"ref3",TRANS,APPROVED,************0943,Electronics,BEST BUY CANADA,TORONTO,ON,CAN,M3K1E3,$299.43,,KEVIN DANG`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "rogers.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -58,11 +58,11 @@ describe("rogers-csv processor", () => {
     }
   });
 
-  it("maps date, description, amount, and category correctly", () => {
+  it("maps date, description, amount, and category correctly", async () => {
     const csv = `${ROGERS_HEADER}
 2025-12-24,2025-12-29,"ref",TRANS,APPROVED,************0943,Electronics Stores,BEST BUY CANADA #927,TORONTO,ON,CAN,M3K 1E3,$299.43,,KEVIN DANG`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "rogers.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -78,10 +78,10 @@ describe("rogers-csv processor", () => {
     }
   });
 
-  it("fails when required Rogers headers are missing", () => {
+  it("fails when required Rogers headers are missing", async () => {
     const csv = "Date,Amount\n2026-01-16,$10.00";
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "rogers.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
@@ -94,8 +94,8 @@ describe("rogers-csv processor", () => {
     }
   });
 
-  it("fails on empty file", () => {
-    const result = processor.process({
+  it("fails on empty file", async () => {
+    const result = await processor.process({
       filename: "rogers.csv",
       contentType: "text/csv",
       bytes: toBytes(""),
@@ -107,11 +107,11 @@ describe("rogers-csv processor", () => {
     }
   });
 
-  it("fails on invalid date format", () => {
+  it("fails on invalid date format", async () => {
     const csv = `${ROGERS_HEADER}
 01-16-2026,2026-01-19,"ref",TRANS,APPROVED,************0943,,COSTCO,TORONTO,ON,CAN,M3K2C8,$7.90,,KEVIN DANG`;
 
-    const result = processor.process({
+    const result = await processor.process({
       filename: "rogers.csv",
       contentType: "text/csv",
       bytes: toBytes(csv),
