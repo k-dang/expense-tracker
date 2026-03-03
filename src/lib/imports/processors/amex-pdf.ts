@@ -1,4 +1,3 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { Output, generateText } from "ai";
 import { z } from "zod";
 import type { FileProcessor } from "@/lib/imports/file-processor";
