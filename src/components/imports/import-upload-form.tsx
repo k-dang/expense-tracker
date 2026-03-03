@@ -17,6 +17,7 @@ import {
   DEFAULT_PROCESSOR_ID,
 } from "@/lib/imports/processors/registry";
 import type { ImportPostResult, ImportPostStatus } from "@/lib/types/api";
+import { ImportProgressCard } from "./import-progress-card";
 import {
   Card,
   CardContent,
@@ -83,6 +84,7 @@ export function ImportUploadForm() {
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const [processorId, setProcessorId] = useState(DEFAULT_PROCESSOR_ID);
+  const [submittedFileNames, setSubmittedFileNames] = useState<string[]>([]);
 
   const processors = listProcessors();
   const selectedProcessor = useMemo(
@@ -113,7 +115,14 @@ export function ImportUploadForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="flex flex-col gap-3">
+          <form
+            action={(formData) => {
+              const files = formData.getAll("file") as File[];
+              setSubmittedFileNames(files.map((f) => f.name));
+              formAction(formData);
+            }}
+            className="flex flex-col gap-3"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Select
                 value={processorId}
@@ -153,7 +162,12 @@ export function ImportUploadForm() {
         </CardContent>
       </Card>
 
-      {state && config ? (
+      <ImportProgressCard
+        isPending={isPending}
+        fileNames={submittedFileNames}
+      />
+
+      {state && config && !isPending ? (
         <Card className={`border-l-2 ${config.border}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
