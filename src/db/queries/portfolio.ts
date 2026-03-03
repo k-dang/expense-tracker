@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql, sum } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
@@ -562,6 +562,121 @@ function logPortfolioImportMergeFailure(context: {
     rowCount: context.rowCount,
     stage: context.stage,
     ...errorDetails,
+  });
+}
+
+export async function listPortfolioImportDates(portfolioId: string) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("portfolio");
+
+  const parsedPortfolioId = requiredIdSchema.safeParse(portfolioId);
+  if (!parsedPortfolioId.success) {
+    throw new Error(getValidationIssueMessage(parsedPortfolioId.error));
+  }
+
+  const rows = await db
+    .select({
+      asOfDate: portfolioImportFilesTable.asOfDate,
+      fileCount: count(portfolioImportFilesTable.id),
+      totalRows: sum(portfolioImportFilesTable.rowCount),
+    })
+    .from(portfolioImportFilesTable)
+    .where(
+      and(
+        eq(portfolioImportFilesTable.portfolioId, parsedPortfolioId.data),
+        eq(portfolioImportFilesTable.status, "succeeded"),
+      ),
+    )
+    .groupBy(portfolioImportFilesTable.asOfDate)
+    .orderBy(desc(portfolioImportFilesTable.asOfDate));
+
+  return rows.map((row) => ({
+    asOfDate: row.asOfDate,
+    fileCount: row.fileCount,
+    totalRows: Number(row.totalRows ?? 0),
+  }));
+}
+
+export type PortfolioSnapshotDeleteResult =
+  | {
+      status: "succeeded";
+      deletedImportFileCount: number;
+      deletedSecurityCount: number;
+    }
+  | { status: "failed"; error: string };
+
+export async function deletePortfolioSnapshotByDate(options: {
+  portfolioId: string;
+  asOfDate: string;
+}): Promise<PortfolioSnapshotDeleteResult> {
+  const snapshot = await db
+    .select({ id: portfolioSnapshotsTable.id })
+    .from(portfolioSnapshotsTable)
+    .where(
+      and(
+        eq(portfolioSnapshotsTable.portfolioId, options.portfolioId),
+        eq(portfolioSnapshotsTable.asOfDate, options.asOfDate),
+      ),
+    )
+    .limit(1);
+
+  if (!snapshot[0]) {
+    return {
+      status: "failed",
+      error: `No snapshot found for date ${options.asOfDate}.`,
+    };
+  }
+
+  const snapshotId = snapshot[0].id;
+
+  const positionSecurityIds = await db
+    .select({ securityId: portfolioSnapshotPositionsTable.securityId })
+    .from(portfolioSnapshotPositionsTable)
+    .where(eq(portfolioSnapshotPositionsTable.snapshotId, snapshotId));
+
+  const securityIds = positionSecurityIds.map((r) => r.securityId);
+
+  return db.transaction(async (tx) => {
+    await tx
+      .delete(portfolioSnapshotPositionsTable)
+      .where(eq(portfolioSnapshotPositionsTable.snapshotId, snapshotId));
+
+    await tx
+      .delete(portfolioSnapshotsTable)
+      .where(eq(portfolioSnapshotsTable.id, snapshotId));
+
+    const deletedImportFiles = await tx
+      .delete(portfolioImportFilesTable)
+      .where(
+        and(
+          eq(portfolioImportFilesTable.portfolioId, options.portfolioId),
+          eq(portfolioImportFilesTable.asOfDate, options.asOfDate),
+        ),
+      )
+      .returning({ id: portfolioImportFilesTable.id });
+
+    let deletedSecurityCount = 0;
+    for (const securityId of securityIds) {
+      const stillReferenced = await tx
+        .select({ id: portfolioSnapshotPositionsTable.id })
+        .from(portfolioSnapshotPositionsTable)
+        .where(eq(portfolioSnapshotPositionsTable.securityId, securityId))
+        .limit(1);
+
+      if (stillReferenced.length === 0) {
+        await tx
+          .delete(securitiesTable)
+          .where(eq(securitiesTable.id, securityId));
+        deletedSecurityCount++;
+      }
+    }
+
+    return {
+      status: "succeeded" as const,
+      deletedImportFileCount: deletedImportFiles.length,
+      deletedSecurityCount,
+    };
   });
 }
 

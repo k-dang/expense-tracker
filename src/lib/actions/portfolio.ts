@@ -4,6 +4,9 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import {
   DuplicatePortfolioImportError,
+  type PortfolioSnapshotDeleteResult,
+  deletePortfolioSnapshotByDate,
+  getOrCreateDefaultPortfolio,
   mergeSnapshotPositionsFromImport,
 } from "@/db/queries/portfolio";
 import { parseStrictDate } from "@/lib/date/utils";
@@ -133,6 +136,42 @@ export async function uploadPortfolioCsvAction(
         },
       ],
     };
+  }
+}
+
+const deletePortfolioSnapshotSchema = z.object({
+  asOfDate: z.string().trim().min(1, "As-of date is required."),
+});
+
+export async function deletePortfolioSnapshotAction(
+  _previousState: PortfolioSnapshotDeleteResult | null,
+  formData: FormData,
+): Promise<PortfolioSnapshotDeleteResult> {
+  const rawAsOfDate = formData.get("asOfDate");
+  const parsed = deletePortfolioSnapshotSchema.safeParse({
+    asOfDate: typeof rawAsOfDate === "string" ? rawAsOfDate : "",
+  });
+
+  if (!parsed.success) {
+    const msg =
+      parsed.error.issues[0]?.message ?? "As-of date is required.";
+    return { status: "failed", error: msg };
+  }
+
+  try {
+    const portfolio = await getOrCreateDefaultPortfolio();
+    const result = await deletePortfolioSnapshotByDate({
+      portfolioId: portfolio.id,
+      asOfDate: parsed.data.asOfDate,
+    });
+
+    if (result.status === "succeeded") {
+      updateTag("portfolio");
+    }
+
+    return result;
+  } catch {
+    return { status: "failed", error: "Failed to delete portfolio snapshot." };
   }
 }
 
