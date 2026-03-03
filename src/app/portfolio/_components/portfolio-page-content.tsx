@@ -25,13 +25,13 @@ export async function PortfolioPageContent() {
     return (
       <div className="space-y-6">
         <PortfolioImportCard />
-        <PortfolioImportHistory />
         <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-sm">
           <p>No portfolio snapshot yet.</p>
           <p className="text-xs">
             Add your first holdings snapshot to see a weighted breakdown.
           </p>
         </div>
+        <PortfolioImportHistory />
       </div>
     );
   }
@@ -44,13 +44,13 @@ export async function PortfolioPageContent() {
   return (
     <div className="space-y-6">
       <PortfolioImportCard />
-      <PortfolioImportHistory />
       <PortfolioBreakdownCard
         portfolio={data.portfolio}
         snapshot={data.snapshot}
         positions={positions}
         usdToCadRate={usdToCad}
       />
+      <PortfolioImportHistory />
     </div>
   );
 }
