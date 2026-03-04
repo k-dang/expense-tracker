@@ -133,6 +133,42 @@ describe("processPortfolioImportFileInput", () => {
     }
   });
 
+  it("accepts alternative header names (Name, Market Value, Market Value Currency)", () => {
+    const result = processPortfolioImportFileInput({
+      filename: "holdings.csv",
+      contentType: "text/csv",
+      bytes: toBytes(
+        [
+          "Symbol,Name,Market Value,Market Value Currency,Exchange",
+          "AAPL,Apple Inc,250.25,USD,NASDAQ",
+          "MSFT,Microsoft Corp,600,USD,NASDAQ",
+        ].join("\n"),
+      ),
+    });
+
+    expect(result.status).toBe("succeeded");
+    if (result.status === "succeeded") {
+      expect(result.totalRows).toBe(2);
+      expect(result.uniqueSymbols).toBe(2);
+      expect(result.rows).toEqual([
+        {
+          symbol: "AAPL",
+          companyName: "Apple Inc",
+          currency: "USD",
+          exchange: "NASDAQ",
+          marketValueCents: 25_025,
+        },
+        {
+          symbol: "MSFT",
+          companyName: "Microsoft Corp",
+          currency: "USD",
+          exchange: "NASDAQ",
+          marketValueCents: 60_000,
+        },
+      ]);
+    }
+  });
+
   it("accepts files with arbitrary extra columns and ignores them", () => {
     const result = processPortfolioImportFileInput({
       filename: "holdings.csv",

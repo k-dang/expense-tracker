@@ -36,8 +36,17 @@ export type ProcessPortfolioImportFileResult =
       rowCountTotal?: number;
     };
 
+const HEADER_ALIASES: Record<string, string> = {
+  name: "companyname",
+  "company name": "companyname",
+  company: "companyname",
+  "market value": "marketvalue",
+  "market value currency": "currency",
+};
+
 function normalizeHeader(value: string): string {
-  return value.trim().toLowerCase();
+  const trimmed = value.trim().toLowerCase();
+  return HEADER_ALIASES[trimmed] ?? trimmed;
 }
 
 function normalizeDisplayValue(value: unknown): string {
@@ -131,10 +140,21 @@ function parseRows(csvText: string):
     parseResult.meta.renamedHeaders &&
     Object.keys(parseResult.meta.renamedHeaders).length > 0
   ) {
+    const duplicates = [
+      ...new Set(
+        Object.values(parseResult.meta.renamedHeaders).map((name) =>
+          name.replace(/_\d+$/, ""),
+        ),
+      ),
+    ];
     return {
       ok: false,
       errors: [
-        { row: 1, field: "header", message: "Duplicate header detected." },
+        {
+          row: 1,
+          field: "header",
+          message: `Duplicate header detected: ${duplicates.join(", ")}.`,
+        },
       ],
     };
   }

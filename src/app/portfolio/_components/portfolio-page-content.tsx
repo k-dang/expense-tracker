@@ -1,4 +1,5 @@
 import { PortfolioBreakdownCard } from "@/components/portfolio/portfolio-breakdown-card";
+import { PortfolioContextBar } from "@/components/portfolio/portfolio-context-bar";
 import { PortfolioImportCard } from "@/components/portfolio/portfolio-import-card";
 import { PortfolioImportHistory } from "@/components/portfolio/portfolio-import-history";
 import { listLatestPortfolioBreakdown } from "@/db/queries/portfolio";
@@ -13,6 +14,20 @@ function resolveLogoUrl(
     return `https://img.logo.dev/ticker/${symbol.toLowerCase()}?token=${token}&size=64`;
   }
   return storedUrl;
+}
+
+function computeConvertedTotalCents(
+  positions: { marketValueCents: number; currency: string }[],
+  baseCurrency: "CAD" | "USD",
+  usdToCadRate: number,
+): number {
+  return positions.reduce((sum, p) => {
+    if (p.currency === baseCurrency) return sum + p.marketValueCents;
+    if (p.currency === "USD" && baseCurrency === "CAD") {
+      return sum + Math.round(p.marketValueCents * usdToCadRate);
+    }
+    return sum + Math.round(p.marketValueCents / usdToCadRate);
+  }, 0);
 }
 
 export async function PortfolioPageContent() {
@@ -43,6 +58,17 @@ export async function PortfolioPageContent() {
 
   return (
     <div className="space-y-6">
+      <PortfolioContextBar
+        portfolioName={data.portfolio.name}
+        baseCurrency={data.portfolio.baseCurrency}
+        snapshotDate={data.snapshot.asOfDate}
+        totalMarketValueCents={computeConvertedTotalCents(
+          data.positions,
+          data.portfolio.baseCurrency as "CAD" | "USD",
+          usdToCad,
+        )}
+        holdingsCount={positions.length}
+      />
       <PortfolioImportCard />
       <PortfolioBreakdownCard
         portfolio={data.portfolio}
