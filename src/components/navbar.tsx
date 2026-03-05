@@ -3,15 +3,22 @@
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Receipt } from "lucide-react";
+import {
+  Receipt,
+  LayoutDashboard,
+  Wallet,
+  TrendingUp,
+  Briefcase,
+  Upload,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/" },
-  { label: "Expenses", href: "/expenses" },
-  { label: "Income", href: "/income" },
-  { label: "Portfolio", href: "/portfolio" },
-  { label: "Imports", href: "/imports" },
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Expenses", href: "/expenses", icon: Wallet },
+  { label: "Income", href: "/income", icon: TrendingUp },
+  { label: "Portfolio", href: "/portfolio", icon: Briefcase },
+  { label: "Imports", href: "/imports", icon: Upload },
 ] as const;
 
 export function Navbar() {
@@ -30,7 +37,7 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {NAV_ITEMS.map(({ label, href }) => {
+          {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
             const isActive =
               href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -39,12 +46,13 @@ export function Navbar() {
                 key={href}
                 href={href}
                 className={cn(
-                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                 )}
               >
+                <Icon className="size-3.5" />
                 {label}
               </Link>
             );
