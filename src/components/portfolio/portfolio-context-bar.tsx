@@ -1,22 +1,49 @@
+"use client";
+
+import { useState } from "react";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCentsWithCode } from "@/lib/format";
+import { PortfolioCurrencyToggle } from "@/components/portfolio/portfolio-currency-toggle";
 
 interface PortfolioContextBarProps {
   portfolioName: string;
   baseCurrency: string;
   snapshotDate: string;
-  totalMarketValueCents: number;
   holdingsCount: number;
+  positions: { marketValueCents: number; currency: string }[];
+  usdToCadRate: number;
+}
+
+function computeConvertedTotalCents(
+  positions: { marketValueCents: number; currency: string }[],
+  displayCurrency: "CAD" | "USD",
+  usdToCadRate: number,
+): number {
+  return positions.reduce((sum, p) => {
+    if (p.currency === displayCurrency) return sum + p.marketValueCents;
+    if (p.currency === "USD" && displayCurrency === "CAD") {
+      return sum + Math.round(p.marketValueCents * usdToCadRate);
+    }
+    return sum + Math.round(p.marketValueCents / usdToCadRate);
+  }, 0);
 }
 
 export function PortfolioContextBar({
   portfolioName,
   baseCurrency,
   snapshotDate,
-  totalMarketValueCents,
   holdingsCount,
+  positions,
+  usdToCadRate,
 }: PortfolioContextBarProps) {
-  const currency = baseCurrency === "USD" ? "USD" : "CAD";
+  const defaultCurrency = baseCurrency === "USD" ? "USD" : "CAD";
+  const [displayCurrency, setDisplayCurrency] = useState<"CAD" | "USD">(defaultCurrency);
+
+  const totalMarketValueCents = computeConvertedTotalCents(
+    positions,
+    displayCurrency,
+    usdToCadRate,
+  );
 
   return (
     <div className="flex items-center gap-x-6 gap-y-3 flex-wrap rounded-xl border border-foreground/[0.06] bg-card/60 backdrop-blur-sm px-5 py-4">
@@ -37,7 +64,7 @@ export function PortfolioContextBar({
           Total Value
         </span>
         <span className="font-mono text-sm font-bold tabular-nums">
-          {formatCurrencyFromCentsWithCode(totalMarketValueCents, currency)}
+          {formatCurrencyFromCentsWithCode(totalMarketValueCents, displayCurrency)}
         </span>
       </div>
 
@@ -59,9 +86,12 @@ export function PortfolioContextBar({
         </span>
       </div>
 
-      <span className="rounded-full bg-foreground/[0.06] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {currency}
-      </span>
+      <div className="ml-auto">
+        <PortfolioCurrencyToggle
+          value={displayCurrency}
+          onChange={setDisplayCurrency}
+        />
+      </div>
     </div>
   );
 }

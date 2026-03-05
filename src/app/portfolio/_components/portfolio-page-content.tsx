@@ -16,20 +16,6 @@ function resolveLogoUrl(
   return storedUrl;
 }
 
-function computeConvertedTotalCents(
-  positions: { marketValueCents: number; currency: string }[],
-  baseCurrency: "CAD" | "USD",
-  usdToCadRate: number,
-): number {
-  return positions.reduce((sum, p) => {
-    if (p.currency === baseCurrency) return sum + p.marketValueCents;
-    if (p.currency === "USD" && baseCurrency === "CAD") {
-      return sum + Math.round(p.marketValueCents * usdToCadRate);
-    }
-    return sum + Math.round(p.marketValueCents / usdToCadRate);
-  }, 0);
-}
-
 export async function PortfolioPageContent() {
   const [data, { usdToCad }] = await Promise.all([
     listLatestPortfolioBreakdown(),
@@ -62,12 +48,12 @@ export async function PortfolioPageContent() {
         portfolioName={data.portfolio.name}
         baseCurrency={data.portfolio.baseCurrency}
         snapshotDate={data.snapshot.asOfDate}
-        totalMarketValueCents={computeConvertedTotalCents(
-          data.positions,
-          data.portfolio.baseCurrency as "CAD" | "USD",
-          usdToCad,
-        )}
         holdingsCount={positions.length}
+        positions={data.positions.map((p) => ({
+          marketValueCents: p.marketValueCents,
+          currency: p.currency,
+        }))}
+        usdToCadRate={usdToCad}
       />
       <PortfolioImportCard />
       <PortfolioBreakdownCard
