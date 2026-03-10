@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decodeCsvBytes,
+  MAX_CSV_FILE_BYTES,
   parseCsvText,
   validateCsvFileInput,
 } from "@/lib/imports/csv-utils";
@@ -95,6 +96,34 @@ describe("csv-utils", () => {
         bytes: new Uint8Array([1]),
       }),
     ).toEqual({ row: 0, field: "file", message: "File must be a CSV." });
+
+    expect(
+      validateCsvFileInput({
+        filename: "expenses.csv",
+        contentType: "text/plain",
+        bytes: new Uint8Array([1]),
+      }),
+    ).toBeNull();
+
+    expect(
+      validateCsvFileInput({
+        filename: "expenses.csv",
+        contentType: "text/csv",
+        bytes: new Uint8Array(),
+      }),
+    ).toEqual({ row: 0, field: "file", message: "File is empty." });
+
+    expect(
+      validateCsvFileInput({
+        filename: "expenses.csv",
+        contentType: "text/csv",
+        bytes: new Uint8Array(MAX_CSV_FILE_BYTES + 1),
+      }),
+    ).toEqual({
+      row: 0,
+      field: "file",
+      message: `File exceeds max size of ${MAX_CSV_FILE_BYTES} bytes.`,
+    });
   });
 
   it("decodes UTF-8 bytes and reports decode failures", () => {
@@ -109,5 +138,19 @@ describe("csv-utils", () => {
     if (!invalid.ok) {
       expect(invalid.error.message).toBe("File must be valid UTF-8 text.");
     }
+  });
+
+  it("reports empty CSV content whether whitespace-only or header-only", () => {
+    expect(parseCsvText("   \n \t ")).toEqual({
+      row: 0,
+      field: "file",
+      message: "CSV file is empty.",
+    });
+
+    expect(parseCsvText("date,description,amount,category\n")).toEqual({
+      row: 0,
+      field: "file",
+      message: "CSV file is empty.",
+    });
   });
 });

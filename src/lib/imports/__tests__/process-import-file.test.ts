@@ -57,4 +57,55 @@ describe("process-import-file", () => {
       expect(result.rows[1]?.category).toBe("Entertainment");
     }
   });
+
+  it("surfaces file validation and decode failures", () => {
+    expect(
+      processImportFileInput({
+        filename: "expenses.txt",
+        contentType: "text/plain",
+        bytes: toBytes("date,description,amount\n01-01-2025,Store,5.00"),
+      }),
+    ).toEqual({
+      status: "failed",
+      errors: [{ row: 0, field: "file", message: "File must be a CSV." }],
+    });
+
+    expect(
+      processImportFileInput({
+        filename: "expenses.csv",
+        contentType: "text/csv",
+        bytes: new Uint8Array([0xc3, 0x28]),
+      }),
+    ).toEqual({
+      status: "failed",
+      errors: [
+        {
+          row: 0,
+          field: "file",
+          message: "File must be valid UTF-8 text.",
+        },
+      ],
+    });
+  });
+
+  it("returns header validation errors from parsing", () => {
+    expect(
+      processImportFileInput({
+        filename: "expenses.csv",
+        contentType: "text/csv",
+        bytes: toBytes(
+          "date,description,amount,notes\n01-01-2025,Store,5.00,n/a",
+        ),
+      }),
+    ).toEqual({
+      status: "failed",
+      errors: [
+        {
+          row: 1,
+          field: "header",
+          message: "Unexpected headers: notes.",
+        },
+      ],
+    });
+  });
 });
