@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCentsWithCode } from "@/lib/format";
 import type { PortfolioRow } from "@/db/schema";
 import type { LatestPortfolioBreakdown } from "@/db/queries/portfolio";
+import type {
+  DisplayCurrency,
+  PortfolioDisplayPosition,
+} from "@/lib/portfolio/portfolio-display";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PortfolioHoldingsPieChart } from "@/components/portfolio/portfolio-holdings-pie-chart";
-import { PortfolioCurrencyToggle } from "@/components/portfolio/portfolio-currency-toggle";
 
-type Position = LatestPortfolioBreakdown["positions"][number];
 type Snapshot = NonNullable<LatestPortfolioBreakdown["snapshot"]>;
 
 const HOLDING_COLOR_CLASSES = [
@@ -33,33 +34,13 @@ const HOLDING_TEXT_COLOR_CLASSES = [
 type Props = {
   portfolio: PortfolioRow;
   snapshot: Snapshot;
-  positions: Position[];
-  usdToCadRate: number;
+  positions: PortfolioDisplayPosition[];
+  totalMarketValueCents: number;
+  displayCurrency: DisplayCurrency;
 };
 
 function formatWeight(weightBps: number): string {
   return `${(weightBps / 100).toFixed(2)}%`;
-}
-
-function convertPositions(
-  positions: Position[],
-  displayCurrency: "CAD" | "USD",
-  usdToCadRate: number,
-) {
-  return positions.map((position) => {
-    if (position.currency === displayCurrency) {
-      return position;
-    }
-
-    let convertedCents: number;
-    if (position.currency === "USD" && displayCurrency === "CAD") {
-      convertedCents = Math.round(position.marketValueCents * usdToCadRate);
-    } else {
-      convertedCents = Math.round(position.marketValueCents / usdToCadRate);
-    }
-
-    return { ...position, marketValueCents: convertedCents };
-  });
 }
 
 type StatTileProps = {
@@ -146,42 +127,16 @@ export function PortfolioBreakdownCard({
   portfolio,
   snapshot,
   positions,
-  usdToCadRate,
+  totalMarketValueCents,
+  displayCurrency,
 }: Props) {
-  const [displayCurrency, setDisplayCurrency] = useState<"CAD" | "USD">("CAD");
-
-  const convertedPositions = convertPositions(
-    positions,
-    displayCurrency,
-    usdToCadRate,
-  );
-
-  const totalMarketValueCents = convertedPositions.reduce(
-    (sum, p) => sum + p.marketValueCents,
-    0,
-  );
-
-  const positionsWithWeights = convertedPositions
-    .map((p) => ({
-      ...p,
-      weightBps:
-        totalMarketValueCents === 0
-          ? 0
-          : Math.round((p.marketValueCents / totalMarketValueCents) * 10000),
-      weightPercent:
-        totalMarketValueCents === 0
-          ? 0
-          : (p.marketValueCents / totalMarketValueCents) * 100,
-    }))
-    .sort((a, b) => b.weightBps - a.weightBps);
-
-  const n = positionsWithWeights.length;
-  const topHolding = positionsWithWeights[0];
+  const n = positions.length;
+  const topHolding = positions[0];
   const top5Count = Math.min(5, n);
-  const top5WeightBps = positionsWithWeights
+  const top5WeightBps = positions
     .slice(0, top5Count)
     .reduce((sum, p) => sum + p.weightBps, 0);
-  const cadWeightBps = positionsWithWeights
+  const cadWeightBps = positions
     .filter((p) => p.currency === "CAD")
     .reduce((sum, p) => sum + p.weightBps, 0);
 
@@ -225,13 +180,7 @@ export function PortfolioBreakdownCard({
   return (
     <Card className="min-w-0">
       <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle>Holdings breakdown</CardTitle>
-          <PortfolioCurrencyToggle
-            value={displayCurrency}
-            onChange={setDisplayCurrency}
-          />
-        </div>
+        <CardTitle>Holdings breakdown</CardTitle>
         <p className="text-muted-foreground text-xs">
           {portfolio.name} - As of {formatIsoDateLabel(snapshot.asOfDate)} -
           Total {fmt(totalMarketValueCents)}
@@ -249,14 +198,14 @@ export function PortfolioBreakdownCard({
         <div className="grid gap-0 md:grid-cols-[280px_1fr]">
           <div className="border-b px-4 py-4 md:border-r md:border-b-0">
             <PortfolioHoldingsPieChart
-              positions={positionsWithWeights}
+              positions={positions}
               totalMarketValueCents={totalMarketValueCents}
               displayCurrency={displayCurrency}
             />
           </div>
 
           <ul className="divide-y">
-            {positionsWithWeights.map((position, index) => {
+            {positions.map((position, index) => {
               const width = Math.max(
                 0,
                 Math.min(100, Number(position.weightPercent.toFixed(2))),

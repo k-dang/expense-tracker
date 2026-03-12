@@ -153,8 +153,7 @@ export async function deletePortfolioSnapshotAction(
   });
 
   if (!parsed.success) {
-    const msg =
-      parsed.error.issues[0]?.message ?? "As-of date is required.";
+    const msg = parsed.error.issues[0]?.message ?? "As-of date is required.";
     return { status: "failed", error: msg };
   }
 

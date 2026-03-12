@@ -1,50 +1,27 @@
 "use client";
 
-import { useState } from "react";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCentsWithCode } from "@/lib/format";
+import type { DisplayCurrency } from "@/lib/portfolio/portfolio-display";
 import { PortfolioCurrencyToggle } from "@/components/portfolio/portfolio-currency-toggle";
 
 interface PortfolioContextBarProps {
   portfolioName: string;
-  baseCurrency: string;
   snapshotDate: string;
   holdingsCount: number;
-  positions: { marketValueCents: number; currency: string }[];
-  usdToCadRate: number;
-}
-
-function computeConvertedTotalCents(
-  positions: { marketValueCents: number; currency: string }[],
-  displayCurrency: "CAD" | "USD",
-  usdToCadRate: number,
-): number {
-  return positions.reduce((sum, p) => {
-    if (p.currency === displayCurrency) return sum + p.marketValueCents;
-    if (p.currency === "USD" && displayCurrency === "CAD") {
-      return sum + Math.round(p.marketValueCents * usdToCadRate);
-    }
-    return sum + Math.round(p.marketValueCents / usdToCadRate);
-  }, 0);
+  totalMarketValueCents: number;
+  displayCurrency: DisplayCurrency;
+  onDisplayCurrencyChange: (currency: DisplayCurrency) => void;
 }
 
 export function PortfolioContextBar({
   portfolioName,
-  baseCurrency,
   snapshotDate,
   holdingsCount,
-  positions,
-  usdToCadRate,
+  totalMarketValueCents,
+  displayCurrency,
+  onDisplayCurrencyChange,
 }: PortfolioContextBarProps) {
-  const defaultCurrency = baseCurrency === "USD" ? "USD" : "CAD";
-  const [displayCurrency, setDisplayCurrency] = useState<"CAD" | "USD">(defaultCurrency);
-
-  const totalMarketValueCents = computeConvertedTotalCents(
-    positions,
-    displayCurrency,
-    usdToCadRate,
-  );
-
   return (
     <div className="flex items-center gap-x-6 gap-y-3 flex-wrap rounded-xl border border-foreground/[0.06] bg-card/60 backdrop-blur-sm px-5 py-4">
       <div className="flex items-center gap-3">
@@ -64,7 +41,10 @@ export function PortfolioContextBar({
           Total Value
         </span>
         <span className="font-mono text-sm font-bold tabular-nums">
-          {formatCurrencyFromCentsWithCode(totalMarketValueCents, displayCurrency)}
+          {formatCurrencyFromCentsWithCode(
+            totalMarketValueCents,
+            displayCurrency,
+          )}
         </span>
       </div>
 
@@ -89,7 +69,7 @@ export function PortfolioContextBar({
       <div className="ml-auto">
         <PortfolioCurrencyToggle
           value={displayCurrency}
-          onChange={setDisplayCurrency}
+          onChange={onDisplayCurrencyChange}
         />
       </div>
     </div>

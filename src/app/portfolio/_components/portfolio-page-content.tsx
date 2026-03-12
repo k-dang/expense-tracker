@@ -1,7 +1,6 @@
-import { PortfolioBreakdownCard } from "@/components/portfolio/portfolio-breakdown-card";
-import { PortfolioContextBar } from "@/components/portfolio/portfolio-context-bar";
 import { PortfolioImportCard } from "@/components/portfolio/portfolio-import-card";
 import { PortfolioImportHistory } from "@/components/portfolio/portfolio-import-history";
+import { PortfolioSummary } from "@/components/portfolio/portfolio-summary";
 import { listLatestPortfolioBreakdown } from "@/db/queries/portfolio";
 import { fetchUsdCadRate } from "@/lib/exchange-rate";
 
@@ -44,24 +43,13 @@ export async function PortfolioPageContent() {
 
   return (
     <div className="space-y-6">
-      <PortfolioContextBar
-        portfolioName={data.portfolio.name}
-        baseCurrency={data.portfolio.baseCurrency}
-        snapshotDate={data.snapshot.asOfDate}
-        holdingsCount={positions.length}
-        positions={data.positions.map((p) => ({
-          marketValueCents: p.marketValueCents,
-          currency: p.currency,
-        }))}
-        usdToCadRate={usdToCad}
-      />
-      <PortfolioImportCard />
-      <PortfolioBreakdownCard
+      <PortfolioSummary
         portfolio={data.portfolio}
         snapshot={data.snapshot}
         positions={positions}
         usdToCadRate={usdToCad}
       />
+      <PortfolioImportCard />
       <PortfolioImportHistory />
     </div>
   );

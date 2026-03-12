@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
-import { and, count, desc, eq, inArray, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sum } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
