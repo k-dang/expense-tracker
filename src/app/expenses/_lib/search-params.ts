@@ -1,6 +1,8 @@
 import type { ExpenseFilters as FiltersType } from "@/db/queries/expenses";
 
-export { parsePage } from "@/lib/search-params";
+import { parseEnumParam, parsePage } from "@/lib/search-params";
+
+export { parsePage };
 
 export type SearchParams = {
   search?: string;
@@ -19,15 +21,11 @@ const VALID_SORT_BY = new Set<FiltersType["sortBy"]>([
 const VALID_SORT_ORDER = new Set<FiltersType["sortOrder"]>(["asc", "desc"]);
 
 export function parseSortBy(v?: string): FiltersType["sortBy"] | undefined {
-  return VALID_SORT_BY.has(v as FiltersType["sortBy"])
-    ? (v as FiltersType["sortBy"])
-    : undefined;
+  return parseEnumParam(v, VALID_SORT_BY);
 }
 
 export function parseSortOrder(
   v?: string,
 ): FiltersType["sortOrder"] | undefined {
-  return VALID_SORT_ORDER.has(v as FiltersType["sortOrder"])
-    ? (v as FiltersType["sortOrder"])
-    : undefined;
+  return parseEnumParam(v, VALID_SORT_ORDER);
 }
