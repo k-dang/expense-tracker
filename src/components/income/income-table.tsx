@@ -20,6 +20,7 @@ import { bulkUpdateSourceAction } from "@/lib/actions/income";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
 import { useListQueryState } from "@/lib/use-list-query-state";
+import { useSelectablePaginatedTableState } from "@/lib/use-selectable-paginated-table-state";
 
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
@@ -39,7 +40,6 @@ export function IncomeTable({
   pageSize,
   sources,
 }: Props) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editTarget, setEditTarget] = useState<IncomeListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null);
   const [isApplying, setIsApplying] = useState(false);
@@ -47,44 +47,32 @@ export function IncomeTable({
     currentSortBy: "",
     currentSortOrder: "desc",
   });
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const toggleSelectAll = useCallback(() => {
-    if (selectedIds.size === incomes.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(incomes.map((i) => i.id)));
-    }
-  }, [selectedIds.size, incomes]);
-
-  const clearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
+  const {
+    allRowsSelected,
+    clearDeletedIds,
+    clearSelection,
+    selectedIds,
+    someRowsSelected,
+    toggleSelect,
+    toggleSelectAll,
+    totalPages,
+  } = useSelectablePaginatedTableState({
+    rowIds: incomes.map((income) => income.id),
+    totalCount,
+    pageSize,
+  });
 
   const handleBulkSourceChange = useCallback(
     async (newSource: string) => {
       setIsApplying(true);
       try {
         await bulkUpdateSourceAction([...selectedIds], newSource);
-        setSelectedIds(new Set());
+        clearSelection();
       } finally {
         setIsApplying(false);
       }
     },
-    [selectedIds],
+    [clearSelection, selectedIds],
   );
 
   if (incomes.length === 0) {
@@ -107,12 +95,8 @@ export function IncomeTable({
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-10">
                 <Checkbox
-                  checked={
-                    selectedIds.size === incomes.length && incomes.length > 0
-                  }
-                  indeterminate={
-                    selectedIds.size > 0 && selectedIds.size < incomes.length
-                  }
+                  checked={allRowsSelected}
+                  indeterminate={someRowsSelected}
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all"
                 />
@@ -226,11 +210,7 @@ export function IncomeTable({
           incomeIds={deleteTarget}
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {
-            setSelectedIds((prev) => {
-              const next = new Set(prev);
-              for (const id of deleteTarget) next.delete(id);
-              return next;
-            });
+            clearDeletedIds(deleteTarget);
             setDeleteTarget(null);
           }}
         />

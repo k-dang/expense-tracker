@@ -22,6 +22,7 @@ import type { ExpenseListItem } from "@/db/queries/expenses";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
 import { useListQueryState } from "@/lib/use-list-query-state";
+import { useSelectablePaginatedTableState } from "@/lib/use-selectable-paginated-table-state";
 
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -53,7 +54,6 @@ export function ExpenseTable({
   pageSize,
   categories,
 }: Props) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [learnRule, setLearnRule] = useState<LearnRuleState>(null);
   const [bulkLearnRule, setBulkLearnRule] = useState<BulkLearnRuleState>(null);
@@ -63,32 +63,20 @@ export function ExpenseTable({
     currentSortBy: "",
     currentSortOrder: "desc",
   });
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const toggleSelectAll = useCallback(() => {
-    if (selectedIds.size === expenses.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(expenses.map((t) => t.id)));
-    }
-  }, [selectedIds.size, expenses]);
-
-  const clearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
+  const {
+    allRowsSelected,
+    clearDeletedIds,
+    clearSelection,
+    selectedIds,
+    someRowsSelected,
+    toggleSelect,
+    toggleSelectAll,
+    totalPages,
+  } = useSelectablePaginatedTableState({
+    rowIds: expenses.map((expense) => expense.id),
+    totalCount,
+    pageSize,
+  });
 
   const handleCategoryChange = useCallback(
     async (expenseId: string, newCategory: string) => {
@@ -124,13 +112,13 @@ export function ExpenseTable({
           ),
         ];
 
-        setSelectedIds(new Set());
+        clearSelection();
         setBulkLearnRule({ descriptions: uniqueDescriptions, newCategory });
       } finally {
         setIsBulkApplying(false);
       }
     },
-    [selectedIds, expenses],
+    [clearSelection, selectedIds, expenses],
   );
 
   if (expenses.length === 0) {
@@ -152,12 +140,8 @@ export function ExpenseTable({
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-10">
                 <Checkbox
-                  checked={
-                    selectedIds.size === expenses.length && expenses.length > 0
-                  }
-                  indeterminate={
-                    selectedIds.size > 0 && selectedIds.size < expenses.length
-                  }
+                  checked={allRowsSelected}
+                  indeterminate={someRowsSelected}
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all"
                 />
@@ -303,11 +287,7 @@ export function ExpenseTable({
           expenseIds={deleteTarget}
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {
-            setSelectedIds((prev) => {
-              const next = new Set(prev);
-              for (const id of deleteTarget) next.delete(id);
-              return next;
-            });
+            clearDeletedIds(deleteTarget);
             setDeleteTarget(null);
           }}
         />
