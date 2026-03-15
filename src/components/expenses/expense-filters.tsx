@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useTransition, useRef, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowUpDown, Search, CircleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useListQueryState } from "@/lib/use-list-query-state";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -37,45 +37,24 @@ export function ExpenseFilters({
   currentSortBy,
   currentSortOrder,
 }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState(currentSearch);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const { cancelDebouncedUpdate, toggleSort, updateParams, updateParamsDebounced } =
+    useListQueryState({
+      currentSortBy,
+      currentSortOrder,
+    });
 
   useEffect(() => {
     setSearchValue(currentSearch);
   }, [currentSearch]);
 
-  const updateParams = useCallback(
-    (updates: Record<string, string | undefined>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        if (value) {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
-      }
-      params.delete("page");
-      startTransition(() => {
-        router.push(`${pathname}?${params.toString()}`);
-      });
-    },
-    [router, pathname, searchParams],
-  );
-
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setSearchValue(value);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        updateParams({ search: value || undefined });
-      }, 300);
+      updateParamsDebounced({ search: value || undefined });
     },
-    [updateParams],
+    [updateParamsDebounced],
   );
 
   const handleCategoryChange = useCallback(
@@ -85,19 +64,6 @@ export function ExpenseFilters({
       });
     },
     [updateParams],
-  );
-
-  const handleSortToggle = useCallback(
-    (field: string) => {
-      if (currentSortBy === field) {
-        updateParams({
-          sortOrder: currentSortOrder === "desc" ? "asc" : "desc",
-        });
-      } else {
-        updateParams({ sortBy: field, sortOrder: "desc" });
-      }
-    },
-    [updateParams, currentSortBy, currentSortOrder],
   );
 
   const showUncategorized = currentCategory === "Uncategorized";
@@ -122,6 +88,7 @@ export function ExpenseFilters({
               variant="ghost"
               size="icon-xs"
               onClick={() => {
+                cancelDebouncedUpdate();
                 setSearchValue("");
                 updateParams({ search: undefined });
               }}
@@ -189,7 +156,7 @@ export function ExpenseFilters({
             key={field}
             variant={currentSortBy === field ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => handleSortToggle(field)}
+            onClick={() => toggleSort(field)}
             className="gap-1 capitalize"
           >
             {field}

@@ -12,13 +12,16 @@ export type SearchParams = {
   page?: string;
 };
 
-const VALID_SORT_BY = new Set<FiltersType["sortBy"]>([
+const VALID_SORT_BY = new Set<NonNullable<FiltersType["sortBy"]>>([
   "date",
   "amount",
   "description",
   "category",
 ]);
-const VALID_SORT_ORDER = new Set<FiltersType["sortOrder"]>(["asc", "desc"]);
+const VALID_SORT_ORDER = new Set<NonNullable<FiltersType["sortOrder"]>>([
+  "asc",
+  "desc",
+]);
 
 export function parseSortBy(v?: string): FiltersType["sortBy"] | undefined {
   return parseEnumParam(v, VALID_SORT_BY);

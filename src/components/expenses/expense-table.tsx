@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -22,6 +21,7 @@ import { bulkUpdateCategoryAction } from "@/lib/actions/expenses";
 import type { ExpenseListItem } from "@/db/queries/expenses";
 import { formatIsoDateLabel } from "@/lib/date/utils";
 import { formatCurrencyFromCents } from "@/lib/format";
+import { useListQueryState } from "@/lib/use-list-query-state";
 
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -53,15 +53,16 @@ export function ExpenseTable({
   pageSize,
   categories,
 }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [learnRule, setLearnRule] = useState<LearnRuleState>(null);
   const [bulkLearnRule, setBulkLearnRule] = useState<BulkLearnRuleState>(null);
   const [isBulkApplying, setIsBulkApplying] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null);
+  const { goToPage } = useListQueryState({
+    currentSortBy: "",
+    currentSortOrder: "desc",
+  });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -130,19 +131,6 @@ export function ExpenseTable({
       }
     },
     [selectedIds, expenses],
-  );
-
-  const navigateToPage = useCallback(
-    (newPage: number) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (newPage > 1) {
-        params.set("page", String(newPage));
-      } else {
-        params.delete("page");
-      }
-      router.push(`${pathname}?${params.toString()}`);
-    },
-    [router, pathname, searchParams],
   );
 
   if (expenses.length === 0) {
@@ -261,7 +249,7 @@ export function ExpenseTable({
           <Button
             variant="outline"
             size="icon-xs"
-            onClick={() => navigateToPage(page - 1)}
+            onClick={() => goToPage(page - 1)}
             disabled={page <= 1}
           >
             <ChevronLeft className="size-4" />
@@ -272,7 +260,7 @@ export function ExpenseTable({
           <Button
             variant="outline"
             size="icon-xs"
-            onClick={() => navigateToPage(page + 1)}
+            onClick={() => goToPage(page + 1)}
             disabled={page >= totalPages}
           >
             <ChevronRight className="size-4" />

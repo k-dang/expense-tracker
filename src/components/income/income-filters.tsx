@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback } from "react";
 import { ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useListQueryState } from "@/lib/use-list-query-state";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -28,28 +28,10 @@ export function IncomeFilters({
   currentSortBy,
   currentSortOrder,
 }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-
-  const updateParams = useCallback(
-    (updates: Record<string, string | undefined>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        if (value) {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
-      }
-      params.delete("page");
-      startTransition(() => {
-        router.push(`${pathname}?${params.toString()}`);
-      });
-    },
-    [router, pathname, searchParams],
-  );
+  const { toggleSort, updateParams } = useListQueryState({
+    currentSortBy,
+    currentSortOrder,
+  });
 
   const handleSourceChange = useCallback(
     (value: string | null) => {
@@ -58,19 +40,6 @@ export function IncomeFilters({
       });
     },
     [updateParams],
-  );
-
-  const handleSortToggle = useCallback(
-    (field: string) => {
-      if (currentSortBy === field) {
-        updateParams({
-          sortOrder: currentSortOrder === "desc" ? "asc" : "desc",
-        });
-      } else {
-        updateParams({ sortBy: field, sortOrder: "desc" });
-      }
-    },
-    [updateParams, currentSortBy, currentSortOrder],
   );
 
   return (
@@ -113,7 +82,7 @@ export function IncomeFilters({
             key={field}
             variant={currentSortBy === field ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => handleSortToggle(field)}
+            onClick={() => toggleSort(field)}
             className="gap-1 capitalize"
           >
             {field}
