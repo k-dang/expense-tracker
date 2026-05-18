@@ -14,6 +14,7 @@ type Props = {
   snapshot: NonNullable<LatestPortfolioBreakdown["snapshot"]>;
   positions: LatestPortfolioBreakdown["positions"];
   usdToCadRate: number;
+  availableSnapshotDates: string[];
 };
 
 export function PortfolioSummary({
@@ -21,6 +22,7 @@ export function PortfolioSummary({
   snapshot,
   positions,
   usdToCadRate,
+  availableSnapshotDates,
 }: Props) {
   const defaultCurrency: DisplayCurrency =
     portfolio.baseCurrency === "USD" ? "USD" : "CAD";
@@ -42,6 +44,7 @@ export function PortfolioSummary({
         totalMarketValueCents={displayModel.totalMarketValueCents}
         displayCurrency={displayCurrency}
         onDisplayCurrencyChange={setDisplayCurrency}
+        availableSnapshotDates={availableSnapshotDates}
       />
       <PortfolioBreakdownCard
         portfolio={portfolio}

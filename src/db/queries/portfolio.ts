@@ -153,6 +153,38 @@ export async function getLatestPortfolioSnapshot(portfolioId: string) {
   return rows[0] ?? null;
 }
 
+export async function getPortfolioSnapshotByDate(
+  portfolioId: string,
+  asOfDate: string,
+) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("portfolio");
+
+  const parsedPortfolioId = requiredIdSchema.safeParse(portfolioId);
+  if (!parsedPortfolioId.success) {
+    throw new Error(getValidationIssueMessage(parsedPortfolioId.error));
+  }
+
+  if (!parseStrictDate(asOfDate)) {
+    return null;
+  }
+
+  const rows = await db
+    .select()
+    .from(portfolioSnapshotsTable)
+    .where(
+      and(
+        eq(portfolioSnapshotsTable.portfolioId, parsedPortfolioId.data),
+        eq(portfolioSnapshotsTable.asOfDate, asOfDate),
+      ),
+    )
+    .orderBy(desc(portfolioSnapshotsTable.createdAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
 export async function listSnapshotBreakdown(snapshotId: string) {
   "use cache";
   cacheLife("max");
@@ -196,11 +228,13 @@ export async function listSnapshotBreakdown(snapshotId: string) {
   }));
 }
 
-export async function listLatestPortfolioBreakdown() {
+export async function listPortfolioBreakdown(asOfDate?: string) {
   const portfolio = await getOrCreateDefaultPortfolio();
-  const latestSnapshot = await getLatestPortfolioSnapshot(portfolio.id);
+  const snapshot = asOfDate
+    ? await getPortfolioSnapshotByDate(portfolio.id, asOfDate)
+    : await getLatestPortfolioSnapshot(portfolio.id);
 
-  if (!latestSnapshot) {
+  if (!snapshot) {
     return {
       portfolio,
       snapshot: null,
@@ -208,10 +242,10 @@ export async function listLatestPortfolioBreakdown() {
     };
   }
 
-  const positions = await listSnapshotBreakdown(latestSnapshot.id);
+  const positions = await listSnapshotBreakdown(snapshot.id);
   return {
     portfolio,
-    snapshot: latestSnapshot,
+    snapshot,
     positions,
   };
 }
@@ -598,6 +632,25 @@ export async function listPortfolioImportDates(portfolioId: string) {
   }));
 }
 
+export async function listPortfolioSnapshotDates(portfolioId: string) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("portfolio");
+
+  const parsedPortfolioId = requiredIdSchema.safeParse(portfolioId);
+  if (!parsedPortfolioId.success) {
+    throw new Error(getValidationIssueMessage(parsedPortfolioId.error));
+  }
+
+  const rows = await db
+    .select({ asOfDate: portfolioSnapshotsTable.asOfDate })
+    .from(portfolioSnapshotsTable)
+    .where(eq(portfolioSnapshotsTable.portfolioId, parsedPortfolioId.data))
+    .orderBy(desc(portfolioSnapshotsTable.asOfDate));
+
+  return rows.map((row) => row.asOfDate);
+}
+
 export type PortfolioSnapshotDeleteResult =
   | {
       status: "succeeded";
@@ -681,5 +734,5 @@ export async function deletePortfolioSnapshotByDate(options: {
 }
 
 export type LatestPortfolioBreakdown = Awaited<
-  ReturnType<typeof listLatestPortfolioBreakdown>
+  ReturnType<typeof listPortfolioBreakdown>
 >;

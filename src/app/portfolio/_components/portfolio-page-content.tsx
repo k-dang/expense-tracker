@@ -1,8 +1,18 @@
 import { PortfolioImportCard } from "@/components/portfolio/portfolio-import-card";
 import { PortfolioImportHistory } from "@/components/portfolio/portfolio-import-history";
 import { PortfolioSummary } from "@/components/portfolio/portfolio-summary";
-import { listLatestPortfolioBreakdown } from "@/db/queries/portfolio";
+import {
+  listPortfolioBreakdown,
+  listPortfolioSnapshotDates,
+} from "@/db/queries/portfolio";
 import { fetchUsdCadRate } from "@/lib/exchange-rate";
+import { parseStrictDate } from "@/lib/date/utils";
+
+type PortfolioPageContentProps = {
+  searchParams: Promise<{
+    asOfDate?: string;
+  }>;
+};
 
 function resolveLogoUrl(
   symbol: string,
@@ -15,11 +25,19 @@ function resolveLogoUrl(
   return storedUrl;
 }
 
-export async function PortfolioPageContent() {
+export async function PortfolioPageContent({
+  searchParams,
+}: PortfolioPageContentProps) {
+  const params = await searchParams;
+  const selectedAsOfDate = params.asOfDate
+    ? parseStrictDate(params.asOfDate)
+    : undefined;
+
   const [data, { usdToCad }] = await Promise.all([
-    listLatestPortfolioBreakdown(),
+    listPortfolioBreakdown(selectedAsOfDate),
     fetchUsdCadRate(),
   ]);
+  const snapshotDates = await listPortfolioSnapshotDates(data.portfolio.id);
 
   if (!data.snapshot) {
     return (
@@ -48,6 +66,7 @@ export async function PortfolioPageContent() {
         snapshot={data.snapshot}
         positions={positions}
         usdToCadRate={usdToCad}
+        availableSnapshotDates={snapshotDates}
       />
       <PortfolioImportCard />
       <PortfolioImportHistory />
