@@ -50,6 +50,12 @@ describe("import processor registry", () => {
       listProcessors()
         .map((processor) => processor.metadata.id)
         .sort(),
-    ).toEqual(["amex-pdf", "generic-csv", "rogers-csv", "wealthsimple-csv"]);
+    ).toEqual([
+      "amex-csv",
+      "amex-pdf",
+      "generic-csv",
+      "rogers-csv",
+      "wealthsimple-csv",
+    ]);
   });
 });
