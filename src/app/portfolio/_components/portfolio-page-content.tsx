@@ -30,7 +30,7 @@ export async function PortfolioPageContent({
 }: PortfolioPageContentProps) {
   const params = await searchParams;
   const selectedAsOfDate = params.asOfDate
-    ? parseStrictDate(params.asOfDate)
+    ? (parseStrictDate(params.asOfDate) ?? undefined)
     : undefined;
 
   const [data, { usdToCad }] = await Promise.all([
