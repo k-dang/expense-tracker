@@ -17,6 +17,7 @@ import { BulkActionBar } from "@/components/expenses/bulk-action-bar";
 import { LearnRuleDialog } from "@/components/expenses/learn-rule-dialog";
 import { BulkLearnRuleDialog } from "@/components/expenses/bulk-learn-rule-dialog";
 import { DeleteExpenseDialog } from "@/components/expenses/delete-expense-dialog";
+import { TxnOriginBadge } from "@/components/lineage/origin-badge";
 import { bulkUpdateCategoryAction } from "@/lib/actions/expenses";
 import type { ExpenseListItem } from "@/db/queries/expenses";
 import { formatIsoDateLabel } from "@/lib/date/utils";
@@ -148,6 +149,7 @@ export function ExpenseTable({
               </TableHead>
               <TableHead className="w-28">Date</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead className="w-[5.75rem] text-center">Origin</TableHead>
               <TableHead className="w-48">Category</TableHead>
               <TableHead className="w-28 text-right">Amount</TableHead>
               <TableHead className="w-10" />
@@ -177,8 +179,23 @@ export function ExpenseTable({
                   <TableCell className="text-muted-foreground text-sm">
                     {formatIsoDateLabel(expense.txnDate)}
                   </TableCell>
-                  <TableCell className="truncate text-sm font-medium">
+                  <TableCell className="max-w-xs truncate text-sm font-medium">
                     {expense.description}
+                  </TableCell>
+                  <TableCell className="px-2 text-center">
+                    <TxnOriginBadge
+                      className="justify-center"
+                      createdAt={expense.createdAt}
+                      importId={expense.importId}
+                      sourceRowNumber={expense.sourceRowNumber}
+                      importFilename={expense.importFilename}
+                      importUploadedAt={expense.importUploadedAt}
+                      importProcessorLabel={expense.importProcessorLabel}
+                      importProcessorId={expense.importProcessorId}
+                      importContentType={expense.importContentType}
+                      importFileSizeBytes={expense.importFileSizeBytes}
+                      importFileSha256={expense.importFileSha256}
+                    />
                   </TableCell>
                   <TableCell>
                     <div className="relative">

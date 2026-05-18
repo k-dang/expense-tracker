@@ -16,12 +16,10 @@ The app imports CSV files, deduplicates expenses across uploads, and renders das
 pnpm install
 ```
 
-2. Copy `.env.example` to `.env` and set `DB_URL` (and `DB_AUTH_TOKEN` only for remote Turso/libSQL).
-
-3. Run DB migrations:
+2. Set secrets in `.env.local` (recommended for local dev) or `.env` — at minimum `DB_URL` (and `DB_AUTH_TOKEN` only for remote Turso/libSQL). Next.js reads both; Drizzle CLI (`db:migrate`, `db:push`) loads `.env` then overrides with `.env.local`.
 
 ```bash
-pnpm exec drizzle-kit migrate
+pnpm run db:migrate
 ```
 
 4. Start the app:

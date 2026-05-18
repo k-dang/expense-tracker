@@ -43,7 +43,8 @@ export function useSelectablePaginatedTableState({
     setSelectedIds((prev) => removeSelectedIds(prev, ids));
   }, []);
 
-  const allRowsSelected = rowIds.length > 0 && selectedIds.size === rowIds.length;
+  const allRowsSelected =
+    rowIds.length > 0 && selectedIds.size === rowIds.length;
   const someRowsSelected =
     selectedIds.size > 0 && selectedIds.size < rowIds.length;
 

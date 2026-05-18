@@ -2,7 +2,8 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 const dbUrl = process.env.DB_URL;
-if (!dbUrl) throw new Error("DB_URL is required. Set it in .env");
+if (!dbUrl)
+  throw new Error("DB_URL is required. Set it in .env.local or .env.");
 
 const dbAuthToken = process.env.DB_AUTH_TOKEN;
 if (dbUrl.startsWith("libsql://") && !dbAuthToken) {

@@ -13,6 +13,7 @@ describe("row-validator", () => {
     expect("value" in valid).toBe(true);
     if ("value" in valid) {
       expect(valid.value.txnDate).toBe("2026-02-07");
+      expect(valid.value.sourceRowNumber).toBe(2);
     }
 
     const invalid = validateRow({

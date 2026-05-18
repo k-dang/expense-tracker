@@ -54,6 +54,7 @@ export type ImportDeleteResult =
       status: Extract<ImportStatus, "succeeded">;
       importId: string;
       deletedExpenseCount: number;
+      deletedIncomeCount: number;
     }
   | {
       status: Extract<ImportStatus, "failed">;

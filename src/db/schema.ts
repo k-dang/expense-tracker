@@ -20,6 +20,11 @@ export const importsTable = sqliteTable("imports", {
   type: text("type", { enum: ["expense", "income"] })
     .notNull()
     .default("expense"),
+  processorId: text("processor_id"),
+  processorLabel: text("processor_label"),
+  contentType: text("content_type"),
+  fileSizeBytes: integer("file_size_bytes"),
+  fileSha256: text("file_sha256"),
 });
 
 export const expensesTable = sqliteTable("expenses", {
@@ -31,6 +36,7 @@ export const expensesTable = sqliteTable("expenses", {
   currency: text("currency").notNull().default("CAD"),
   fingerprint: text("fingerprint").notNull().unique(),
   importId: text("import_id").references(() => importsTable.id),
+  sourceRowNumber: integer("source_row_number"),
   createdAt: integer("created_at")
     .notNull()
     .$defaultFn(() => Date.now()),
@@ -54,6 +60,7 @@ export const importDuplicatesTable = sqliteTable("import_duplicates", {
   type: text("type", { enum: ["expense", "income"] })
     .notNull()
     .default("expense"),
+  sourceRowNumber: integer("source_row_number"),
 });
 
 export type ExpenseRow = typeof expensesTable.$inferSelect;
@@ -84,6 +91,7 @@ export const incomesTable = sqliteTable("incomes", {
   currency: text("currency").notNull().default("CAD"),
   fingerprint: text("fingerprint").notNull().unique(),
   importId: text("import_id").references(() => importsTable.id),
+  sourceRowNumber: integer("source_row_number"),
   createdAt: integer("created_at")
     .notNull()
     .$defaultFn(() => Date.now()),

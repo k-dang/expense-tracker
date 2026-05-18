@@ -11,6 +11,7 @@ export type ValidatedExpenseInput = {
   descriptionDedup: string;
   categoryDedup: string;
   fingerprint: string;
+  sourceRowNumber: number;
 };
 
 const AMOUNT_PATTERN = /^\$?(?:\d+|\d{1,3}(?:,\d{3})+)(\.\d{1,2})?$/;
@@ -153,6 +154,7 @@ export function validateRow(row: {
         categoryNormalizedLower: categoryDedup,
         currency: "CAD",
       }),
+      sourceRowNumber: row.rowNumber,
     },
   };
 }

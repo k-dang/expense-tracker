@@ -46,8 +46,8 @@ describe("list query state helpers", () => {
     expect(
       buildPathWithSearchParams("/expenses", new URLSearchParams("page=2")),
     ).toBe("/expenses?page=2");
-    expect(
-      buildPathWithSearchParams("/expenses", new URLSearchParams()),
-    ).toBe("/expenses");
+    expect(buildPathWithSearchParams("/expenses", new URLSearchParams())).toBe(
+      "/expenses",
+    );
   });
 });

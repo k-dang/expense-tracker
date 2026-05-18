@@ -38,11 +38,15 @@ export function ExpenseFilters({
   currentSortOrder,
 }: Props) {
   const [searchValue, setSearchValue] = useState(currentSearch);
-  const { cancelDebouncedUpdate, toggleSort, updateParams, updateParamsDebounced } =
-    useListQueryState({
-      currentSortBy,
-      currentSortOrder,
-    });
+  const {
+    cancelDebouncedUpdate,
+    toggleSort,
+    updateParams,
+    updateParamsDebounced,
+  } = useListQueryState({
+    currentSortBy,
+    currentSortOrder,
+  });
 
   useEffect(() => {
     setSearchValue(currentSearch);

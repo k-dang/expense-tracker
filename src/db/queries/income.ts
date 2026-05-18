@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
 import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { incomesTable } from "@/db/schema";
+import { incomesTable, importsTable } from "@/db/schema";
 
 export type IncomeFilters = {
   source?: string;
@@ -16,6 +16,7 @@ export async function listIncomes(filters: IncomeFilters = {}) {
   "use cache";
   cacheLife("max");
   cacheTag("income");
+  cacheTag("imports");
 
   const {
     source,
@@ -49,8 +50,19 @@ export async function listIncomes(filters: IncomeFilters = {}) {
         incomeDate: incomesTable.incomeDate,
         source: incomesTable.source,
         amountCents: incomesTable.amountCents,
+        createdAt: incomesTable.createdAt,
+        importId: incomesTable.importId,
+        sourceRowNumber: incomesTable.sourceRowNumber,
+        importFilename: importsTable.filename,
+        importUploadedAt: importsTable.uploadedAt,
+        importProcessorId: importsTable.processorId,
+        importProcessorLabel: importsTable.processorLabel,
+        importContentType: importsTable.contentType,
+        importFileSizeBytes: importsTable.fileSizeBytes,
+        importFileSha256: importsTable.fileSha256,
       })
       .from(incomesTable)
+      .leftJoin(importsTable, eq(incomesTable.importId, importsTable.id))
       .where(whereClause)
       .orderBy(orderFn(sortColumn), desc(incomesTable.createdAt))
       .limit(pageSize)

@@ -212,6 +212,7 @@ describe("deleteImportAction", () => {
       status: "succeeded",
       importId: "imp-1",
       deletedExpenseCount: 5,
+      deletedIncomeCount: 0,
     });
 
     const formData = new FormData();
@@ -223,9 +224,13 @@ describe("deleteImportAction", () => {
       status: "succeeded",
       importId: "imp-1",
       deletedExpenseCount: 5,
+      deletedIncomeCount: 0,
     });
     expect(deleteImportByIdMock).toHaveBeenCalledWith({ importId: "imp-1" });
-    expect(updateTagMock).toHaveBeenCalledTimes(2);
+    expect(updateTagMock).toHaveBeenCalledTimes(3);
+    expect(updateTagMock).toHaveBeenCalledWith("expenses");
+    expect(updateTagMock).toHaveBeenCalledWith("income");
+    expect(updateTagMock).toHaveBeenCalledWith("imports");
   });
 
   it("returns failed when importId is empty", async () => {

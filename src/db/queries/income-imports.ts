@@ -3,17 +3,32 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { importDuplicatesTable, importsTable, incomesTable } from "@/db/schema";
 import { processIncomeImportFileInput } from "@/lib/imports/process-income-import-file";
+import { sha256Hex } from "@/lib/imports/sha256-hex";
 import type { ImportFileResult } from "@/lib/types/api";
+
+const INCOME_CSV_PROCESSOR_ID = "income-csv";
+const INCOME_CSV_PROCESSOR_LABEL = "Income CSV";
 
 export async function processIncomeImportFile(options: {
   filename: string;
   contentType: string;
   bytes: Uint8Array;
 }): Promise<ImportFileResult> {
+  const fileBytes = options.bytes;
+  const fileSizeBytes = fileBytes.byteLength;
+  const fileSha256 = sha256Hex(fileBytes);
+  const provenanceValues = {
+    processorId: INCOME_CSV_PROCESSOR_ID,
+    processorLabel: INCOME_CSV_PROCESSOR_LABEL,
+    contentType: options.contentType,
+    fileSizeBytes,
+    fileSha256,
+  };
+
   const processed = processIncomeImportFileInput({
     filename: options.filename,
     contentType: options.contentType,
-    bytes: options.bytes,
+    bytes: fileBytes,
   });
   if (processed.status === "failed") {
     await db.insert(importsTable).values({
@@ -25,6 +40,7 @@ export async function processIncomeImportFile(options: {
       status: "failed",
       errorMessage: processed.errors[0]?.message ?? "Import failed.",
       type: "income",
+      ...provenanceValues,
     });
     return {
       filename: options.filename,
@@ -74,6 +90,7 @@ export async function processIncomeImportFile(options: {
       status: "succeeded",
       errorMessage: null,
       type: "income",
+      ...provenanceValues,
     });
 
     if (rowsToInsert.length > 0) {
@@ -86,6 +103,7 @@ export async function processIncomeImportFile(options: {
           currency: "CAD",
           fingerprint: row.fingerprint,
           importId,
+          sourceRowNumber: row.sourceRowNumber,
         })),
       );
     }
@@ -103,6 +121,7 @@ export async function processIncomeImportFile(options: {
           fingerprint: dup.fingerprint,
           reason: dup.reason,
           type: "income" as const,
+          sourceRowNumber: dup.sourceRowNumber,
         })),
       );
     }

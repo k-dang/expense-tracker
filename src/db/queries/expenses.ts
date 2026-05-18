@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
-import { and, count, desc, asc, eq, inArray, like, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, like, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { expensesTable } from "@/db/schema";
+import { expensesTable, importsTable } from "@/db/schema";
 
 export type ExpenseFilters = {
   search?: string;
@@ -17,6 +17,7 @@ export async function listExpenses(filters: ExpenseFilters = {}) {
   "use cache";
   cacheLife("max");
   cacheTag("expenses");
+  cacheTag("imports");
 
   const {
     search,
@@ -57,8 +58,19 @@ export async function listExpenses(filters: ExpenseFilters = {}) {
         description: expensesTable.description,
         category: expensesTable.category,
         amountCents: expensesTable.amountCents,
+        createdAt: expensesTable.createdAt,
+        importId: expensesTable.importId,
+        sourceRowNumber: expensesTable.sourceRowNumber,
+        importFilename: importsTable.filename,
+        importUploadedAt: importsTable.uploadedAt,
+        importProcessorId: importsTable.processorId,
+        importProcessorLabel: importsTable.processorLabel,
+        importContentType: importsTable.contentType,
+        importFileSizeBytes: importsTable.fileSizeBytes,
+        importFileSha256: importsTable.fileSha256,
       })
       .from(expensesTable)
+      .leftJoin(importsTable, eq(expensesTable.importId, importsTable.id))
       .where(whereClause)
       .orderBy(orderFn(sortColumn), desc(expensesTable.createdAt))
       .limit(pageSize)

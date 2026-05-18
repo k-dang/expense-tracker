@@ -15,6 +15,7 @@ import { SourceBadge } from "@/components/income/source-badge";
 import { BulkActionBar } from "@/components/income/bulk-action-bar";
 import { DeleteIncomeDialog } from "@/components/income/delete-income-dialog";
 import { EditIncomeDialog } from "@/components/income/edit-income-dialog";
+import { TxnOriginBadge } from "@/components/lineage/origin-badge";
 import type { IncomeListItem } from "@/db/queries/income";
 import { bulkUpdateSourceAction } from "@/lib/actions/income";
 import { formatIsoDateLabel } from "@/lib/date/utils";
@@ -102,7 +103,8 @@ export function IncomeTable({
                 />
               </TableHead>
               <TableHead className="w-28">Date</TableHead>
-              <TableHead className="w-48">Source</TableHead>
+              <TableHead className="min-w-48">Source</TableHead>
+              <TableHead className="w-[5.75rem] text-center">Origin</TableHead>
               <TableHead className="w-28 text-right">Amount</TableHead>
               <TableHead className="w-20" />
             </TableRow>
@@ -128,6 +130,21 @@ export function IncomeTable({
                   </TableCell>
                   <TableCell>
                     <SourceBadge source={income.source} />
+                  </TableCell>
+                  <TableCell className="px-2 text-center">
+                    <TxnOriginBadge
+                      className="justify-center"
+                      createdAt={income.createdAt}
+                      importId={income.importId}
+                      sourceRowNumber={income.sourceRowNumber}
+                      importFilename={income.importFilename}
+                      importUploadedAt={income.importUploadedAt}
+                      importProcessorLabel={income.importProcessorLabel}
+                      importProcessorId={income.importProcessorId}
+                      importContentType={income.importContentType}
+                      importFileSizeBytes={income.importFileSizeBytes}
+                      importFileSha256={income.importFileSha256}
+                    />
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm tabular-nums">
                     {formatCurrencyFromCents(income.amountCents)}

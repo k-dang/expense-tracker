@@ -13,6 +13,7 @@ import {
   DEFAULT_PROCESSOR_ID,
   getProcessor,
 } from "@/lib/imports/processors/registry";
+import { sha256Hex } from "@/lib/imports/sha256-hex";
 import type {
   ImportDeleteResult,
   ImportDuplicatesResult,
@@ -99,11 +100,17 @@ export async function uploadImportAction(
   for (const file of parsed.data) {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
+      const provenance = {
+        processorId: processor.metadata.id,
+        processorLabel: processor.metadata.label,
+        fileSha256: sha256Hex(bytes),
+      };
       const result = await processImportFile({
         filename: file.name,
         contentType: file.type,
         bytes,
         processor,
+        provenance,
       });
       fileResults.push(result);
     } catch {
@@ -207,6 +214,7 @@ export async function deleteImportAction(
     const result = await deleteImportById({ importId: parsed.data.importId });
     if (result.status === "succeeded") {
       updateTag("expenses");
+      updateTag("income");
       updateTag("imports");
     }
     return result;

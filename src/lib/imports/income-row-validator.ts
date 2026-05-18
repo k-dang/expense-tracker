@@ -7,6 +7,7 @@ export type ValidatedIncomeInput = {
   amountCents: number;
   source: string;
   fingerprint: string;
+  sourceRowNumber: number;
 };
 
 const AMOUNT_PATTERN = /^\$?(?:\d+|\d{1,3}(?:,\d{3})+)(\.\d{1,2})?$/;
@@ -130,6 +131,7 @@ export function validateIncomeRow(row: {
         sourceNormalizedLower: sourceDedup,
         currency: "CAD",
       }),
+      sourceRowNumber: row.rowNumber,
     },
   };
 }

@@ -6,11 +6,18 @@ import {
   expensesTable,
   importDuplicatesTable,
   importsTable,
+  incomesTable,
 } from "@/db/schema";
 import { findCategoryRule } from "@/db/queries/category-rules";
 import { categorize } from "@/lib/imports/auto-categorize";
 import type { FileProcessor } from "@/lib/imports/file-processor";
 import type { ImportDeleteResult, ImportFileResult } from "@/lib/types/api";
+
+export type ImportProcessingProvenance = {
+  processorId: string;
+  processorLabel: string;
+  fileSha256: string;
+};
 
 export async function listImports() {
   "use cache";
@@ -19,6 +26,7 @@ export async function listImports() {
   return db
     .select({
       id: importsTable.id,
+      type: importsTable.type,
       filename: importsTable.filename,
       uploadedAt: importsTable.uploadedAt,
       rowCountTotal: importsTable.rowCountTotal,
@@ -26,6 +34,11 @@ export async function listImports() {
       rowCountDuplicates: importsTable.rowCountDuplicates,
       status: importsTable.status,
       errorMessage: importsTable.errorMessage,
+      processorId: importsTable.processorId,
+      processorLabel: importsTable.processorLabel,
+      contentType: importsTable.contentType,
+      fileSizeBytes: importsTable.fileSizeBytes,
+      fileSha256: importsTable.fileSha256,
     })
     .from(importsTable)
     .orderBy(desc(importsTable.uploadedAt));
@@ -38,12 +51,28 @@ export async function processImportFile(options: {
   contentType: string;
   bytes: Uint8Array;
   processor: FileProcessor;
+  provenance?: ImportProcessingProvenance;
 }): Promise<ImportFileResult> {
+  const fileBytes = options.bytes;
+  const fileSizeBytes = fileBytes.byteLength;
   const processed = await options.processor.process({
     filename: options.filename,
     contentType: options.contentType,
-    bytes: options.bytes,
+    bytes: fileBytes,
   });
+  const provenanceValues = options.provenance
+    ? {
+        processorId: options.provenance.processorId,
+        processorLabel: options.provenance.processorLabel,
+        contentType: options.contentType,
+        fileSizeBytes,
+        fileSha256: options.provenance.fileSha256,
+      }
+    : {
+        contentType: options.contentType,
+        fileSizeBytes,
+      };
+
   if (processed.status === "failed") {
     await db.insert(importsTable).values({
       id: randomUUID(),
@@ -53,6 +82,8 @@ export async function processImportFile(options: {
       rowCountDuplicates: 0,
       status: "failed",
       errorMessage: processed.errors[0]?.message ?? "Import failed.",
+      type: "expense",
+      ...provenanceValues,
     });
     return {
       filename: options.filename,
@@ -111,6 +142,7 @@ export async function processImportFile(options: {
       status: "succeeded",
       errorMessage: null,
       type: "expense",
+      ...provenanceValues,
     });
 
     if (rowsToInsert.length > 0) {
@@ -124,6 +156,7 @@ export async function processImportFile(options: {
           currency: "CAD",
           fingerprint: txn.fingerprint,
           importId,
+          sourceRowNumber: txn.sourceRowNumber,
         })),
       );
     }
@@ -141,6 +174,7 @@ export async function processImportFile(options: {
           fingerprint: dup.fingerprint,
           reason: dup.reason,
           type: "expense" as const,
+          sourceRowNumber: dup.sourceRowNumber,
         })),
       );
     }
@@ -169,12 +203,16 @@ export async function deleteImportById(options: {
     return { status: "failed", error: "Import not found." };
   }
 
-  const deletedExpenseCount = await db.transaction(async (tx) => {
+  const deletedCounts = await db.transaction(async (tx) => {
     const existingExpenseCount = await tx
       .select({ count: count(expensesTable.id) })
       .from(expensesTable)
-      .where(eq(expensesTable.importId, options.importId))
-      .limit(1);
+      .where(eq(expensesTable.importId, options.importId));
+
+    const existingIncomeCount = await tx
+      .select({ count: count(incomesTable.id) })
+      .from(incomesTable)
+      .where(eq(incomesTable.importId, options.importId));
 
     await tx
       .delete(importDuplicatesTable)
@@ -184,15 +222,23 @@ export async function deleteImportById(options: {
       .delete(expensesTable)
       .where(eq(expensesTable.importId, options.importId));
 
+    await tx
+      .delete(incomesTable)
+      .where(eq(incomesTable.importId, options.importId));
+
     await tx.delete(importsTable).where(eq(importsTable.id, options.importId));
 
-    return Number(existingExpenseCount[0]?.count ?? 0);
+    return {
+      deletedExpenseCount: Number(existingExpenseCount[0]?.count ?? 0),
+      deletedIncomeCount: Number(existingIncomeCount[0]?.count ?? 0),
+    };
   });
 
   return {
     status: "succeeded",
     importId: options.importId,
-    deletedExpenseCount,
+    deletedExpenseCount: deletedCounts.deletedExpenseCount,
+    deletedIncomeCount: deletedCounts.deletedIncomeCount,
   };
 }
 
@@ -243,6 +289,7 @@ export async function importSelectedDuplicates(options: {
         currency: row.currency,
         fingerprint: `${row.fingerprint}-${randomUUID()}`,
         importId,
+        sourceRowNumber: row.sourceRowNumber ?? null,
       })),
     );
 

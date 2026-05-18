@@ -1,6 +1,7 @@
 import { listImports } from "@/db/queries/imports";
 import { DeleteImportDialog } from "@/components/imports/delete-import-dialog";
 import { ViewDuplicatesDialog } from "@/components/imports/view-duplicates-dialog";
+import { ImportBatchDetailsTrigger } from "@/components/lineage/origin-badge";
 import { formatUtcTimestampShort } from "@/lib/date/utils";
 import {
   Table,
@@ -44,7 +45,11 @@ export async function ImportHistoryTable() {
       <TableHeader>
         <TableRow className="text-muted-foreground hover:bg-transparent">
           <TableHead className="w-28">Date</TableHead>
-          <TableHead className="w-40">File</TableHead>
+          <TableHead className="w-20">Kind</TableHead>
+          <TableHead className="w-36 min-w-[8rem]">File</TableHead>
+          <TableHead className="hidden w-8 md:table-cell">
+            <span className="sr-only">Details</span>
+          </TableHead>
           <TableHead className="w-36">Result</TableHead>
           <TableHead className="hidden w-14 text-right md:table-cell">
             Total
@@ -53,7 +58,7 @@ export async function ImportHistoryTable() {
             New
           </TableHead>
           <TableHead className="w-14">Dup</TableHead>
-          <TableHead className="w-20 text-right">Actions</TableHead>
+          <TableHead className="w-24 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -67,8 +72,16 @@ export async function ImportHistoryTable() {
                 {formatUtcTimestampShort(item.uploadedAt)}
               </span>
             </TableCell>
-            <TableCell className="w-40 overflow-hidden">
-              <TruncateCell text={item.filename} />
+            <TableCell className="w-20 overflow-hidden">
+              <Badge variant="outline" className="w-fit text-xs capitalize">
+                {item.type}
+              </Badge>
+            </TableCell>
+            <TableCell className="min-w-0 overflow-hidden">
+              <TruncateCell text={item.filename} maxWidth="10rem" />
+            </TableCell>
+            <TableCell className="hidden w-8 text-center md:table-cell">
+              <ImportBatchDetailsTrigger batch={item} />
             </TableCell>
             <TableCell className="w-36">
               <div className="flex flex-col gap-0.5">
@@ -101,8 +114,13 @@ export async function ImportHistoryTable() {
                 duplicateCount={item.rowCountDuplicates}
               />
             </TableCell>
-            <TableCell className="w-20 text-right">
-              <DeleteImportDialog importId={item.id} />
+            <TableCell className="w-24 text-right">
+              <div className="flex justify-end gap-1">
+                <div className="md:hidden">
+                  <ImportBatchDetailsTrigger batch={item} />
+                </div>
+                <DeleteImportDialog importId={item.id} />
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -117,7 +135,11 @@ export function ImportHistoryTableSkeleton() {
       <TableHeader>
         <TableRow className="text-muted-foreground hover:bg-transparent">
           <TableHead className="w-28">Date</TableHead>
-          <TableHead className="w-40">File</TableHead>
+          <TableHead className="w-20">Kind</TableHead>
+          <TableHead className="w-36 min-w-[8rem]">File</TableHead>
+          <TableHead className="hidden w-8 md:table-cell">
+            <span className="sr-only">Details</span>
+          </TableHead>
           <TableHead className="w-36">Result</TableHead>
           <TableHead className="hidden w-14 text-right md:table-cell">
             Total
@@ -126,7 +148,7 @@ export function ImportHistoryTableSkeleton() {
             New
           </TableHead>
           <TableHead className="w-14">Dup</TableHead>
-          <TableHead className="w-20 text-right">Actions</TableHead>
+          <TableHead className="w-24 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -135,8 +157,14 @@ export function ImportHistoryTableSkeleton() {
             <TableCell className="w-28">
               <div className="h-4 w-20 rounded bg-muted animate-pulse" />
             </TableCell>
-            <TableCell className="w-40">
+            <TableCell className="w-20">
+              <div className="h-5 w-14 rounded bg-muted animate-pulse" />
+            </TableCell>
+            <TableCell className="w-36">
               <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+            </TableCell>
+            <TableCell className="hidden w-8 md:table-cell">
+              <div className="mx-auto h-6 w-6 rounded bg-muted animate-pulse" />
             </TableCell>
             <TableCell className="w-36">
               <div className="h-5 w-16 rounded bg-muted animate-pulse" />
@@ -150,8 +178,8 @@ export function ImportHistoryTableSkeleton() {
             <TableCell className="w-14">
               <div className="h-4 w-6 rounded bg-muted animate-pulse" />
             </TableCell>
-            <TableCell className="w-20 text-right">
-              <div className="ml-auto h-8 w-14 rounded bg-muted animate-pulse" />
+            <TableCell className="w-24 text-right">
+              <div className="ml-auto h-8 w-16 rounded bg-muted animate-pulse" />
             </TableCell>
           </TableRow>
         ))}
