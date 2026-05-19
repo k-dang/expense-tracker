@@ -6,6 +6,7 @@ import { MonthlyTrendCard } from "@/components/dashboard/monthly-trend-card";
 import { SavingsTrendCard } from "@/components/dashboard/savings-trend-card";
 import { RecentExpensesCard } from "@/components/dashboard/recent-expenses-card";
 import { TopDescriptionsCard } from "@/components/dashboard/top-descriptions-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { resolveDashboardPageDateRange } from "@/lib/dashboard/date-range";
 
 type PageProps = {
@@ -15,14 +16,6 @@ type PageProps = {
     trendCategory?: string;
   }>;
 };
-
-function CardSkeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={`bg-muted w-full min-w-0 animate-pulse rounded-lg ${className ?? "h-72"}`}
-    />
-  );
-}
 
 export default async function Page({ searchParams }: PageProps) {
   const params = await searchParams;
@@ -40,7 +33,7 @@ export default async function Page({ searchParams }: PageProps) {
       <Suspense fallback={<KpiCardsFallback />}>
         <KpiCards range={range} />
       </Suspense>
-      <Suspense fallback={<CardSkeleton className="h-80" />}>
+      <Suspense fallback={<Skeleton className="h-80 w-full min-w-0 rounded-lg" />}>
         <MonthlyTrendCard range={range} category={params.trendCategory} />
       </Suspense>
       <SavingsTrendCard range={range} />
