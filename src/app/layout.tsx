@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/themes";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { Navbar } from "@/components/navbar";
 import "./globals.css";
 
@@ -30,14 +31,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
-        <ClerkProvider
-          appearance={{
-            theme: shadcn,
-          }}
-        >
-          <Navbar />
-          {children}
-        </ClerkProvider>
+        <Suspense fallback={null}>
+          <ClerkProvider
+            appearance={{
+              theme: shadcn,
+            }}
+          >
+            <Navbar />
+            {children}
+          </ClerkProvider>
+        </Suspense>
       </body>
     </html>
   );
