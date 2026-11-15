@@ -11,8 +11,20 @@ import type {
 } from "@/lib/imports/process-import-file";
 import type { ImportError } from "@/lib/types/api";
 
-const WS_REQUIRED_HEADERS = ["transaction_date", "details", "amount"];
+const WS_REQUIRED_HEADERS = ["transaction_date", "amount"];
+const WS_DESCRIPTION_HEADERS = ["details", "merchant"] as const;
 const WS_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const WS_NON_EXPENSE_TYPES = new Set(["payment"]);
+const WS_SUPPORTED_CURRENCY = "CAD";
+
+type WsDescriptionHeader = (typeof WS_DESCRIPTION_HEADERS)[number];
+
+type WsColumnShape = {
+  descriptionHeader: WsDescriptionHeader;
+  // Newer exports list purchases as negative amounts and payments/refunds as
+  // positive; older exports do the opposite.
+  expensesAreNegative: boolean;
+};
 
 function normalizeHeader(header: string): string {
   return header.trim().toLowerCase();
@@ -28,17 +40,45 @@ function convertWsDateToCanonical(wsDate: string): string | null {
   return `${month}-${day}-${year}`;
 }
 
-function isExpenseRow(raw: Record<string, unknown>): boolean {
-  const type = toText(raw.type).toLowerCase();
-  if (type === "payment") return false;
-  const amountStr = toText(raw.amount);
-  if (!amountStr || amountStr.startsWith("-")) return false;
-  const num = Number.parseFloat(amountStr);
-  return Number.isFinite(num) && num > 0;
+function detectColumnShape(headers: string[]): WsColumnShape | null {
+  const headerSet = new Set(headers);
+  const descriptionHeader = WS_DESCRIPTION_HEADERS.find((header) =>
+    headerSet.has(header),
+  );
+  if (!descriptionHeader) return null;
+
+  return {
+    descriptionHeader,
+    expensesAreNegative: descriptionHeader === "merchant",
+  };
+}
+
+function expenseAmountFor(
+  raw: Record<string, unknown>,
+  shape: WsColumnShape,
+): string | null {
+  const status = toText(raw.status).toLowerCase();
+  if (status && status !== "completed") return null;
+
+  const type = (toText(raw.transaction_type) || toText(raw.type)).toLowerCase();
+  if (WS_NON_EXPENSE_TYPES.has(type)) return null;
+
+  const amountStr = toText(raw.amount).replace(/^\$/, "");
+  if (!amountStr) return null;
+
+  const isNegative = amountStr.startsWith("-");
+  if (isNegative !== shape.expensesAreNegative) return null;
+
+  const magnitude = isNegative ? amountStr.slice(1) : amountStr;
+  const num = Number.parseFloat(magnitude.replace(/,/g, ""));
+  if (!Number.isFinite(num) || num <= 0) return null;
+
+  return magnitude;
 }
 
 function processWsRows(
   rows: Record<string, unknown>[],
+  shape: WsColumnShape,
 ): ProcessImportFileResult {
   const errors: ImportError[] = [];
   const validatedRows: ValidatedExpenseInput[] = [];
@@ -46,12 +86,13 @@ function processWsRows(
 
   for (const raw of rows) {
     rowIndex += 1;
-    if (!isExpenseRow(raw)) continue;
+    const amount = expenseAmountFor(raw, shape);
+    if (!amount) continue;
 
     const wsDate = toText(raw.transaction_date);
     const date = convertWsDateToCanonical(wsDate);
-    const description = toText(raw.details);
-    const amountStr = toText(raw.amount);
+    const description = toText(raw[shape.descriptionHeader]);
+    const currency = toText(raw.currency).toUpperCase();
 
     if (!date) {
       errors.push({
@@ -62,11 +103,20 @@ function processWsRows(
       continue;
     }
 
+    if (currency && currency !== WS_SUPPORTED_CURRENCY) {
+      errors.push({
+        row: rowIndex,
+        field: "amount",
+        message: `Unsupported currency "${currency}". Only ${WS_SUPPORTED_CURRENCY} transactions can be imported.`,
+      });
+      continue;
+    }
+
     const result = validateRow({
       rowNumber: rowIndex,
       date,
       description,
-      amount: amountStr,
+      amount,
       category: "",
     });
 
@@ -130,20 +180,26 @@ function processWealthsimpleCsv(
   const headers = parseResult.meta.fields ?? [];
   const headerSet = new Set(headers);
   const missing = WS_REQUIRED_HEADERS.filter((h) => !headerSet.has(h));
-  if (missing.length > 0) {
+  const shape = detectColumnShape(headers);
+
+  if (missing.length > 0 || !shape) {
+    const missingAll = [
+      ...missing,
+      ...(shape ? [] : [`one of ${WS_DESCRIPTION_HEADERS.join(" or ")}`]),
+    ];
     return {
       status: "failed",
       errors: [
         {
           row: 1,
           field: "header",
-          message: `Missing required Wealthsimple headers: ${missing.join(", ")}.`,
+          message: `Missing required Wealthsimple headers: ${missingAll.join(", ")}.`,
         },
       ],
     };
   }
 
-  return processWsRows(parseResult.data);
+  return processWsRows(parseResult.data, shape);
 }
 
 export const wealthsimpleCsvProcessor: FileProcessor = {
@@ -151,7 +207,7 @@ export const wealthsimpleCsvProcessor: FileProcessor = {
     id: "wealthsimple-csv",
     label: "Wealthsimple CSV",
     description:
-      "Wealthsimple credit card CSV export (transaction_date, details, amount). Payment rows are skipped.",
+      "Wealthsimple credit card CSV export. Supports both the legacy export (transaction_date, details, amount) and the newer export (transaction_date, transaction_type, status, merchant, amount, currency, category). Payments, refunds, credits, and non-completed rows are skipped.",
     acceptedExtensions: [".csv"],
     acceptedMimeTypes: ["text/csv", "application/vnd.ms-excel"],
   },
